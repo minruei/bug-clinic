@@ -1,9 +1,12 @@
 import express from 'express'
 import type { RowDataPacket } from 'mysql2'
+import bcrypt from 'bcryptjs'
 import { pool } from './db'
 
 const app = express()
 const port = 8000
+// 讓 req.body 能讀到前端送來的 JSON
+app.use(express.json())
 
 app.get('/', (req, res) => {
   res.send('Bug Clinic API 運作中')
@@ -27,6 +30,31 @@ app.get('/api/problems', async (req, res) => {
 
   res.json(result)
 })
+
+// 註冊：信箱重複回 400，密碼雜湊後才存進資料庫
+app.post('/api/user', async (req, res) => {
+    const { name, email, password } = req.body
+  
+    if (!name || !email || !password) {
+      res.status(400).json({ error: true, message: '請填寫所有欄位' })
+      return
+    }
+  
+    const [rows] = await pool.query<RowDataPacket[]>('SELECT id FROM users WHERE email = ?', [email])
+    if (rows.length > 0) {
+      res.status(400).json({ error: true, message: '重複的電子郵件' })
+      return
+    }
+  
+    const passwordHash = await bcrypt.hash(password, 10)
+    await pool.query('INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)', [
+      name,
+      email,
+      passwordHash,
+    ])
+  
+    res.json({ ok: true })
+  })
 
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`)
