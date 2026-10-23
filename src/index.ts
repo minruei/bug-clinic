@@ -3,6 +3,7 @@ import type { RowDataPacket } from 'mysql2'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { pool } from './db'
+import { getUser } from './auth'
 
 const app = express()
 const port = 8000
@@ -86,6 +87,22 @@ app.put('/api/user/auth', async (req, res) => {
   )
 
   res.json({ token })
+})
+
+// 取得目前登入的使用者，沒登入回 data: null
+// 金幣和經驗值會變動，所以每次都從資料庫拿最新的
+app.get('/api/user/auth', async (req, res) => {
+  const tokenUser = getUser(req)
+  if (!tokenUser) {
+    res.json({ data: null })
+    return
+  }
+
+  const [rows] = await pool.query<RowDataPacket[]>(
+    'SELECT id, name, email, coins, exp FROM users WHERE id = ?',
+    [tokenUser.id],
+  )
+  res.json({ data: rows[0] ?? null })
 })
 
 app.listen(port, () => {
