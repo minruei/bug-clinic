@@ -6,6 +6,19 @@ import { pool } from './db'
 import { getUser } from './auth'
 import { TIME_LIMIT, EXP_REWARD, remainingLife, coinsFor } from './game'
 
+// 找出這個使用者、還沒結束的看診，順便拿到題目的答案
+// 不是本人的或已結束的都找不到，避免偷用別人的紀錄或重複領獎勵
+async function findOpenAttempt(attemptId: number, userId: number) {
+  const [rows] = await pool.query<RowDataPacket[]>(
+    `SELECT a.id, a.problem_id, a.mistakes, a.started_at, p.bug_line, p.explanation
+     FROM attempts a
+     JOIN problems p ON a.problem_id = p.id
+     WHERE a.id = ? AND a.user_id = ? AND a.finished_at IS NULL`,
+    [attemptId, userId],
+  )
+  return rows[0]
+}
+
 const app = express()
 const port = 8000
 
@@ -129,6 +142,29 @@ app.post('/api/attempts', async (req, res) => {
   )
 
   res.json({ attemptId: result.insertId })
+})
+
+// 檢查點的那一行：錯了就把點錯次數加 1
+app.post('/api/attempts/:id/line', async (req, res) => {
+  const user = getUser(req)
+  if (!user) {
+    res.status(403).json({ error: true, message: '請先登入' })
+    return
+  }
+
+  const attempt = await findOpenAttempt(Number(req.params.id), user.id)
+  if (!attempt) {
+    res.status(400).json({ error: true, message: '找不到這次看診' })
+    return
+  }
+
+  if (Number(req.body.line) === attempt.bug_line) {
+    res.json({ correct: true })
+    return
+  }
+
+  await pool.query('UPDATE attempts SET mistakes = mistakes + 1 WHERE id = ?', [attempt.id])
+  res.json({ correct: false })
 })
 
 app.listen(port, () => {
