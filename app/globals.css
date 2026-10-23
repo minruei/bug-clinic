@@ -473,3 +473,45 @@ h2 {
     grid-template-columns: repeat(3, 1fr);
   }
 }
+
+/* 登入註冊表單 */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 400px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-weight: 600;
+}
+
+.form input {
+  font: inherit;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.form input:focus {
+  outline: 2px solid var(--green);
+  border-color: transparent;
+}
+
+.form .btn {
+  text-align: center;
+}
+
+.error {
+  color: var(--red);
+}
+
+.switch {
+  color: var(--green);
+  text-align: center;
+}
