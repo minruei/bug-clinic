@@ -1,9 +1,10 @@
 import express from 'express'
-import type { RowDataPacket } from 'mysql2'
+import type { RowDataPacket, ResultSetHeader } from 'mysql2'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { pool } from './db'
 import { getUser } from './auth'
+import { TIME_LIMIT, EXP_REWARD, remainingLife, coinsFor } from './game'
 
 const app = express()
 const port = 8000
@@ -103,6 +104,31 @@ app.get('/api/user/auth', async (req, res) => {
     [tokenUser.id],
   )
   res.json({ data: rows[0] ?? null })
+})
+
+// 開始看診：建立一筆練習紀錄，開始時間由資料庫自動記錄
+app.post('/api/attempts', async (req, res) => {
+  const user = getUser(req)
+  if (!user) {
+    res.status(403).json({ error: true, message: '請先登入' })
+    return
+  }
+
+  const { problemId } = req.body
+  const [problems] = await pool.query<RowDataPacket[]>('SELECT id FROM problems WHERE id = ?', [
+    problemId,
+  ])
+  if (problems.length === 0) {
+    res.status(400).json({ error: true, message: '找不到這個題目' })
+    return
+  }
+
+  const [result] = await pool.query<ResultSetHeader>(
+    'INSERT INTO attempts (user_id, problem_id) VALUES (?, ?)',
+    [user.id, problemId],
+  )
+
+  res.json({ attemptId: result.insertId })
 })
 
 app.listen(port, () => {
