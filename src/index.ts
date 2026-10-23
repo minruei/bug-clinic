@@ -6,11 +6,12 @@ import { pool } from './db'
 import { getUser } from './auth'
 import { TIME_LIMIT, EXP_REWARD, remainingLife, coinsFor } from './game'
 
-// 找出這個使用者、還沒結束的看診，順便拿到題目的答案
+// 找出這個使用者、還沒結束的看診，順便拿到題目的答案和經過秒數
 // 不是本人的或已結束的都找不到，避免偷用別人的紀錄或重複領獎勵
 async function findOpenAttempt(attemptId: number, userId: number) {
   const [rows] = await pool.query<RowDataPacket[]>(
-    `SELECT a.id, a.problem_id, a.mistakes, a.started_at, p.bug_line, p.explanation
+    `SELECT a.id, a.problem_id, a.mistakes, p.bug_line, p.explanation,
+            TIMESTAMPDIFF(SECOND, a.started_at, NOW()) AS seconds_used
      FROM attempts a
      JOIN problems p ON a.problem_id = p.id
      WHERE a.id = ? AND a.user_id = ? AND a.finished_at IS NULL`,
@@ -120,6 +121,7 @@ app.get('/api/user/auth', async (req, res) => {
 })
 
 // 開始看診：建立一筆練習紀錄，開始時間由資料庫自動記錄
+// 回傳時間限制，前端倒數和後端規則才會一致
 app.post('/api/attempts', async (req, res) => {
   const user = getUser(req)
   if (!user) {
@@ -141,7 +143,7 @@ app.post('/api/attempts', async (req, res) => {
     [user.id, problemId],
   )
 
-  res.json({ attemptId: result.insertId })
+  res.json({ attemptId: result.insertId, timeLimit: TIME_LIMIT })
 })
 
 // 檢查點的那一行：錯了就把點錯次數加 1
@@ -165,6 +167,77 @@ app.post('/api/attempts/:id/line', async (req, res) => {
 
   await pool.query('UPDATE attempts SET mistakes = mistakes + 1 WHERE id = ?', [attempt.id])
   res.json({ correct: false })
+})
+
+// 選藥：答對發獎勵並結束看診；答錯扣生命值讓玩家再選
+// 生命值歸零或沒選（前端時間到）就判定失敗，公布答案
+app.post('/api/attempts/:id/answer', async (req, res) => {
+  const user = getUser(req)
+  if (!user) {
+    res.status(403).json({ error: true, message: '請先登入' })
+    return
+  }
+
+  const attempt = await findOpenAttempt(Number(req.params.id), user.id)
+  if (!attempt) {
+    res.status(400).json({ error: true, message: '找不到這次看診' })
+    return
+  }
+
+  const [options] = await pool.query<RowDataPacket[]>(
+    'SELECT id, option_text, is_correct FROM problem_options WHERE problem_id = ?',
+    [attempt.problem_id],
+  )
+  const correctOption = options.find((o) => o.is_correct)
+  const picked = options.find((o) => o.id === Number(req.body.optionId))
+
+  let mistakes = attempt.mistakes
+  if (picked && !picked.is_correct) mistakes += 1
+
+  const seconds = attempt.seconds_used
+  const life = remainingLife(seconds, mistakes)
+
+  if (picked?.is_correct && life > 0) {
+    const coins = coinsFor(life)
+    await pool.query(
+      `UPDATE attempts
+       SET is_correct = TRUE, mistakes = ?, seconds_used = ?,
+           coins_earned = ?, exp_earned = ?, finished_at = NOW()
+       WHERE id = ?`,
+      [mistakes, seconds, coins, EXP_REWARD, attempt.id],
+    )
+    await pool.query('UPDATE users SET coins = coins + ?, exp = exp + ? WHERE id = ?', [
+      coins,
+      EXP_REWARD,
+      user.id,
+    ])
+    res.json({
+      status: 'cured',
+      coins,
+      exp: EXP_REWARD,
+      secondsUsed: seconds,
+      explanation: attempt.explanation,
+    })
+    return
+  }
+
+  if (life <= 0 || !picked) {
+    await pool.query(
+      `UPDATE attempts
+       SET is_correct = FALSE, mistakes = ?, seconds_used = ?, finished_at = NOW()
+       WHERE id = ?`,
+      [mistakes, seconds, attempt.id],
+    )
+    res.json({
+      status: 'failed',
+      correctOption: correctOption?.option_text,
+      explanation: attempt.explanation,
+    })
+    return
+  }
+
+  await pool.query('UPDATE attempts SET mistakes = ? WHERE id = ?', [mistakes, attempt.id])
+  res.json({ status: 'wrong', life })
 })
 
 app.listen(port, () => {
