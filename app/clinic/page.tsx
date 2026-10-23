@@ -2,81 +2,160 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { cases } from '@/lib/cases'
-import { player, daily } from '@/lib/clinic'
+import { api } from '@/lib/api'
 
-const TIME = 60
+type Option = {
+  id: number
+  option_text: string
+}
 
-type Stage = 'find' | 'treat' | 'cured' | 'failed'
+type Problem = {
+  id: number
+  pet_name: string
+  emoji: string
+  topic: string
+  error_message: string
+  code: string
+  options: Option[]
+}
+
+// ready：還沒開始；find：找錯誤行；treat：選答案；cured / failed：結束
+type Stage = 'ready' | 'find' | 'treat' | 'cured' | 'failed'
+
+// 看診結束後，後端回傳的結果
+type Result = {
+  coins?: number
+  exp?: number
+  secondsUsed?: number
+  correctOption?: string
+  explanation: string
+}
+
+const MISTAKE_PENALTY = 5
 
 export default function Clinic() {
+  const [problems, setProblems] = useState<Problem[]>([])
+  const [loggedIn, setLoggedIn] = useState<boolean | null>(null)
   const [index, setIndex] = useState(0)
-  const [hp, setHp] = useState(TIME)
-  const [stage, setStage] = useState<Stage>('find')
+  const [attemptId, setAttemptId] = useState<number | null>(null)
+  const [timeLimit, setTimeLimit] = useState(60)
+  const [hp, setHp] = useState(60)
+  const [stage, setStage] = useState<Stage>('ready')
+  const [foundLine, setFoundLine] = useState<number | null>(null)
   const [wrongLine, setWrongLine] = useState<number | null>(null)
   const [wrongOption, setWrongOption] = useState<number | null>(null)
-  const [mistakes, setMistakes] = useState(0)
-  const [copied, setCopied] = useState(false)
+  const [result, setResult] = useState<Result | null>(null)
 
-  const patient = cases[index]
+  const problem = problems[index]
   const playing = stage === 'find' || stage === 'treat'
-  const isDaily = index === daily.caseIndex
 
-  // 看診中每秒扣一點生命值
+  // 進頁面時拿題目，並確認有沒有登入
+  useEffect(() => {
+    async function load() {
+      const list = await api('/api/problems')
+      setProblems(list)
+      const auth = await api('/api/user/auth')
+      setLoggedIn(auth.data !== null)
+    }
+    load()
+  }, [])
+
+  // 看診中每秒扣一點生命值，只是畫面顯示，真正的時間由後端計算
   useEffect(() => {
     if (!playing) return
     const timer = setInterval(() => {
-      setHp((prev) => {
-        if (prev <= 1) {
-          setStage('failed')
-          return 0
-        }
-        return prev - 1
-      })
+      setHp((prev) => Math.max(prev - 1, 0))
     }, 1000)
     return () => clearInterval(timer)
   }, [playing])
 
-  function pickLine(line: number) {
+  // 生命值歸零：不送答案，讓後端判定失敗並公布答案
+  useEffect(() => {
+    if (!playing || hp > 0 || attemptId === null) return
+    async function timeUp() {
+      const data = await api(`/api/attempts/${attemptId}/answer`, 'POST', {})
+      if (data.status === 'failed') {
+        setResult(data)
+        setStage('failed')
+      }
+    }
+    timeUp()
+  }, [hp, playing, attemptId])
+
+  // 開始看診：後端建立紀錄並開始計時
+  async function start() {
+    const data = await api('/api/attempts', 'POST', { problemId: problem.id })
+    if (data.error) return
+    setAttemptId(data.attemptId)
+    setTimeLimit(data.timeLimit)
+    setHp(data.timeLimit)
+    setStage('find')
+  }
+
+  // 點某一行：交給後端判斷是不是錯誤行
+  async function pickLine(line: number) {
     if (stage !== 'find') return
-    if (line === patient.bugLine) {
-      setStage('treat')
+    const data = await api(`/api/attempts/${attemptId}/line`, 'POST', { line })
+    if (data.correct) {
+      setFoundLine(line)
       setWrongLine(null)
+      setStage('treat')
     } else {
       setWrongLine(line)
-      setMistakes((prev) => prev + 1)
-      setHp((prev) => Math.max(prev - 5, 1))
+      setHp((prev) => Math.max(prev - MISTAKE_PENALTY, 0))
     }
   }
 
-  function pickOption(i: number) {
-    if (i === patient.answer) {
+  // 選答案：後端回傳 cured、wrong 或 failed
+  async function pickOption(optionId: number) {
+    const data = await api(`/api/attempts/${attemptId}/answer`, 'POST', { optionId })
+    if (data.status === 'cured') {
+      setResult(data)
       setStage('cured')
-    } else {
-      setWrongOption(i)
-      setMistakes((prev) => prev + 1)
-      setHp((prev) => Math.max(prev - 5, 1))
+    } else if (data.status === 'failed') {
+      setResult(data)
+      setStage('failed')
+    } else if (data.status === 'wrong') {
+      setWrongOption(optionId)
+      // 用後端算的生命值，跟畫面倒數對齊
+      setHp(data.life)
     }
   }
 
+  // 下一位病患：清空畫面，回到還沒開始的狀態
   function next() {
-    setIndex((prev) => (prev + 1) % cases.length)
-    setHp(TIME)
-    setStage('find')
+    setIndex((prev) => (prev + 1) % problems.length)
+    setAttemptId(null)
+    setStage('ready')
+    setFoundLine(null)
     setWrongLine(null)
     setWrongOption(null)
-    setMistakes(0)
-    setCopied(false)
+    setResult(null)
   }
 
-  // 分享時不透露答案，只顯示秒數和失誤
-  const shareText = `除蟲動物診所 今日病患 #${daily.no}
-${patient.emoji} ${TIME - hp} 秒治癒 ${'🩺'.repeat(3 - Math.min(mistakes, 2))}${'❌'.repeat(Math.min(mistakes, 2))}
-🔥 連續打卡 ${player.streak + 1} 天`
+  if (loggedIn === false) {
+    return (
+      <main className="wrap">
+        <Link href="/" className="back">
+          ← 回診所
+        </Link>
+        <section className="card result">
+          <p className="big">🩺 看診前要先打卡上班</p>
+          <p className="muted">登入之後，看診紀錄、金幣和經驗值才會存下來</p>
+          <Link href="/login" className="btn">
+            去登入
+          </Link>
+        </section>
+      </main>
+    )
+  }
 
-  async function share() {
-    await navigator.clipboard.writeText(shareText)
-    setCopied(true)
+  if (!problem) {
+    return (
+      <main className="wrap">
+        <p className="muted">病患資料讀取中...</p>
+      </main>
+    )
   }
 
   const face = stage === 'cured' ? '😊' : stage === 'failed' ? '😵' : hp < 20 ? '😣' : '🤒'
@@ -89,22 +168,22 @@ ${patient.emoji} ${TIME - hp} 秒治癒 ${'🩺'.repeat(3 - Math.min(mistakes, 2
           ← 回診所
         </Link>
         <span className="muted">
-          {isDaily ? `📅 今日病患 #${daily.no}` : `練習病患 ${index} / ${cases.length - 1}`}
+          病患 {index + 1} / {problems.length}
         </span>
       </header>
 
       <section className="card patient">
         <div className={`pet ${playing ? 'shake' : ''}`}>
-          {patient.emoji}
+          {problem.emoji}
           <span className="face">{face}</span>
         </div>
         <div className="grow">
           <p className="name">
-            {patient.pet}
-            <span className="tag">{patient.topic}</span>
+            {problem.pet_name}
+            <span className="tag">{problem.topic}</span>
           </p>
           <div className="bar">
-            <div className={`fill hp ${hpColor}`} style={{ width: `${(hp / TIME) * 100}%` }} />
+            <div className={`fill hp ${hpColor}`} style={{ width: `${(hp / timeLimit) * 100}%` }} />
           </div>
           <p className="muted">生命值 {hp} 秒</p>
         </div>
@@ -112,8 +191,14 @@ ${patient.emoji} ${TIME - hp} 秒治癒 ${'🩺'.repeat(3 - Math.min(mistakes, 2
 
       <section className="card symptom">
         <p className="muted">症狀</p>
-        <p className="mono">{patient.symptom}</p>
+        <p className="mono">{problem.error_message}</p>
       </section>
+
+      {stage === 'ready' && (
+        <button className="btn" onClick={start}>
+          開始看診（倒數 {timeLimit} 秒）
+        </button>
+      )}
 
       {playing && (
         <p className="hint">
@@ -122,65 +207,62 @@ ${patient.emoji} ${TIME - hp} 秒治癒 ${'🩺'.repeat(3 - Math.min(mistakes, 2
         </p>
       )}
 
-      <section className="code">
-        {patient.code.map((text, i) => {
-          const line = i + 1
-          const found = stage !== 'find' && line === patient.bugLine
-          return (
-            <button
-              key={line}
-              className={`line ${found ? 'found' : ''} ${wrongLine === line ? 'wrong' : ''}`}
-              onClick={() => pickLine(line)}
-            >
-              <span className="num">{line}</span>
-              <span>{text || ' '}</span>
-              {found && <span className="bug">🐛</span>}
-            </button>
-          )
-        })}
-      </section>
+      {/* 按下開始才顯示程式碼，避免先偷看再計時 */}
+      {stage !== 'ready' && (
+        <section className="code">
+          {problem.code.split('\n').map((text, i) => {
+            const line = i + 1
+            const found = line === foundLine
+            return (
+              <button
+                key={line}
+                className={`line ${found ? 'found' : ''} ${wrongLine === line ? 'wrong' : ''}`}
+                onClick={() => pickLine(line)}
+              >
+                <span className="num">{line}</span>
+                <span>{text || ' '}</span>
+                {found && <span className="bug">🐛</span>}
+              </button>
+            )
+          })}
+        </section>
+      )}
 
       {stage === 'treat' && (
         <section className="options">
-          {patient.options.map((opt, i) => (
+          {problem.options.map((opt) => (
             <button
-              key={opt}
-              className={`option ${wrongOption === i ? 'wrong' : ''}`}
-              onClick={() => pickOption(i)}
+              key={opt.id}
+              className={`option ${wrongOption === opt.id ? 'wrong' : ''}`}
+              onClick={() => pickOption(opt.id)}
             >
-              💊 <span className="mono">{opt}</span>
+              💊 <span className="mono">{opt.option_text}</span>
             </button>
           ))}
         </section>
       )}
 
-      {stage === 'cured' && (
+      {stage === 'cured' && result && (
         <section className="card result ok">
-          <p className="big">🎉 {patient.pet} 康復了！</p>
-          <p>{patient.note}</p>
-          <p className="muted">診療費 🪙 +30　經驗值 +20　已收進病歷本</p>
-          {isDaily && (
-            <>
-              <p className="checkin">
-                ✅ 打卡成功！連續 {player.streak + 1} 天，再 1 天 🦌 麒麟就會來訪
-              </p>
-              <pre className="share">{shareText}</pre>
-              <button className="btn ghost" onClick={share}>
-                {copied ? '已複製，貼給朋友吧' : '分享成績'}
-              </button>
-            </>
-          )}
+          <p className="big">🎉 {problem.pet_name} 康復了！</p>
+          <p>{result.explanation}</p>
+          <p className="muted">
+            花了 {result.secondsUsed} 秒　診療費 🪙 +{result.coins}　經驗值 +{result.exp}
+          </p>
           <button className="btn" onClick={next}>
-            {isDaily ? '再練習一題' : '下一位病患'}
+            下一位病患
           </button>
         </section>
       )}
 
-      {stage === 'failed' && (
+      {stage === 'failed' && result && (
         <section className="card result bad">
-          <p className="big">🚑 {patient.pet} 先轉去住院部</p>
-          <p>{patient.note}</p>
-          <p className="muted">三天後會回來複診，再挑戰一次</p>
+          <p className="big">🚑 {problem.pet_name} 先轉去住院部</p>
+          <p>
+            正確的藥：<span className="mono">{result.correctOption}</span>
+          </p>
+          <p>{result.explanation}</p>
+          <p className="muted">已記進病歷本，之後再來複習</p>
           <button className="btn" onClick={next}>
             下一位病患
           </button>
