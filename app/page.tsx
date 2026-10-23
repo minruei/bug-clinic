@@ -21,6 +21,8 @@ type Attempt = {
   emoji: string
   topic: string
   is_correct: number
+  mistakes: number
+  seconds_used: number
   finished_at: string
 }
 
@@ -181,13 +183,20 @@ export default function Home() {
               {a.emoji} {a.pet_name}
             </span>
             <span className="tag">{a.topic}</span>
-            <span className="grow muted">
+            <span className="grow">
               {a.is_correct ? '✅ 治好了' : '❌ 沒治好，再複習一次'}
+              <br />
+              <small className="muted">
+                花了 {a.seconds_used} 秒，點錯 {a.mistakes} 次
+              </small>
             </span>
             <span className="muted">
-              {new Date(a.finished_at).toLocaleDateString('zh-TW', {
+              {new Date(a.finished_at).toLocaleString('zh-TW', {
                 month: '2-digit',
                 day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false,
               })}
             </span>
           </div>
