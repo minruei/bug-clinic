@@ -240,6 +240,29 @@ app.post('/api/attempts/:id/answer', async (req, res) => {
   res.json({ status: 'wrong', life })
 })
 
+// 讀取自己的練習紀錄（病歷本），成功失敗都列出來，方便複習
+// 只拿已結束的看診，看到一半的不會出現，答案不會提早洩漏
+app.get('/api/attempts', async (req, res) => {
+  const user = getUser(req)
+  if (!user) {
+    res.status(403).json({ error: true, message: '請先登入' })
+    return
+  }
+
+  const [rows] = await pool.query<RowDataPacket[]>(
+    `SELECT a.id, a.problem_id, p.pet_name, p.emoji, p.topic, p.explanation,
+            a.is_correct, a.mistakes, a.seconds_used,
+            a.coins_earned, a.exp_earned, a.finished_at
+     FROM attempts a
+     JOIN problems p ON a.problem_id = p.id
+     WHERE a.user_id = ? AND a.finished_at IS NOT NULL
+     ORDER BY a.finished_at DESC`,
+    [user.id],
+  )
+
+  res.json({ data: rows })
+})
+
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`)
 })
