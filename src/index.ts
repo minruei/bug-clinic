@@ -27,8 +27,8 @@ const port = 8000
 // 讓 req.body 能讀到前端送來的 JSON
 app.use(express.json())
 
-// 只允許自己的前端呼叫 API，其他網站的瀏覽器請求會被擋下
-app.use(cors({ origin: process.env.FRONTEND_URL }))
+// 只允許自己的前端呼叫 API，FRONTEND_URL 可以用逗號放多個網址（本機和線上）
+app.use(cors({ origin: process.env.FRONTEND_URL?.split(',') }))
 
 app.get('/', (req, res) => {
   res.send('Bug Clinic API 運作中')
