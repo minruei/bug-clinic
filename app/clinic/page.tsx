@@ -172,102 +172,116 @@ export default function Clinic() {
         </span>
       </header>
 
-      <section className="card patient">
-        <div className={`pet ${playing ? 'shake' : ''}`}>
-          {problem.emoji}
-          <span className="face">{face}</span>
-        </div>
-        <div className="grow">
-          <p className="name">
-            {problem.pet_name}
-            <span className="tag">{problem.topic}</span>
-          </p>
-          <div className="bar">
-            <div className={`fill hp ${hpColor}`} style={{ width: `${(hp / timeLimit) * 100}%` }} />
-          </div>
-          <p className="muted">生命值 {hp} 秒</p>
-        </div>
-      </section>
+      {/* 電腦版左右兩欄：左邊病患和操作，右邊程式碼 */}
+      <div className="clinic-grid">
+        <div className="clinic-side">
+          <section className="card patient">
+            <div className={`pet ${playing ? 'shake' : ''}`}>
+              {problem.emoji}
+              <span className="face">{face}</span>
+            </div>
+            <div className="grow">
+              <p className="name">
+                {problem.pet_name}
+                <span className="tag">{problem.topic}</span>
+              </p>
+              <div className="bar">
+                <div
+                  className={`fill hp ${hpColor}`}
+                  style={{ width: `${(hp / timeLimit) * 100}%` }}
+                />
+              </div>
+              <p className="muted">生命值 {hp} 秒</p>
+            </div>
+          </section>
 
-      <section className="card symptom">
-        <p className="muted">症狀</p>
-        <p className="mono">{problem.error_message}</p>
-      </section>
+          <section className="card symptom">
+            <p className="muted">症狀</p>
+            <p className="mono">{problem.error_message}</p>
+          </section>
 
-      {stage === 'ready' && (
-        <button className="btn" onClick={start}>
-          開始看診（倒數 {timeLimit} 秒）
-        </button>
-      )}
-
-      {playing && (
-        <p className="hint">
-          {stage === 'find' && '🔍 第一步：點出 bug 躲在哪一行'}
-          {stage === 'treat' && '💊 第二步：選擇正確的藥'}
-        </p>
-      )}
-
-      {/* 按下開始才顯示程式碼，避免先偷看再計時 */}
-      {stage !== 'ready' && (
-        <section className="code">
-          {problem.code.split('\n').map((text, i) => {
-            const line = i + 1
-            const found = line === foundLine
-            return (
-              <button
-                key={line}
-                className={`line ${found ? 'found' : ''} ${wrongLine === line ? 'wrong' : ''}`}
-                onClick={() => pickLine(line)}
-              >
-                <span className="num">{line}</span>
-                <span>{text || ' '}</span>
-                {found && <span className="bug">🐛</span>}
-              </button>
-            )
-          })}
-        </section>
-      )}
-
-      {stage === 'treat' && (
-        <section className="options">
-          {problem.options.map((opt) => (
-            <button
-              key={opt.id}
-              className={`option ${wrongOption === opt.id ? 'wrong' : ''}`}
-              onClick={() => pickOption(opt.id)}
-            >
-              💊 <span className="mono">{opt.option_text}</span>
+          {stage === 'ready' && (
+            <button className="btn" onClick={start}>
+              開始看診（倒數 {timeLimit} 秒）
             </button>
-          ))}
-        </section>
-      )}
+          )}
 
-      {stage === 'cured' && result && (
-        <section className="card result ok">
-          <p className="big">🎉 {problem.pet_name} 康復了！</p>
-          <p>{result.explanation}</p>
-          <p className="muted">
-            花了 {result.secondsUsed} 秒　診療費 🪙 +{result.coins}　經驗值 +{result.exp}
-          </p>
-          <button className="btn" onClick={next}>
-            下一位病患
-          </button>
-        </section>
-      )}
+          {playing && (
+            <p className="hint">
+              {stage === 'find' && '🔍 第一步：點出 bug 躲在哪一行'}
+              {stage === 'treat' && '💊 第二步：選擇正確的藥'}
+            </p>
+          )}
 
-      {stage === 'failed' && result && (
-        <section className="card result bad">
-          <p className="big">🚑 {problem.pet_name} 先轉去住院部</p>
-          <p>
-            正確的藥：<span className="mono">{result.correctOption}</span>
-          </p>
-          <p>{result.explanation}</p>
-          <p className="muted">已記進病歷本，之後再來複習</p>
-          <button className="btn" onClick={next}>
-            下一位病患
-          </button>
-        </section>
-      )}
+          {stage === 'treat' && (
+            <section className="options">
+              {problem.options.map((opt) => (
+                <button
+                  key={opt.id}
+                  className={`option ${wrongOption === opt.id ? 'wrong' : ''}`}
+                  onClick={() => pickOption(opt.id)}
+                >
+                  💊 <span className="mono">{opt.option_text}</span>
+                </button>
+              ))}
+            </section>
+          )}
+
+          {stage === 'cured' && result && (
+            <section className="card result ok">
+              <p className="big">🎉 {problem.pet_name} 康復了！</p>
+              <p>{result.explanation}</p>
+              <p className="muted">
+                花了 {result.secondsUsed} 秒　診療費 🪙 +{result.coins}　經驗值 +{result.exp}
+              </p>
+              <button className="btn" onClick={next}>
+                下一位病患
+              </button>
+            </section>
+          )}
+
+          {stage === 'failed' && result && (
+            <section className="card result bad">
+              <p className="big">🚑 {problem.pet_name} 先轉去住院部</p>
+              <p>
+                正確的藥：<span className="mono">{result.correctOption}</span>
+              </p>
+              <p>{result.explanation}</p>
+              <p className="muted">已記進病歷本，之後再來複習</p>
+              <button className="btn" onClick={next}>
+                下一位病患
+              </button>
+            </section>
+          )}
+        </div>
+
+        <div className="clinic-main">
+          {/* 按下開始才顯示程式碼，避免先偷看再計時 */}
+          {stage === 'ready' ? (
+            <section className="card code-placeholder">
+              <p className="muted">按下開始看診，病歷上的程式碼才會出現</p>
+            </section>
+          ) : (
+            <section className="code">
+              {problem.code.split('\n').map((text, i) => {
+                const line = i + 1
+                const found = line === foundLine
+                return (
+                  <button
+                    key={line}
+                    className={`line ${found ? 'found' : ''} ${wrongLine === line ? 'wrong' : ''}`}
+                    onClick={() => pickLine(line)}
+                  >
+                    <span className="num">{line}</span>
+                    <span>{text || ' '}</span>
+                    {found && <span className="bug">🐛</span>}
+                  </button>
+                )
+              })}
+            </section>
+          )}
+        </div>
+      </div>
     </main>
   )
 }

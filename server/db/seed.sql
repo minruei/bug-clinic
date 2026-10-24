@@ -2,6 +2,9 @@
 -- 會清空舊的練習紀錄和題目，重新放入；測試帳號的金幣經驗也歸零，demo 從乾淨的狀態開始
 -- 執行：mysql bug_clinic < db/seed.sql
 
+-- emoji 一個字 4 位元組，連線要用 utf8mb4 才存得進去
+SET NAMES utf8mb4;
+
 ALTER TABLE problems MODIFY explanation TEXT NOT NULL;
 
 DELETE FROM attempts;
@@ -14,7 +17,7 @@ UPDATE users SET coins = 0, exp = 0;
 
 -- 1. 小橘：TypeScript 型別
 INSERT INTO problems (id, pet_name, emoji, topic, error_message, code, bug_line, explanation) VALUES
-(1, '小橘', '��', 'TypeScript 型別', 'Type ''string'' is not assignable to type ''number''.',
+(1, '小橘', '🐱', 'TypeScript 型別', 'Type ''string'' is not assignable to type ''number''.',
  'type Item = {\n  id: number\n  title: string\n}\n\nconst ref = await addDoc(collection(db, ''items''), data)\nconst item: Item = { id: ref.id, title }',
  2,
  '【為什麼錯】Firestore 自動產生的文件 id 是字串（例如 "a8Kx3f..."），但型別寫成 number，兩邊對不上，TypeScript 就擋下來。\n【基本概念】型別是對資料長相的約定。TypeScript 會在程式執行前先檢查「實際的資料」和「約定」是否一致，提早抓出錯誤。改成 any 雖然不會報錯，但等於把檢查關掉。\n【名詞解釋】type：定義資料長相的語法。number／string：數字／字串型別。any：什麼都接受的型別，會失去保護。');

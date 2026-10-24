@@ -3,3 +3,6 @@ node_modules
 package-lock.json
 playwright-report
 test-results
+
+# 後端有自己的設定，前端的檢查不管它
+server
