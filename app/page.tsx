@@ -42,7 +42,7 @@ export default function Home() {
       setUser(auth.data)
       if (auth.data) {
         const records = await api('/api/attempts')
-        setAttempts(records.data)
+        setAttempts(records.data ?? [])
       }
       setLoaded(true)
     }
