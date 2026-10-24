@@ -9,12 +9,12 @@
 }
 
 :root {
-  --bg: #f3e6c8;
-  --card: #fff8e6;
+  --bg: #efe9dd;
+  --card: #fbf8f1;
   --ink: #4a3426;
   --muted: #6e5440;
   --green: #5a9a4a;
-  --green-soft: #dcebc4;
+  --green-soft: #e4ebdc;
   --red: #c8553d;
   --yellow: #e8a33d;
   --line: #4a3426;
@@ -32,8 +32,8 @@
 body {
   background-color: var(--bg);
   background-image:
-    linear-gradient(45deg, rgba(74, 52, 38, 0.04) 25%, transparent 25%),
-    linear-gradient(-45deg, rgba(74, 52, 38, 0.04) 25%, transparent 25%);
+    linear-gradient(45deg, rgba(74, 52, 38, 0.025) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(74, 52, 38, 0.025) 25%, transparent 25%);
   background-size: 16px 16px;
   color: var(--ink);
   font-size: 16px;
@@ -430,6 +430,10 @@ h2::before {
   align-items: flex-start;
 }
 
+.result p {
+  white-space: pre-line;
+}
+
 .result.ok {
   background: var(--green-soft);
 }
@@ -500,7 +504,7 @@ h2::before {
 }
 
 .beast {
-  background: #fff1cf;
+  background: #f6efe0;
   border: var(--pixel) solid var(--ink);
   box-shadow: var(--shadow);
   padding: 14px 8px;
