@@ -175,8 +175,8 @@ app.post('/api/attempts/:id/line', async (req, res) => {
   res.json({ data: { correct: false } })
 })
 
-// 選藥：答對發獎勵並結束看診；答錯扣生命值讓玩家再選
-// 生命值歸零或沒選（前端時間到）就判定失敗，公布答案
+// 選藥：只有一次機會，答對發獎勵；選錯、生命值歸零或沒選（前端時間到）都判定失敗，公布答案
+// 不給重選，是因為猜到對為止沒有學習意義，失敗的題目會進住院部複習
 app.post('/api/attempts/:id/answer', async (req, res) => {
   const user = getUser(req)
   if (!user) {
@@ -229,7 +229,7 @@ app.post('/api/attempts/:id/answer', async (req, res) => {
     return
   }
 
-  if (life <= 0 || !picked) {
+  if (life <= 0 || !picked || !picked.is_correct) {
     await pool.query(
       `UPDATE attempts
        SET is_correct = FALSE, mistakes = ?, seconds_used = ?, finished_at = NOW()
@@ -245,9 +245,6 @@ app.post('/api/attempts/:id/answer', async (req, res) => {
     })
     return
   }
-
-  await pool.query('UPDATE attempts SET mistakes = ? WHERE id = ?', [mistakes, attempt.id])
-  res.json({ data: { status: 'wrong', life } })
 })
 
 // 讀取自己的練習紀錄（病歷本），成功失敗都列出來，方便複習

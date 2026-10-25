@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { api } from '@/lib/api'
 import { beasts, unlockedBeasts, type DexAttempt } from '@/lib/dex'
 import { Pixel, PetIcon, Rarity } from '@/components/Pixel'
-import { pets, petLabel } from '@/lib/pets'
+import { pets, petLabel, onePerPet } from '@/lib/pets'
 
 type Problem = {
   id: number
@@ -35,7 +35,13 @@ export default function DexPage() {
   }, [])
 
   const curedPets = new Set(attempts.filter((a) => a.is_correct).map((a) => a.pet_name))
-  const unlocked = unlockedBeasts(attempts, problems.length)
+  const animals = onePerPet(problems)
+  const unlocked = unlockedBeasts(attempts, animals.length)
+  // 每隻動物治好了幾題不同的題目
+  const curedIds = new Set(attempts.filter((a) => a.is_correct).map((a) => a.problem_id))
+  const curedOf = (pet: string) =>
+    problems.filter((p) => p.pet_name === pet && curedIds.has(p.id)).length
+  const totalOf = (pet: string) => problems.filter((p) => p.pet_name === pet).length
 
   return (
     <main className="wrap">
@@ -44,7 +50,7 @@ export default function DexPage() {
           ← 回診所
         </Link>
         <span className="muted">
-          收集 {curedPets.size + unlocked.size} / {problems.length + beasts.length}
+          收集 {curedPets.size + unlocked.size} / {animals.length + beasts.length}
         </span>
       </header>
 
@@ -58,15 +64,15 @@ export default function DexPage() {
       <div className="section-head">
         <h2>動物圖鑑</h2>
         <span className="muted">
-          {curedPets.size} / {problems.length}
+          {curedPets.size} / {animals.length}
         </span>
       </div>
       <section className="dex-grid">
-        {problems.map((p) => {
+        {animals.map((p) => {
           const met = curedPets.has(p.pet_name)
           return (
             <Link
-              key={p.id}
+              key={p.pet_name}
               href={`/clinic?id=${p.id}`}
               className={`beast room-link ${met ? '' : 'locked'}`}
             >
@@ -74,6 +80,9 @@ export default function DexPage() {
               <p className="name">{met ? petLabel(p.pet_name) : '???'}</p>
               <p className="tag">{p.topic}</p>
               <p className="muted">{met ? pets[p.pet_name]?.hint : '治好牠就能收集'}</p>
+              <p className="muted">
+                治好 {curedOf(p.pet_name)} / {totalOf(p.pet_name)} 題
+              </p>
             </Link>
           )
         })}

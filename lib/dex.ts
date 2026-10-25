@@ -2,6 +2,7 @@
 // rank 是稀有度，用幾顆星星表示
 
 export type DexAttempt = {
+  problem_id: number
   pet_name: string
   is_correct: number
   mistakes: number

@@ -865,3 +865,10 @@ h2::before {
     font-size: 18px;
   }
 }
+
+/* 結果畫面的按鈕：下一題、換主題並排 */
+.result-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}

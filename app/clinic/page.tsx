@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { api } from '@/lib/api'
 import { Pixel, PetIcon } from '@/components/Pixel'
-import { pets, petLabel } from '@/lib/pets'
+import { pets, petLabel, onePerPet } from '@/lib/pets'
 
 type Option = {
   id: number
@@ -120,7 +120,7 @@ export default function Clinic() {
     }
   }
 
-  // 選答案：後端回傳 cured、wrong 或 failed
+  // 選答案：只有一次機會，後端回傳 cured 或 failed
   async function pickOption(optionId: number) {
     const { data } = await api(`/api/attempts/${attemptId}/answer`, 'POST', { optionId })
     if (!data) return
@@ -128,12 +128,10 @@ export default function Clinic() {
       setResult(data)
       setStage('cured')
     } else if (data.status === 'failed') {
+      // 記下選錯的是哪一個，結果畫面拿來對照正確答案
+      setWrongOption(optionId)
       setResult(data)
       setStage('failed')
-    } else if (data.status === 'wrong') {
-      setWrongOption(optionId)
-      // 用後端算的生命值，跟畫面倒數對齊
-      setHp(data.life)
     }
   }
 
@@ -151,9 +149,15 @@ export default function Clinic() {
     setChoosing(false)
   }
 
-  // 看完一位：清空畫面，回到選主題
-  function next() {
-    setChoosing(true)
+  // 看完一位：預設直接接下一題，一直練下去；按「換主題」才回到選主題畫面
+  function next(backToTopics = false) {
+    if (backToTopics) setChoosing(true)
+    else {
+      // 同一隻動物的下一題，做到最後一題再從頭開始，同一個觀念一直練下去
+      const same = problems.filter((p) => p.pet_name === problem.pet_name)
+      const nextOne = same[(same.indexOf(problem) + 1) % same.length]
+      setIndex(problems.indexOf(nextOne))
+    }
     setAttemptId(null)
     setStage('ready')
     setFoundLine(null)
@@ -206,12 +210,19 @@ export default function Clinic() {
           <p className="muted">選一個想練習的觀念，每隻動物負責一種常見的 bug</p>
         </div>
         <section className="topic-grid">
-          {problems.map((p, i) => (
-            <button key={p.id} className="beast room-link topic" onClick={() => choose(i)}>
+          {onePerPet(problems).map((p) => (
+            <button
+              key={p.pet_name}
+              className="beast room-link topic"
+              onClick={() => choose(problems.indexOf(p))}
+            >
               <PetIcon pet={p.pet_name} emoji={p.emoji} size={56} />
               <p className="name">{petLabel(p.pet_name)}</p>
               <p className="tag">{p.topic}</p>
               <p className="muted">{pets[p.pet_name]?.hint}</p>
+              <p className="muted">
+                共 {problems.filter((q) => q.pet_name === p.pet_name).length} 題
+              </p>
             </button>
           ))}
         </section>
@@ -219,6 +230,8 @@ export default function Clinic() {
     )
   }
 
+  // 同一隻動物的所有題目，用來顯示第幾題
+  const sameTopic = problems.filter((p) => p.pet_name === problem.pet_name)
   // 病患的樣子：失敗昏迷，看診中血量不到一半就虛弱
   const mood = stage === 'failed' ? 'coma' : playing && hp < timeLimit / 2 ? 'weak' : 'normal'
   // 健康狀態：治好愛心、失敗 OK 繃、血量低心碎、其他發燒
@@ -232,7 +245,9 @@ export default function Clinic() {
         <Link href="/" className="back">
           ← 回診所
         </Link>
-        <span className="muted">{problem.topic}</span>
+        <span className="muted">
+          {problem.topic}　第 {sameTopic.indexOf(problem) + 1} / {sameTopic.length} 題
+        </span>
       </header>
 
       {/* 電腦版左右兩欄：左邊病患和操作，右邊程式碼 */}
@@ -265,11 +280,11 @@ export default function Clinic() {
             </div>
           </section>
 
+          {/* 每一題都是英文原文加中文：英文是真的會看到的樣子，中文幫忙理解 */}
           <section className="card symptom">
             <p className="muted">症狀</p>
             <p className="mono">{problem.error_message}</p>
-            {/* 英文錯誤訊息附上中文白話，本來就是中文的題目沒有這行 */}
-            {problem.symptom_zh && <p className="muted">白話翻譯：{problem.symptom_zh}</p>}
+            {problem.symptom_zh && <p className="muted">中文：{problem.symptom_zh}</p>}
           </section>
 
           {stage === 'ready' && (
@@ -321,9 +336,14 @@ export default function Clinic() {
               <p className="muted">
                 花了 {result.secondsUsed} 秒　診療費 <Pixel name="coin" size={18} /> +{result.coins}
               </p>
-              <button className="btn" onClick={next}>
-                選下一個主題
-              </button>
+              <div className="result-actions">
+                <button className="btn" onClick={() => next()}>
+                  下一題
+                </button>
+                <button className="btn ghost" onClick={() => next(true)}>
+                  換主題
+                </button>
+              </div>
             </section>
           )}
 
@@ -332,14 +352,27 @@ export default function Clinic() {
               <p className="big">
                 <Pixel name="failed" size={28} /> {petLabel(problem.pet_name)} 先轉去住院部
               </p>
+              {wrongOption !== null && (
+                <p>
+                  你選的藥：
+                  <span className="mono">
+                    {problem.options.find((o) => o.id === wrongOption)?.option_text}
+                  </span>
+                </p>
+              )}
               <p>
                 正確的藥：<span className="mono">{result.correctOption}</span>
               </p>
               <p>{result.explanation}</p>
-              <p className="muted">已記進病歷本，之後再來複習</p>
-              <button className="btn" onClick={next}>
-                選下一個主題
-              </button>
+              <p className="muted">這題已經送進住院部，之後可以回去複習</p>
+              <div className="result-actions">
+                <button className="btn" onClick={() => next()}>
+                  下一題
+                </button>
+                <button className="btn ghost" onClick={() => next(true)}>
+                  換主題
+                </button>
+              </div>
             </section>
           )}
         </div>

@@ -17,3 +17,13 @@ export function petLabel(name: string) {
   const pet = pets[name]
   return pet ? `${pet.species} ${name}` : name
 }
+
+// 每隻動物底下有很多題，這個函式把題目清單變成「每隻動物只留第一題」，用在選主題和圖鑑
+export function onePerPet<T extends { pet_name: string }>(list: T[]): T[] {
+  const seen = new Set<string>()
+  return list.filter((p) => {
+    if (seen.has(p.pet_name)) return false
+    seen.add(p.pet_name)
+    return true
+  })
+}

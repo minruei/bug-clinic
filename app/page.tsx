@@ -114,7 +114,9 @@ export default function Home() {
 
   const next = loaded ? pickNext(problems, review, !!user) : null
   const curedPets = new Set(attempts.filter((a) => a.is_correct).map((a) => a.pet_name))
-  const unlocked = unlockedBeasts(attempts, problems.length)
+  // 一隻動物有很多題，動物的數量要用名字去重複來算
+  const petCount = new Set(problems.map((p) => p.pet_name)).size
+  const unlocked = unlockedBeasts(attempts, petCount)
 
   return (
     <main className="wrap">
@@ -164,13 +166,13 @@ export default function Home() {
             <Pixel name="dex" size={22} /> 我的圖鑑
           </p>
           <p className="muted">
-            動物 {curedPets.size} / {problems.length}，神獸 {unlocked.size} / {beasts.length}
+            動物 {curedPets.size} / {petCount}，神獸 {unlocked.size} / {beasts.length}
           </p>
           <div className="bar">
             <div
               className="fill exp"
               style={{
-                width: `${((curedPets.size + unlocked.size) / Math.max(problems.length + beasts.length, 1)) * 100}%`,
+                width: `${((curedPets.size + unlocked.size) / Math.max(petCount + beasts.length, 1)) * 100}%`,
               }}
             />
           </div>
