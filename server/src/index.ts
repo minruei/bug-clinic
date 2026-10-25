@@ -21,6 +21,8 @@ async function findOpenAttempt(attemptId: number, userId: number) {
   return rows[0]
 }
 
+// 回傳格式統一：成功一律是 { data: ... }，失敗一律是 { error: true, message: ... }
+// 前端只要先看有沒有 error，再從 data 拿資料
 const app = express()
 const port = 8000
 
@@ -38,7 +40,7 @@ app.get('/', (req, res) => {
 // 不回傳 bug_line、explanation、is_correct，答案只留在後端
 app.get('/api/problems', async (req, res) => {
   const [problems] = await pool.query<RowDataPacket[]>(
-    'SELECT id, pet_name, emoji, topic, error_message, code FROM problems',
+    'SELECT id, pet_name, emoji, topic, error_message, symptom_zh, code FROM problems',
   )
   const [options] = await pool.query<RowDataPacket[]>(
     'SELECT id, problem_id, option_text FROM problem_options ORDER BY problem_id, sort_order',
@@ -50,7 +52,7 @@ app.get('/api/problems', async (req, res) => {
     options: options.filter((o) => o.problem_id === p.id),
   }))
 
-  res.json(result)
+  res.json({ data: result })
 })
 
 // 註冊：信箱重複回 400，密碼雜湊後才存進資料庫
@@ -75,7 +77,7 @@ app.post('/api/user', async (req, res) => {
     passwordHash,
   ])
 
-  res.json({ ok: true })
+  res.json({ data: { ok: true } })
 })
 
 // 登入：帳密正確就發 JWT，7 天後失效
@@ -105,7 +107,7 @@ app.put('/api/user/auth', async (req, res) => {
     { expiresIn: '7d' },
   )
 
-  res.json({ token })
+  res.json({ data: { token } })
 })
 
 // 取得目前登入的使用者，沒登入回 data: null
@@ -147,7 +149,7 @@ app.post('/api/attempts', async (req, res) => {
     [user.id, problemId],
   )
 
-  res.json({ attemptId: result.insertId, timeLimit: TIME_LIMIT })
+  res.json({ data: { attemptId: result.insertId, timeLimit: TIME_LIMIT } })
 })
 
 // 檢查點的那一行：錯了就把點錯次數加 1
@@ -165,12 +167,12 @@ app.post('/api/attempts/:id/line', async (req, res) => {
   }
 
   if (Number(req.body.line) === attempt.bug_line) {
-    res.json({ correct: true })
+    res.json({ data: { correct: true } })
     return
   }
 
   await pool.query('UPDATE attempts SET mistakes = mistakes + 1 WHERE id = ?', [attempt.id])
-  res.json({ correct: false })
+  res.json({ data: { correct: false } })
 })
 
 // 選藥：答對發獎勵並結束看診；答錯扣生命值讓玩家再選
@@ -216,11 +218,13 @@ app.post('/api/attempts/:id/answer', async (req, res) => {
       user.id,
     ])
     res.json({
-      status: 'cured',
-      coins,
-      exp: EXP_REWARD,
-      secondsUsed: seconds,
-      explanation: attempt.explanation,
+      data: {
+        status: 'cured',
+        coins,
+        exp: EXP_REWARD,
+        secondsUsed: seconds,
+        explanation: attempt.explanation,
+      },
     })
     return
   }
@@ -233,15 +237,17 @@ app.post('/api/attempts/:id/answer', async (req, res) => {
       [mistakes, seconds, attempt.id],
     )
     res.json({
-      status: 'failed',
-      correctOption: correctOption?.option_text,
-      explanation: attempt.explanation,
+      data: {
+        status: 'failed',
+        correctOption: correctOption?.option_text,
+        explanation: attempt.explanation,
+      },
     })
     return
   }
 
   await pool.query('UPDATE attempts SET mistakes = ? WHERE id = ?', [mistakes, attempt.id])
-  res.json({ status: 'wrong', life })
+  res.json({ data: { status: 'wrong', life } })
 })
 
 // 讀取自己的練習紀錄（病歷本），成功失敗都列出來，方便複習
@@ -261,6 +267,33 @@ app.get('/api/attempts', async (req, res) => {
      JOIN problems p ON a.problem_id = p.id
      WHERE a.user_id = ? AND a.finished_at IS NOT NULL
      ORDER BY a.finished_at DESC`,
+    [user.id],
+  )
+
+  res.json({ data: rows })
+})
+
+// 住院部：列出自己看過的每一題和治好率，治好率低的排前面，就是自己的弱點
+// 只算已經結束的看診，所以可以附上正確答案和解說
+app.get('/api/review', async (req, res) => {
+  const user = getUser(req)
+  if (!user) {
+    res.status(403).json({ error: true, message: '請先登入' })
+    return
+  }
+
+  const [rows] = await pool.query<RowDataPacket[]>(
+    `SELECT p.id, p.pet_name, p.emoji, p.topic, p.explanation,
+            (SELECT o.option_text FROM problem_options o
+             WHERE o.problem_id = p.id AND o.is_correct = TRUE LIMIT 1) AS correct_option,
+            COUNT(*) AS tries,
+            SUM(a.is_correct) AS cured,
+            MAX(a.finished_at) AS last_at
+     FROM attempts a
+     JOIN problems p ON a.problem_id = p.id
+     WHERE a.user_id = ? AND a.finished_at IS NOT NULL
+     GROUP BY p.id
+     ORDER BY SUM(a.is_correct) / COUNT(*) ASC, last_at DESC`,
     [user.id],
   )
 

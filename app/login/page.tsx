@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { Pixel } from '@/components/Pixel'
 import { api, saveToken } from '@/lib/api'
 
 export default function LoginPage() {
@@ -33,7 +34,7 @@ export default function LoginPage() {
       setMessage(result.message)
       return
     }
-    saveToken(result.token)
+    saveToken(result.data.token)
     router.push('/')
   }
 
@@ -44,7 +45,9 @@ export default function LoginPage() {
       </Link>
 
       <form className="card form" onSubmit={handleSubmit}>
-        <h1>{mode === 'login' ? '🐾 獸醫上班囉' : '🐾 成為除蟲獸醫'}</h1>
+        <h1>
+          <Pixel name="doctor" size={44} /> {mode === 'login' ? '獸醫上班囉' : '成為除蟲獸醫'}
+        </h1>
 
         {mode === 'register' && (
           <label>

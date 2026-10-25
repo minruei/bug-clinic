@@ -2,10 +2,15 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { daily, week, beasts, rooms } from '@/lib/clinic'
-import { cases } from '@/lib/cases'
+import { useRouter } from 'next/navigation'
+import { rooms } from '@/lib/clinic'
+import { beasts, unlockedBeasts } from '@/lib/dex'
+import { Pixel, PetIcon } from '@/components/Pixel'
+import { DoorButton } from '@/components/DoorButton'
+import { WeekCard } from '@/components/WeekCard'
+import { petLabel } from '@/lib/pets'
 import { api, clearToken } from '@/lib/api'
-import { EXP_PER_LEVEL, levelFromExp, expInLevel } from '@/lib/level'
+import { type AttemptRecord } from '@/components/RecordList'
 
 type User = {
   id: number
@@ -15,34 +20,85 @@ type User = {
   exp: number
 }
 
-type Attempt = {
+type Attempt = AttemptRecord
+
+type Problem = {
   id: number
   pet_name: string
   emoji: string
   topic: string
-  is_correct: number
-  mistakes: number
-  seconds_used: number
-  finished_at: string
 }
 
-// 打卡和神獸還沒做後端，先用示範資料
-const streak = 5
-const leaveTickets = 1
+type ReviewItem = Problem & {
+  tries: number
+  cured: number | string
+}
+
+type Next = {
+  problem: Problem
+  icon: string
+  label: string
+  title: string
+  note: string
+}
+
+// 決定下一位病患：先回診弱點，再看新題目，都治好了就複習
+function pickNext(problems: Problem[], review: ReviewItem[], loggedIn: boolean): Next | null {
+  if (problems.length === 0) return null
+
+  const weak = review.find((r) => Number(r.cured) < r.tries)
+  if (weak) {
+    return {
+      problem: weak,
+      icon: 'sick',
+      label: '回診',
+      title: `${petLabel(weak.pet_name)} 上次沒治好，回來找你了`,
+      note: `治好 ${Number(weak.cured)} / ${weak.tries} 次，這是你的弱點`,
+    }
+  }
+
+  const seen = new Set(review.map((r) => r.id))
+  const fresh = problems.find((p) => !seen.has(p.id))
+  if (fresh) {
+    return {
+      problem: fresh,
+      icon: 'star',
+      label: '初診',
+      title: `${petLabel(fresh.pet_name)} 第一次來看診`,
+      note: loggedIn ? '這是你還沒練過的新觀念' : '登入之後，會依照你的弱點推薦病患',
+    }
+  }
+
+  const again = review[Math.floor(Math.random() * review.length)]
+  return {
+    problem: again,
+    icon: 'cured',
+    label: '複診',
+    title: `${petLabel(again.pet_name)} 回來做健康檢查`,
+    note: '你治好過了，再練一次加深印象',
+  }
+}
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null)
   const [attempts, setAttempts] = useState<Attempt[]>([])
+  const [problems, setProblems] = useState<Problem[]>([])
+  const [review, setReview] = useState<ReviewItem[]>([])
   const [loaded, setLoaded] = useState(false)
+  const router = useRouter()
 
-  // 進首頁時跟後端拿目前使用者和病歷本
+  // 進首頁時跟後端拿使用者、題目、病歷本和複習紀錄
   useEffect(() => {
     async function load() {
+      const list = await api('/api/problems')
+      setProblems(list.data ?? [])
       const auth = await api('/api/user/auth')
       setUser(auth.data)
       if (auth.data) {
         const records = await api('/api/attempts')
         setAttempts(records.data ?? [])
+        const rows = await api('/api/review')
+        setReview(rows.data ?? [])
       }
       setLoaded(true)
     }
@@ -53,14 +109,12 @@ export default function Home() {
     clearToken()
     setUser(null)
     setAttempts([])
+    setReview([])
   }
 
-  const exp = user?.exp ?? 0
-  const level = levelFromExp(exp)
-  const percent = Math.round((expInLevel(exp) / EXP_PER_LEVEL) * 100)
-  const cured = attempts.filter((a) => a.is_correct).length
-  const today = cases[daily.caseIndex]
-  const nextBeast = beasts.find((b) => b.days > streak)
+  const next = loaded ? pickNext(problems, review, !!user) : null
+  const curedPets = new Set(attempts.filter((a) => a.is_correct).map((a) => a.pet_name))
+  const unlocked = unlockedBeasts(attempts, problems.length)
 
   return (
     <main className="wrap">
@@ -71,139 +125,114 @@ export default function Home() {
         </div>
         {user ? (
           <div className="stats">
-            <span>🪙 {user.coins}</span>
-            <span>💉 已治癒 {cured}</span>
+            <span>
+              <Pixel name="coin" size={22} /> {user.coins}
+            </span>
           </div>
-        ) : (
-          loaded && (
-            <Link href="/login" className="btn">
-              登入
-            </Link>
-          )
-        )}
+        ) : null}
       </header>
 
       <section className="card daily">
-        <div className="pet">{today.emoji}</div>
-        <div className="grow">
-          <p className="muted">📅 今日病患 #{daily.no}</p>
-          <p className="big">
-            {today.pet} 身體不舒服，正在等你
-            <span className="tag">{today.topic}</span>
-          </p>
-          <p className="muted">全世界的醫生今天都在救同一隻</p>
-        </div>
-        <Link href="/clinic" className="btn">
-          開始看診
-        </Link>
+        {next ? (
+          <>
+            <div className="pet">
+              <PetIcon pet={next.problem.pet_name} emoji={next.problem.emoji} size={72} />
+            </div>
+            <div className="grow">
+              <p className="muted">
+                今天推薦你看這一位 <Pixel name={next.icon} size={18} /> {next.label}
+              </p>
+              <p className="big">
+                {next.title}
+                <span className="tag">{next.problem.topic}</span>
+              </p>
+              <p className="muted">{next.note}</p>
+            </div>
+            <Link href={`/clinic?id=${next.problem.id}`} className="btn">
+              看這一位
+            </Link>
+          </>
+        ) : (
+          <p className="muted">病患資料讀取中...</p>
+        )}
       </section>
 
       <section className="two">
-        <div className="card">
-          <p className="name">🔥 連續打卡 {streak} 天</p>
-          <div className="week">
-            {week.map((d) => (
-              <div key={d.day} className={`dot ${d.done ? 'done' : ''}`}>
-                <span>{d.done ? '✓' : ''}</span>
-                <small>{d.day}</small>
-              </div>
-            ))}
+        {/* 圖鑑進度：治好的動物和解鎖的神獸 */}
+        <Link href="/dex" className="card room-link">
+          <p className="name">
+            <Pixel name="dex" size={22} /> 我的圖鑑
+          </p>
+          <p className="muted">
+            動物 {curedPets.size} / {problems.length}，神獸 {unlocked.size} / {beasts.length}
+          </p>
+          <div className="bar">
+            <div
+              className="fill exp"
+              style={{
+                width: `${((curedPets.size + unlocked.size) / Math.max(problems.length + beasts.length, 1)) * 100}%`,
+              }}
+            />
           </div>
-          <p className="muted">🎫 請假券 {leaveTickets} 張，斷一天也不會歸零</p>
-        </div>
+          <p className="muted">治好動物、達成里程碑，就能收集神獸 →</p>
+        </Link>
 
         <div className="card doctor">
-          <div className="avatar">👨‍⚕️</div>
+          <div className="avatar">
+            <Pixel name="doctor" size={64} alt="除蟲獸醫" />
+          </div>
           {user ? (
             <div className="grow">
-              <p className="name">
-                {user.name}
-                <span className="tag">診所 Lv.{level}</span>
-              </p>
-              <div className="bar">
-                <div className="fill exp" style={{ width: `${percent}%` }} />
-              </div>
+              <p className="name">{user.name}</p>
               <p className="muted">
-                經驗值 {expInLevel(exp)} / {EXP_PER_LEVEL}
+                <Pixel name="coin" size={18} /> {user.coins} 金幣，之後可以用來解鎖新的房間
               </p>
-              <button className="switch" onClick={logout}>
-                下班登出
-              </button>
+              <DoorButton
+                direction="out"
+                label="下班登出"
+                doneLabel="下班囉，明天見"
+                onDone={logout}
+              />
             </div>
           ) : (
-            <p className="grow muted">登入之後，看診會累積經驗值和金幣</p>
+            <>
+              <p className="grow muted">登入之後，治好動物可以賺金幣，練習紀錄也會存下來</p>
+              <DoorButton
+                direction="in"
+                label="上班登入"
+                doneLabel="上班囉"
+                onDone={() => router.push('/login')}
+              />
+            </>
           )}
         </div>
-      </section>
-
-      <h2>神獸來訪</h2>
-      {nextBeast && (
-        <p className="muted">
-          再打卡 {nextBeast.days - streak} 天，{nextBeast.icon} {nextBeast.name}
-          就會來診所求診
-        </p>
-      )}
-      <section className="beasts">
-        {beasts.map((b) => {
-          const met = streak >= b.days
-          return (
-            <div key={b.name} className={`beast ${met ? '' : 'locked'}`}>
-              <span className="icon">{met ? b.icon : '❔'}</span>
-              <p className="name">{met ? b.name : '???'}</p>
-              <p className="muted">{met ? b.desc : `連續 ${b.days} 天`}</p>
-            </div>
-          )
-        })}
       </section>
 
       <h2>我的診所</h2>
       <section className="rooms">
         {rooms.map((room) => {
-          const locked = room.unlock > level
-          return (
-            <div key={room.name} className={`room ${locked ? 'locked' : ''}`}>
-              <span className="icon">{locked ? '🔒' : room.icon}</span>
+          const locked = !!room.locked
+          const content = (
+            <>
+              <Pixel name={room.pixel} size={48} />
               <p className="name">{room.name}</p>
-              <p className="muted">{locked ? `Lv.${room.unlock} 解鎖` : room.desc}</p>
+              <p className="tag">{room.tag}</p>
+              <p className="muted">{room.desc}</p>
+            </>
+          )
+          // 開放而且有頁面的診間，整張卡片都可以點
+          return room.href && !locked ? (
+            <Link key={room.name} href={room.href} className="room room-link">
+              {content}
+            </Link>
+          ) : (
+            <div key={room.name} className={`room ${locked ? 'locked' : ''}`}>
+              {content}
             </div>
           )
         })}
       </section>
-
-      <h2>病歷本</h2>
-      <section className="card">
-        {attempts.length === 0 && (
-          <p className="muted">
-            {user ? '還沒有看診紀錄，去看第一隻病患吧' : '登入之後，這裡會出現你的看診紀錄'}
-          </p>
-        )}
-        {attempts.map((a) => (
-          <div key={a.id} className="record">
-            <span>
-              {a.emoji} {a.pet_name}
-            </span>
-            <span className="tag">{a.topic}</span>
-            <span className="grow">
-              {a.is_correct ? '✅ 治好了' : '❌ 沒治好，再複習一次'}
-              <br />
-              <small className="muted">
-                花了 {a.seconds_used} 秒，點錯 {a.mistakes} 次
-              </small>
-            </span>
-            <span className="muted">
-              {new Date(a.finished_at).toLocaleString('zh-TW', {
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: false,
-              })}
-            </span>
-          </div>
-        ))}
-      </section>
-
-      <p className="footnote">打卡和神獸目前是示範資料，插畫繪製中</p>
+      {user && <WeekCard attempts={attempts} />}
     </main>
   )
 }

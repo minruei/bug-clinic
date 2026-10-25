@@ -306,9 +306,9 @@ h2::before {
 
 .face {
   position: absolute;
-  right: -10px;
-  bottom: -6px;
-  font-size: 26px;
+  right: -12px;
+  bottom: -8px;
+  line-height: 0;
 }
 
 /* steps() 讓動畫一格一格跳，比較有像素遊戲的感覺 */
@@ -463,40 +463,6 @@ h2::before {
   gap: 14px;
 }
 
-.week {
-  display: flex;
-  gap: 6px;
-  margin: 10px 0 8px;
-}
-
-.dot {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-}
-
-.dot span {
-  width: 26px;
-  height: 26px;
-  border: 2px dashed var(--muted);
-  display: grid;
-  place-items: center;
-  font-size: 13px;
-}
-
-.dot.done span {
-  background: var(--yellow);
-  border: 2px solid var(--ink);
-  color: #fff;
-}
-
-.dot small {
-  color: var(--muted);
-  font-size: 11px;
-}
-
 .beasts {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -518,6 +484,92 @@ h2::before {
 .btn.ghost {
   background: var(--card);
   color: var(--ink);
+}
+
+/* 可以點的診間：滑過去浮起來 */
+.room-link {
+  display: block;
+}
+
+.room-link:hover {
+  background: var(--green-soft);
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 var(--ink);
+}
+
+.section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+/* 住院部（複習頁） */
+.review-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+.review-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.review-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.review-card details {
+  border-top: 2px dashed var(--muted);
+  padding-top: 8px;
+}
+
+.review-card summary {
+  cursor: pointer;
+  color: var(--green);
+  font-weight: 700;
+}
+
+.review-card details p {
+  margin-top: 8px;
+  white-space: pre-line;
+}
+
+.review-card .btn {
+  align-self: flex-start;
+}
+
+.weak-topics {
+  background: #f6d5cc;
+}
+
+/* 看診頁的選題列 */
+.picker {
+  display: flex;
+  gap: 10px;
+}
+
+.picker select {
+  flex: 1;
+  font: inherit;
+  padding: 8px 12px;
+  background: var(--card);
+  color: var(--ink);
+  border: var(--pixel) solid var(--ink);
+  box-shadow: var(--shadow);
+}
+
+@media (min-width: 900px) {
+  .review-list {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 /* 登入註冊表單 */
@@ -553,7 +605,14 @@ h2::before {
 }
 
 .error::before {
-  content: '⚠ ';
+  content: '';
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  margin-right: 6px;
+  vertical-align: middle;
+  background: url('/pixel/cross.svg') center / contain no-repeat;
+  image-rendering: pixelated;
 }
 
 .switch {
@@ -600,7 +659,7 @@ h2::before {
   }
 
   .rooms {
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(5, 1fr);
   }
 }
 
@@ -617,5 +676,192 @@ h2::before {
 @media (max-width: 520px) {
   .rooms {
     grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* 像素圖：放大時保持格子銳利 */
+.pixel {
+  image-rendering: pixelated;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* 還沒收集到的變成剪影 */
+.pixel.silhouette {
+  filter: brightness(0);
+  opacity: 0.25;
+}
+
+.pet-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.review-head .name {
+  align-items: center;
+}
+
+.dex-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.dex-grid .tag {
+  display: inline-block;
+  margin: 4px 0;
+}
+
+@media (max-width: 640px) {
+  .dex-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.hint {
+  margin-top: 4px;
+}
+
+.rarity {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.rarity .pixel:last-of-type {
+  margin-right: 4px;
+}
+
+.weak-topics.done {
+  background: var(--green-soft);
+}
+
+/* 小診療室選主題的卡片 */
+.topic-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+}
+
+.topic {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.room .tag,
+.topic .tag {
+  display: inline-block;
+  margin: 4px 0;
+}
+
+@media (max-width: 640px) {
+  .topic-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* 下班登出的門 */
+.door-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: inherit;
+  color: var(--green);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.door-btn:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+/* 下班登出放在獸醫卡片的右下角 */
+.doctor {
+  position: relative;
+}
+
+/* 有登出按鈕時，底部留空間給門 */
+.doctor:has(.door-btn) {
+  padding-bottom: 48px;
+}
+
+.doctor .door-btn {
+  position: absolute;
+  right: 14px;
+  bottom: 10px;
+}
+
+/* 這週的練習：像撕頁日曆，一週七張橫排 */
+.calendar {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+  margin: 12px 0 10px;
+}
+
+.cal-day {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--card);
+  border: var(--pixel) solid var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+/* 上面紅色那一條，像日曆的裝訂處 */
+.cal-head {
+  width: 100%;
+  text-align: center;
+  background: var(--red);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  border-bottom: var(--pixel) solid var(--ink);
+}
+
+.cal-date {
+  font-family: 'Cubic 11', 'Huninn', sans-serif;
+  font-size: 22px;
+  line-height: 1.8;
+}
+
+/* 有練習的那天：底色變綠，右下角蓋一個打勾章 */
+.cal-day.done {
+  background: var(--green-soft);
+}
+
+.cal-stamp {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  line-height: 0;
+}
+
+/* 今天：用黃色粗框標出來 */
+.cal-day.today {
+  outline: var(--pixel) solid var(--yellow);
+  outline-offset: 2px;
+}
+
+/* 還沒到的日子淡一點 */
+.cal-day.future {
+  opacity: 0.45;
+  box-shadow: none;
+}
+
+@media (max-width: 520px) {
+  .calendar {
+    gap: 4px;
+  }
+
+  .cal-date {
+    font-size: 18px;
   }
 }
