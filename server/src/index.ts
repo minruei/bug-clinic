@@ -319,6 +319,78 @@ app.get('/api/parts', async (req, res) => {
   res.json({ data: result })
 })
 
+// 買零件：扣金幣、記錄擁有、寫明細，三件事放在同一個 transaction
+// 任何一步失敗就全部取消，不會發生扣了錢卻沒拿到零件
+app.post('/api/parts/:id/purchase', async (req, res) => {
+  const user = getUser(req)
+  if (!user) {
+    res.status(403).json({ error: true, message: '請先登入' })
+    return
+  }
+
+  // transaction 裡每一句都要用同一條連線，所以從連線池借一條出來
+  const conn = await pool.getConnection()
+
+  try {
+    await conn.beginTransaction()
+
+    // 第一句就用 FOR UPDATE 鎖住這個玩家，連點送來的第二次購買會在這裡排隊
+    // 一定要放在最前面，排到的時候後面查到的才會是上一次買完的最新資料
+    const [users] = await conn.query<RowDataPacket[]>(
+      'SELECT coins FROM users WHERE id = ? FOR UPDATE',
+      [user.id],
+    )
+    const coins = users[0]?.coins ?? 0
+
+    const [parts] = await conn.query<RowDataPacket[]>(
+      'SELECT id, price, starter_code FROM parts WHERE id = ?',
+      [Number(req.params.id)],
+    )
+    const part = parts[0]
+    if (!part) {
+      await conn.rollback()
+      res.status(400).json({ error: true, message: '找不到這個零件' })
+      return
+    }
+
+    const [owned] = await conn.query<RowDataPacket[]>(
+      'SELECT id FROM user_parts WHERE user_id = ? AND part_id = ?',
+      [user.id, part.id],
+    )
+    if (owned.length > 0) {
+      await conn.rollback()
+      res.status(400).json({ error: true, message: '已經買過這個零件' })
+      return
+    }
+
+    if (coins < part.price) {
+      await conn.rollback()
+      res.status(400).json({ error: true, message: '金幣不夠' })
+      return
+    }
+
+    await conn.query('UPDATE users SET coins = coins - ? WHERE id = ?', [part.price, user.id])
+    await conn.query('INSERT INTO user_parts (user_id, part_id) VALUES (?, ?)', [user.id, part.id])
+    await conn.query(
+      `INSERT INTO coin_transactions (user_id, amount, reason, part_id)
+       VALUES (?, ?, 'purchase', ?)`,
+      [user.id, -part.price, part.id],
+    )
+
+    await conn.commit()
+
+    // 回傳新的餘額和起始程式碼，前端不用再查一次
+    res.json({ data: { coins: coins - part.price, starter_code: part.starter_code } })
+  } catch {
+    // 中途出錯（例如資料庫斷線），前面做的全部取消
+    await conn.rollback()
+    res.status(500).json({ error: true, message: '購買失敗，請稍後再試' })
+  } finally {
+    // 不管成功失敗都要把連線還回連線池
+    conn.release()
+  }
+})
+
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`)
 })
