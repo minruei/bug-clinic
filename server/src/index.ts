@@ -297,6 +297,28 @@ app.get('/api/review', async (req, res) => {
   res.json({ data: rows })
 })
 
+// 零件商店：列出所有零件，有登入的話標出自己買過哪些
+// 沒登入也能逛，owned 一律是 false
+// 起始程式碼是買了才拿得到的東西，沒買過的回 null
+app.get('/api/parts', async (req, res) => {
+  const user = getUser(req)
+
+  const [rows] = await pool.query<RowDataPacket[]>(
+    `SELECT p.id, p.name, p.category, p.price, p.sprite,
+            up.id IS NOT NULL AS owned,
+            CASE WHEN up.id IS NULL THEN NULL ELSE p.starter_code END AS starter_code
+     FROM parts p
+     LEFT JOIN user_parts up ON up.part_id = p.id AND up.user_id = ?
+     ORDER BY p.price, p.id`,
+    [user?.id ?? 0],
+  )
+
+  // MySQL 回傳的 owned 是 0 或 1，轉成 true / false 給前端
+  const result = rows.map((r) => ({ ...r, owned: Boolean(r.owned) }))
+
+  res.json({ data: result })
+})
+
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`)
 })
