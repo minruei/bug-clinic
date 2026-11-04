@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { api } from '@/lib/api'
 import { Pixel } from '@/components/Pixel'
-import { ChimeraEditor } from '@/components/ChimeraEditor'
+import { ChimeraEditor, starterChimera, type ChimeraCode } from '@/components/ChimeraEditor'
 
 type Part = {
   id: number
@@ -31,6 +31,8 @@ export default function LabPage() {
   // 正在買哪一個零件，買的時候按鈕先鎖住，避免連點
   const [buyingId, setBuyingId] = useState<number | null>(null)
   const [message, setMessage] = useState('')
+  // 存過的合成獸，null 代表還在讀取，讀完才顯示編輯器
+  const [chimera, setChimera] = useState<ChimeraCode | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -38,9 +40,18 @@ export default function LabPage() {
       setLoggedIn(!!userRes.data)
       setCoins(userRes.data?.coins ?? 0)
       setParts(partsRes.data ?? [])
+
+      // 有登入才去拿存檔，沒存過就用預設的樣子
+      const saved = userRes.data ? await api('/api/chimera') : null
+      setChimera(saved?.data?.code ?? starterChimera)
     }
     load()
   }, [])
+
+  async function saveChimera(code: ChimeraCode) {
+    const res = await api('/api/chimera', 'PUT', { code })
+    return !res.error
+  }
 
   async function buy(part: Part) {
     setBuyingId(part.id)
@@ -93,7 +104,7 @@ export default function LabPage() {
       )}
 
       <h2>我的合成獸</h2>
-      <ChimeraEditor />
+      {chimera && <ChimeraEditor initial={chimera} onSave={loggedIn ? saveChimera : undefined} />}
 
       {message && <p className="lab-message">{message}</p>}
 

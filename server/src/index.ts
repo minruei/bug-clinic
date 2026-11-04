@@ -420,6 +420,61 @@ app.post('/api/parts/:id/purchase', async (req, res) => {
   }
 })
 
+// 讀取自己的合成獸，沒存過回 data: null，前端就用預設的樣子
+// 資料庫裡是一段 JSON 文字，拆回 html、css、js 三格再回傳
+app.get('/api/chimera', async (req, res) => {
+  const user = getUser(req)
+  if (!user) {
+    res.status(403).json({ error: true, message: '請先登入' })
+    return
+  }
+
+  const [rows] = await pool.query<RowDataPacket[]>(
+    'SELECT name, code, updated_at FROM chimeras WHERE user_id = ?',
+    [user.id],
+  )
+  const chimera = rows[0]
+  if (!chimera) {
+    res.json({ data: null })
+    return
+  }
+
+  res.json({
+    data: { name: chimera.name, code: JSON.parse(chimera.code), updatedAt: chimera.updated_at },
+  })
+})
+
+// 存檔：一個玩家只有一隻，第一次存是新增，之後都是覆蓋
+app.put('/api/chimera', async (req, res) => {
+  const user = getUser(req)
+  if (!user) {
+    res.status(403).json({ error: true, message: '請先登入' })
+    return
+  }
+
+  const { html, css, js } = req.body?.code ?? {}
+  if (typeof html !== 'string' || typeof css !== 'string' || typeof js !== 'string') {
+    res.status(400).json({ error: true, message: '程式碼格式不對' })
+    return
+  }
+
+  // 三格包成一段 JSON 文字存進 code 欄位，限制長度避免塞爆資料庫
+  const code = JSON.stringify({ html, css, js })
+  if (code.length > 20000) {
+    res.status(400).json({ error: true, message: '程式碼太長了，最多 20000 字' })
+    return
+  }
+
+  // user_id 有 UNIQUE：沒有這個玩家的資料就新增，已經有就改成新的程式碼
+  await pool.query(
+    `INSERT INTO chimeras (user_id, code) VALUES (?, ?)
+     ON DUPLICATE KEY UPDATE code = ?`,
+    [user.id, code, code],
+  )
+
+  res.json({ data: { ok: true } })
+})
+
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`)
 })

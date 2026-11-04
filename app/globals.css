@@ -992,3 +992,10 @@ h2::before {
     grid-template-columns: 1fr;
   }
 }
+
+.editor-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
