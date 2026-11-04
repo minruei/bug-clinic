@@ -924,3 +924,71 @@ h2::before {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* 合成獸編輯器：左邊程式碼，右邊 iframe 預覽 */
+.editor {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.editor-code {
+  display: flex;
+  flex-direction: column;
+  border: var(--pixel) solid var(--ink);
+  box-shadow: var(--shadow);
+  background: var(--code);
+}
+
+.editor-tabs {
+  display: flex;
+  border-bottom: var(--pixel) solid var(--ink);
+}
+
+.editor-tab {
+  flex: 1;
+  padding: 6px 0;
+  background: var(--card);
+  color: var(--ink);
+  border: none;
+  border-right: 2px solid var(--ink);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.editor-tab:last-child {
+  border-right: none;
+}
+
+.editor-tab.active {
+  background: var(--green);
+  color: #fff;
+}
+
+.editor-code textarea {
+  flex: 1;
+  min-height: 280px;
+  padding: 12px;
+  background: var(--code);
+  color: #f3ead8;
+  border: none;
+  resize: vertical;
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.editor-preview {
+  width: 100%;
+  min-height: 320px;
+  background: #fff;
+  border: var(--pixel) solid var(--ink);
+  box-shadow: var(--shadow);
+}
+
+@media (max-width: 640px) {
+  .editor {
+    grid-template-columns: 1fr;
+  }
+}

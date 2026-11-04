@@ -1,0 +1,88 @@
+'use client'
+
+import { useState } from 'react'
+
+export type ChimeraCode = {
+  html: string
+  css: string
+  js: string
+}
+
+// 還沒改過的合成獸：一個方形身體，毛色用變數，買了毛色零件就能改
+export const starterChimera: ChimeraCode = {
+  html: '<div class="chimera">\n  <div class="body"></div>\n</div>',
+  css: `.chimera {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+}
+
+.body {
+  --fur-color: #b4b2a9;
+  width: 120px;
+  height: 100px;
+  background: var(--fur-color);
+  border: 4px solid #4a3426;
+}`,
+  js: '// 讓合成獸動起來的程式寫在這裡\n',
+}
+
+const tabs = [
+  { key: 'html', label: 'HTML 骨架' },
+  { key: 'css', label: 'CSS 烤漆' },
+  { key: 'js', label: 'JS 引擎' },
+] as const
+
+// 把三格程式碼組成一整個網頁，丟進 iframe 顯示
+function buildPage(code: ChimeraCode) {
+  return `<!doctype html>
+<html>
+<head>
+<style>body { margin: 0; } ${code.css}</style>
+</head>
+<body>
+${code.html}
+<script>${code.js}</script>
+</body>
+</html>`
+}
+
+// 合成獸編輯器：左邊改程式碼，右邊即時預覽
+export function ChimeraEditor({ initial = starterChimera }: { initial?: ChimeraCode }) {
+  const [code, setCode] = useState<ChimeraCode>(initial)
+  const [tab, setTab] = useState<keyof ChimeraCode>('css')
+
+  return (
+    <section className="editor">
+      <div className="editor-code">
+        <div className="editor-tabs">
+          {tabs.map((t) => (
+            <button
+              key={t.key}
+              className={`editor-tab ${tab === t.key ? 'active' : ''}`}
+              onClick={() => setTab(t.key)}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+        <textarea
+          value={code[tab]}
+          onChange={(e) => setCode({ ...code, [tab]: e.target.value })}
+          spellCheck={false}
+          aria-label={`${tab} 程式碼`}
+        />
+      </div>
+
+      {/* sandbox 只開 allow-scripts：裡面的 JS 可以跑，但碰不到外面的 localStorage 和頁面 */}
+      <iframe
+        className="editor-preview"
+        title="合成獸預覽"
+        sandbox="allow-scripts"
+        srcDoc={buildPage(code)}
+      />
+    </section>
+  )
+}

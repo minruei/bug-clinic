@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { api } from '@/lib/api'
 import { Pixel } from '@/components/Pixel'
+import { ChimeraEditor } from '@/components/ChimeraEditor'
 
 type Part = {
   id: number
@@ -90,6 +91,9 @@ export default function LabPage() {
           </Link>
         </section>
       )}
+
+      <h2>我的合成獸</h2>
+      <ChimeraEditor />
 
       {message && <p className="lab-message">{message}</p>}
 
