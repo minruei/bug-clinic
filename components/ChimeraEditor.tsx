@@ -1,6 +1,11 @@
 'use client'
 
 import { useState } from 'react'
+import CodeMirror from '@uiw/react-codemirror'
+import { html } from '@codemirror/lang-html'
+import { css } from '@codemirror/lang-css'
+import { javascript } from '@codemirror/lang-javascript'
+import { colorPicker } from '@replit/codemirror-css-color-picker'
 
 export type ChimeraCode = {
   html: string
@@ -29,10 +34,11 @@ export const starterChimera: ChimeraCode = {
   js: '// 讓合成獸動起來的程式寫在這裡\n',
 }
 
+// 每一格用對應的語法上色；CSS 格多一個色票，色碼旁邊會出現小色塊，點了可以選色
 const tabs = [
-  { key: 'html', label: 'HTML 骨架' },
-  { key: 'css', label: 'CSS 烤漆' },
-  { key: 'js', label: 'JS 引擎' },
+  { key: 'html', label: 'HTML 骨架', extensions: [html()] },
+  { key: 'css', label: 'CSS 烤漆', extensions: [css(), colorPicker] },
+  { key: 'js', label: 'JS 引擎', extensions: [javascript()] },
 ] as const
 
 // 把三格程式碼組成一整個網頁，丟進 iframe 顯示
@@ -88,10 +94,13 @@ export function ChimeraEditor({ initial = starterChimera, onSave }: EditorProps)
               </button>
             ))}
           </div>
-          <textarea
+          <CodeMirror
+            className="editor-cm"
             value={code[tab]}
-            onChange={(e) => setCode({ ...code, [tab]: e.target.value })}
-            spellCheck={false}
+            onChange={(value) => setCode({ ...code, [tab]: value })}
+            extensions={[...tabs.find((t) => t.key === tab)!.extensions]}
+            theme="dark"
+            basicSetup={{ foldGutter: false, autocompletion: false }}
             aria-label={`${tab} 程式碼`}
           />
         </div>
