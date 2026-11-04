@@ -1,6 +1,15 @@
 // 診所的房間：tag 是一句話說明功能，有 href 的可以點進去
 // locked 是規劃中、之後用金幣解鎖的功能；pixel 是 public/pixel 裡的像素圖檔名
-export const rooms = [
+type Room = {
+  name: string
+  tag: string
+  pixel: string
+  desc: string
+  href?: string
+  locked?: boolean
+}
+
+export const rooms: Room[] = [
   {
     name: '小診療室',
     tag: '選主題練習',
@@ -23,5 +32,11 @@ export const rooms = [
     desc: '每一次看診的結果和花費時間',
     href: '/records',
   },
-  { name: '合成獸實驗室', tag: '即將開放', pixel: 'lock', desc: '之後用金幣解鎖', locked: true },
+  {
+    name: '合成獸實驗室',
+    tag: '零件商店',
+    pixel: 'lab',
+    desc: '用金幣買零件，改造你的合成獸',
+    href: '/lab',
+  },
 ]
