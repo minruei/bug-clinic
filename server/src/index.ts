@@ -205,18 +205,47 @@ app.post('/api/attempts/:id/answer', async (req, res) => {
 
   if (picked?.is_correct && life > 0) {
     const coins = coinsFor(life)
-    await pool.query(
-      `UPDATE attempts
-       SET is_correct = TRUE, mistakes = ?, seconds_used = ?,
-           coins_earned = ?, exp_earned = ?, finished_at = NOW()
-       WHERE id = ?`,
-      [mistakes, seconds, coins, EXP_REWARD, attempt.id],
-    )
-    await pool.query('UPDATE users SET coins = coins + ?, exp = exp + ? WHERE id = ?', [
-      coins,
-      EXP_REWARD,
-      user.id,
-    ])
+
+    // 結束看診、加金幣經驗、寫金幣明細，三件事放在同一個 transaction
+    const conn = await pool.getConnection()
+    try {
+      await conn.beginTransaction()
+
+      // 加上 finished_at IS NULL：同一次看診同時送來好幾次答案，只有第一次改得到
+      // 後面幾次改到 0 筆，就知道已經領過獎勵，直接取消
+      const [result] = await conn.query<ResultSetHeader>(
+        `UPDATE attempts
+         SET is_correct = TRUE, mistakes = ?, seconds_used = ?,
+             coins_earned = ?, exp_earned = ?, finished_at = NOW()
+         WHERE id = ? AND finished_at IS NULL`,
+        [mistakes, seconds, coins, EXP_REWARD, attempt.id],
+      )
+      if (result.affectedRows === 0) {
+        await conn.rollback()
+        res.status(400).json({ error: true, message: '這次看診已經結束' })
+        return
+      }
+
+      await conn.query('UPDATE users SET coins = coins + ?, exp = exp + ? WHERE id = ?', [
+        coins,
+        EXP_REWARD,
+        user.id,
+      ])
+      await conn.query(
+        `INSERT INTO coin_transactions (user_id, amount, reason, attempt_id)
+         VALUES (?, ?, 'attempt', ?)`,
+        [user.id, coins, attempt.id],
+      )
+
+      await conn.commit()
+    } catch {
+      await conn.rollback()
+      res.status(500).json({ error: true, message: '送出失敗，請稍後再試' })
+      return
+    } finally {
+      conn.release()
+    }
+
     res.json({
       data: {
         status: 'cured',
