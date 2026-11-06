@@ -4,7 +4,14 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { api } from '@/lib/api'
 import { Pixel } from '@/components/Pixel'
-import { ChimeraEditor, starterChimera, type ChimeraCode } from '@/components/ChimeraEditor'
+import {
+  ChimeraEditor,
+  installPart,
+  isInstalled,
+  starterChimera,
+  type ChimeraCode,
+  type EditorTab,
+} from '@/components/ChimeraEditor'
 
 type Part = {
   id: number
@@ -23,6 +30,18 @@ const categoryLabel = {
   js: 'JS 引擎',
 }
 
+// 零件的起始程式碼存成 JSON 文字，拆成 html、css、js 三段
+// 舊格式只有一段文字的話，就整段放進零件分類對應的那一格
+function parsePartCode(part: Part): ChimeraCode | null {
+  if (!part.starter_code) return null
+  try {
+    const parsed = JSON.parse(part.starter_code)
+    return { html: parsed.html ?? '', css: parsed.css ?? '', js: parsed.js ?? '' }
+  } catch {
+    return { html: '', css: '', js: '', [part.category]: part.starter_code }
+  }
+}
+
 // 合成獸實驗室：先做零件商店，用金幣買零件藍圖
 export default function LabPage() {
   const [parts, setParts] = useState<Part[]>([])
@@ -31,8 +50,9 @@ export default function LabPage() {
   // 正在買哪一個零件，買的時候按鈕先鎖住，避免連點
   const [buyingId, setBuyingId] = useState<number | null>(null)
   const [message, setMessage] = useState('')
-  // 存過的合成獸，null 代表還在讀取，讀完才顯示編輯器
-  const [chimera, setChimera] = useState<ChimeraCode | null>(null)
+  // 合成獸的程式碼放在這一層保管，編輯器和商店都改得到；null 代表還在讀取
+  const [code, setCode] = useState<ChimeraCode | null>(null)
+  const [tab, setTab] = useState<EditorTab>('css')
 
   useEffect(() => {
     async function load() {
@@ -43,7 +63,7 @@ export default function LabPage() {
 
       // 有登入才去拿存檔，沒存過就用預設的樣子
       const saved = userRes.data ? await api('/api/chimera') : null
-      setChimera(saved?.data?.code ?? starterChimera)
+      setCode(saved?.data?.code ?? starterChimera)
     }
     load()
   }, [])
@@ -51,6 +71,15 @@ export default function LabPage() {
   async function saveChimera(code: ChimeraCode) {
     const res = await api('/api/chimera', 'PUT', { code })
     return !res.error
+  }
+
+  // 裝上零件：把零件的程式碼加進合成獸，編輯器切到零件分類那一格
+  function install(part: Part) {
+    const partCode = parsePartCode(part)
+    if (!code || !partCode) return
+    setCode(installPart(code, partCode))
+    setTab(part.category)
+    setMessage(`裝上${part.name}了！記得按存檔`)
   }
 
   async function buy(part: Part) {
@@ -104,7 +133,15 @@ export default function LabPage() {
       )}
 
       <h2>我的合成獸</h2>
-      {chimera && <ChimeraEditor initial={chimera} onSave={loggedIn ? saveChimera : undefined} />}
+      {code && (
+        <ChimeraEditor
+          code={code}
+          onChange={setCode}
+          tab={tab}
+          onTabChange={setTab}
+          onSave={loggedIn ? saveChimera : undefined}
+        />
+      )}
 
       {message && <p className="lab-message">{message}</p>}
 
@@ -112,14 +149,29 @@ export default function LabPage() {
       <section className="parts">
         {parts.map((part) => {
           const canAfford = coins >= part.price
+          const partCode = parsePartCode(part)
+          const installed = !!code && !!partCode && isInstalled(code, partCode)
+
+          // 買過的零件按鈕變成「裝上」，沒買過的維持購買
+          if (part.owned) {
+            return (
+              <div key={part.id} className="part owned">
+                <span className="tag">{categoryLabel[part.category]}</span>
+                <p className="name">{part.name}</p>
+                <p className="muted">已擁有</p>
+                <button className="btn" onClick={() => install(part)} disabled={installed}>
+                  {installed ? '已裝上' : '裝上'}
+                </button>
+              </div>
+            )
+          }
 
           let label = '購買'
-          if (part.owned) label = '已擁有'
-          else if (!canAfford) label = '金幣不夠'
+          if (!canAfford) label = '金幣不夠'
           else if (buyingId === part.id) label = '購買中…'
 
           return (
-            <div key={part.id} className={`part ${part.owned ? 'owned' : ''}`}>
+            <div key={part.id} className="part">
               <span className="tag">{categoryLabel[part.category]}</span>
               <p className="name">{part.name}</p>
               <p className="price">
@@ -128,7 +180,7 @@ export default function LabPage() {
               <button
                 className="btn"
                 onClick={() => buy(part)}
-                disabled={!loggedIn || part.owned || !canAfford || buyingId !== null}
+                disabled={!loggedIn || !canAfford || buyingId !== null}
               >
                 {label}
               </button>
