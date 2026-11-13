@@ -1003,3 +1003,42 @@ h2::before {
   gap: 12px;
   flex-wrap: wrap;
 }
+
+/* 買金幣：方案卡片和 TapPay 卡號欄位 */
+.coin-link {
+  margin-left: 8px;
+  font-weight: 700;
+  color: var(--green);
+}
+
+.coin-pack {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.pay-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pay-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.pay-row {
+  display: flex;
+  gap: 12px;
+}
+
+/* TapPay 會把輸入框放進這些 div，外框和高度由我們決定 */
+.tpfield {
+  height: 40px;
+  padding: 8px 10px;
+  background: #fff;
+  border: 2px solid var(--ink);
+}

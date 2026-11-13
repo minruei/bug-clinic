@@ -6,6 +6,7 @@ import jwt from 'jsonwebtoken'
 import { pool } from './db'
 import { getUser } from './auth'
 import { TIME_LIMIT, EXP_REWARD, remainingLife, coinsFor } from './game'
+import { coinPackages, payByPrime } from './payment'
 
 // 找出這個使用者、還沒結束的看診，順便拿到題目的答案和經過秒數
 // 不是本人的或已結束的都找不到，避免偷用別人的紀錄或重複領獎勵
@@ -473,6 +474,91 @@ app.put('/api/chimera', async (req, res) => {
   )
 
   res.json({ data: { ok: true } })
+})
+
+// 金幣方案列表，不用登入也能看
+app.get('/api/coin-packages', (req, res) => {
+  res.json({ data: coinPackages })
+})
+
+// 買金幣：建立訂單 → 向 TapPay 收款 → 成功才加金幣
+app.post('/api/orders', async (req, res) => {
+  const user = getUser(req)
+  if (!user) {
+    res.status(403).json({ error: true, message: '請先登入' })
+    return
+  }
+
+  const { prime, packageId } = req.body ?? {}
+  const pack = coinPackages.find((p) => p.id === Number(packageId))
+  if (typeof prime !== 'string' || !prime || !pack) {
+    res.status(400).json({ error: true, message: '付款資料不完整' })
+    return
+  }
+
+  // 1. 先建立一筆未付款的訂單，之後不管成功失敗都查得到
+  const orderNumber = `${Date.now()}${Math.floor(Math.random() * 1000)}`
+  const [created] = await pool.query<ResultSetHeader>(
+    'INSERT INTO orders (number, user_id, amount, coins) VALUES (?, ?, ?, ?)',
+    [orderNumber, user.id, pack.amount, pack.coins],
+  )
+  const orderId = created.insertId
+
+  // 2. 向 TapPay 收款。這一步要等外部服務，所以放在 transaction 外面，不佔住資料庫
+  const payment = await payByPrime({
+    prime,
+    amount: pack.amount,
+    details: pack.name,
+    orderNumber,
+    cardholder: { name: user.name, email: user.email, phone_number: '0912345678' },
+  })
+
+  if (payment.status !== 0) {
+    await pool.query("UPDATE orders SET status = 'FAILED', message = ? WHERE id = ?", [
+      payment.msg,
+      orderId,
+    ])
+    res.status(400).json({ error: true, message: `付款失敗：${payment.msg}` })
+    return
+  }
+
+  // 3. 收款成功：訂單改成已付款、加金幣、寫明細，三件事綁在同一個 transaction
+  const conn = await pool.getConnection()
+  try {
+    await conn.beginTransaction()
+
+    // 只有還沒付款的訂單改得到，避免同一筆訂單加兩次金幣
+    const [paid] = await conn.query<ResultSetHeader>(
+      `UPDATE orders SET status = 'PAID', rec_trade_id = ?, paid_at = NOW()
+       WHERE id = ? AND status = 'UNPAID'`,
+      [payment.rec_trade_id ?? null, orderId],
+    )
+    if (paid.affectedRows === 0) {
+      await conn.rollback()
+      res.status(400).json({ error: true, message: '這筆訂單已經處理過了' })
+      return
+    }
+
+    await conn.query('UPDATE users SET coins = coins + ? WHERE id = ?', [pack.coins, user.id])
+    await conn.query(
+      `INSERT INTO coin_transactions (user_id, amount, reason, order_id)
+       VALUES (?, ?, 'payment', ?)`,
+      [user.id, pack.coins, orderId],
+    )
+
+    const [rows] = await conn.query<RowDataPacket[]>('SELECT coins FROM users WHERE id = ?', [
+      user.id,
+    ])
+    await conn.commit()
+
+    res.json({ data: { number: orderNumber, coins: rows[0].coins, added: pack.coins } })
+  } catch {
+    // 錢已經收了但加金幣失敗：訂單會停在 UNPAID，之後可以用 rec_trade_id 查帳補發
+    await conn.rollback()
+    res.status(500).json({ error: true, message: '付款成功但加金幣失敗，請聯絡我們' })
+  } finally {
+    conn.release()
+  }
 })
 
 app.listen(port, () => {

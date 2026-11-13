@@ -187,7 +187,10 @@ export default function Home() {
             <div className="grow">
               <p className="name">{user.name}</p>
               <p className="muted">
-                <Pixel name="coin" size={18} /> {user.coins} 金幣，之後可以用來解鎖新的房間
+                <Pixel name="coin" size={18} /> {user.coins} 金幣，可以在合成獸實驗室買零件
+                <Link href="/coins" className="coin-link">
+                  買金幣
+                </Link>
               </p>
               <DoorButton
                 direction="out"

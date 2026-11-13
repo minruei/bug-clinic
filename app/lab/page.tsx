@@ -112,7 +112,10 @@ export default function LabPage() {
         </Link>
         {loggedIn && (
           <span className="muted">
-            <Pixel name="coin" size={18} /> {coins}
+            <Pixel name="coin" size={18} /> {coins}{' '}
+            <Link href="/coins" className="coin-link">
+              買金幣
+            </Link>
           </span>
         )}
       </header>
