@@ -1473,7 +1473,23 @@ h2::before {
   line-height: 1.6;
 }
 
+/* 預覽外面包一層，「遊玩」按鈕疊在預覽的右上角 */
+.editor-preview-wrap {
+  position: relative;
+  display: flex;
+  min-width: 0;
+}
+
+.editor-play {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  min-height: 44px;
+  padding: 6px 16px;
+}
+
 .editor-preview {
+  flex: 1;
   width: 100%;
   min-height: 320px;
   background: #fff;
@@ -1901,4 +1917,73 @@ h2::before {
   height: 320px;
   border: 0;
   pointer-events: none;
+}
+
+/* 遊玩模式：蓋滿整個畫面，合成獸放大到接近全螢幕；四周留一點邊看得出是一個框 */
+.play-mode {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  padding: 16px;
+  background: rgba(46, 34, 26, 0.85);
+}
+
+.play-mode-preview {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  background: #fff;
+  border: var(--pixel) solid var(--ink);
+  box-shadow: var(--shadow);
+}
+
+/* 右上角的 X，44px 手機上也好按 */
+.play-mode-close {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  background: var(--card);
+  color: var(--ink);
+  border: var(--pixel) solid var(--ink);
+  cursor: pointer;
+}
+
+/* 左下角的錯誤數字，點了回到編輯器看主控台 */
+.play-mode-errors {
+  position: absolute;
+  bottom: 24px;
+  left: 24px;
+  min-width: 44px;
+  height: 44px;
+  padding: 0 10px;
+  background: var(--red);
+  color: #fff;
+  border: var(--pixel) solid var(--ink);
+  border-radius: 22px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+@media (max-width: 640px) {
+  .play-mode {
+    padding: 8px;
+  }
+
+  .play-mode-close {
+    top: 16px;
+    right: 16px;
+  }
+
+  .play-mode-errors {
+    bottom: 16px;
+    left: 16px;
+  }
 }

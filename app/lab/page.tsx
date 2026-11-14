@@ -403,6 +403,7 @@ export default function LabPage() {
           onRestore={loggedIn && !practicing ? restoreVersion : undefined}
           onPreview={practicing ? onPreview : undefined}
           canCollapse={!practicing}
+          canPlay={!practicing}
         />
       )}
 

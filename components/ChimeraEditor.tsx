@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import CodeMirror, { type ReactCodeMirrorRef } from '@uiw/react-codemirror'
 import { html } from '@codemirror/lang-html'
 import { css } from '@codemirror/lang-css'
@@ -17,6 +17,7 @@ import {
 } from '@/lib/chimera'
 import { addConsoleError, formatConsoleError, type ConsoleError } from '@/lib/console'
 import { VersionPanel } from '@/components/VersionPanel'
+import { PlayMode } from '@/components/PlayMode'
 
 // 每一格用對應的語法上色；CSS 格多一個色票，色碼旁邊會出現小色塊，點了可以選色
 const tabs = [
@@ -39,6 +40,8 @@ type EditorProps = {
   onPreview?: (code: ChimeraCode, event: PreviewEvent) => void
   // 程式碼區可不可以收起來；新手教程進行中不行，玩家才不會找不到要改的地方
   canCollapse?: boolean
+  // 可不可以進遊玩模式；新手教程進行中不行
+  canPlay?: boolean
 }
 
 // 合成獸編輯器：左邊改程式碼，右邊即時預覽
@@ -51,11 +54,15 @@ export function ChimeraEditor({
   onRestore,
   onPreview,
   canCollapse = true,
+  canPlay = true,
 }: EditorProps) {
   const [status, setStatus] = useState('')
   // 程式碼區收起來了沒，不存檔，重新整理就恢復打開
   const [collapsedState, setCollapsed] = useState(false)
   const collapsed = canCollapse && collapsedState
+  const [playing, setPlaying] = useState(false)
+  const playButtonRef = useRef<HTMLButtonElement>(null)
+
   const [showVersions, setShowVersions] = useState(false)
   // 存檔成功幾次，版本紀錄看到數字變了就重新拿列表
   const [savedCount, setSavedCount] = useState(0)
@@ -69,6 +76,25 @@ export function ChimeraEditor({
     list: [],
   })
   const consoleErrors = errors.page === page ? errors.list : []
+
+  // 離開遊玩模式：玩的時候抓到的錯誤放進主控台，焦點放回「遊玩」按鈕
+  // 用 preventScroll 讓畫面停在原本的位置
+  const closePlay = useCallback(
+    (playErrors: ConsoleError[]) => {
+      setPlaying(false)
+      if (playErrors.length) {
+        setErrors((prev) => {
+          let list = prev.page === page ? prev.list : []
+          for (const e of playErrors) {
+            for (let i = 0; i < e.count; i++) list = addConsoleError(list, e)
+          }
+          return { page, list }
+        })
+      }
+      playButtonRef.current?.focus({ preventScroll: true })
+    },
+    [page],
+  )
 
   useEffect(() => {
     function onMessage(event: MessageEvent) {
@@ -210,14 +236,25 @@ export function ChimeraEditor({
           />
         </div>
 
-        {/* sandbox 只開 allow-scripts：裡面的 JS 可以跑，但碰不到外面的 localStorage 和頁面 */}
-        <iframe
-          ref={previewRef}
-          className="editor-preview"
-          title="合成獸預覽"
-          sandbox="allow-scripts"
-          srcDoc={page}
-        />
+        <div className="editor-preview-wrap">
+          {/* sandbox 只開 allow-scripts：裡面的 JS 可以跑，但碰不到外面的 localStorage 和頁面 */}
+          <iframe
+            ref={previewRef}
+            className="editor-preview"
+            title="合成獸預覽"
+            sandbox="allow-scripts"
+            srcDoc={page}
+          />
+          {canPlay && (
+            <button
+              ref={playButtonRef}
+              className="btn editor-play"
+              onClick={() => setPlaying(true)}
+            >
+              遊玩
+            </button>
+          )}
+        </div>
       </section>
       <section className="console" aria-live="polite" hidden={collapsed}>
         <p className="console-title">主控台</p>
@@ -251,6 +288,7 @@ export function ChimeraEditor({
           {status && <span className="muted">{status}</span>}
         </div>
       )}
+      {playing && canPlay && <PlayMode code={code} onClose={closePlay} />}
       {onSave && onRestore && showVersions && (
         <VersionPanel savedCount={savedCount} onRestore={onRestore} />
       )}

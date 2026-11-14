@@ -10,7 +10,7 @@ const blink = moves.find((m) => m.id === 'blink-interval') as Move
 function fakeElement() {
   const listeners: Record<string, ((event: unknown) => void)[]> = {}
   const classes = new Set<string>()
-  return {
+  const element = {
     listeners,
     classes,
     textContent: '',
@@ -20,7 +20,16 @@ function fakeElement() {
       toggle: (name: string) => (classes.has(name) ? classes.delete(name) : classes.add(name)),
       contains: (name: string) => classes.has(name),
     },
-    style: { setProperty: () => {}, getPropertyValue: () => '' },
+    // CSS 變數記在這裡，測試可以看 JS 把 --walk-x 改成多少
+    vars: {} as Record<string, string>,
+    style: {
+      setProperty(name: string, value: string) {
+        element.vars[name] = value
+      },
+      getPropertyValue(name: string) {
+        return element.vars[name] ?? ''
+      },
+    },
     className: '',
     children: [] as unknown[],
     append(child: unknown) {
@@ -31,6 +40,7 @@ function fakeElement() {
     },
     getBoundingClientRect: () => ({ left: 100, top: 100, width: 120, height: 100 }),
   }
+  return element
 }
 
 type FakeElement = ReturnType<typeof fakeElement>
@@ -51,7 +61,7 @@ function run(js: string, found: boolean, missing: string[] = []) {
       return element
     },
   }
-  const window = { innerWidth: 400 }
+  const window = { innerWidth: 400, innerHeight: 320 }
   new Function('document', 'window', js)(document, window)
   return { document, elements, created }
 }
@@ -198,6 +208,59 @@ describe('招式執行起來', () => {
       elements['.body'].listeners.click[0]({})
       expect(elements['.speech'].textContent, id).not.toBe('')
     }
+  })
+
+  it('方向鍵走路：上下鍵改 --walk-y，左右鍵改 --walk-x，走到框的邊邊就停', () => {
+    const walk = moves.find((m) => m.id === 'arrow-walk') as Move
+    const { document, elements } = run(walk.js, true)
+    const press = (key: string) =>
+      document.listeners.keydown.forEach((fn) => fn({ key, preventDefault: () => {} }))
+    const chimera = elements['.chimera']
+
+    press('ArrowUp')
+    press('ArrowRight')
+    expect(chimera.vars).toEqual({ '--walk-x': '20px', '--walk-y': '-20px' })
+
+    // 預覽框 400×320：左右最遠 130px，上下最遠 90px
+    for (let i = 0; i < 20; i++) press('ArrowDown')
+    for (let i = 0; i < 20; i++) press('ArrowLeft')
+    expect(chimera.vars).toEqual({ '--walk-x': '-130px', '--walk-y': '90px' })
+  })
+
+  it('方向鍵以外的鍵不會動', () => {
+    const walk = moves.find((m) => m.id === 'arrow-walk') as Move
+    const { document, elements } = run(walk.js, true)
+    document.listeners.keydown.forEach((fn) => fn({ key: 'a', preventDefault: () => {} }))
+    expect(elements['.chimera'].vars).toEqual({})
+  })
+
+  it('點哪裡走過去：點的位置換算成離中間多遠，x、y 都會變，點在邊邊也不會走出框', () => {
+    const walk = moves.find((m) => m.id === 'click-walk') as Move
+    const { document, elements } = run(walk.js, true)
+    const click = (clientX: number, clientY: number) =>
+      document.listeners.click.forEach((fn) => fn({ clientX, clientY }))
+
+    click(250, 100)
+    expect(elements['.chimera'].vars).toEqual({ '--walk-x': '50px', '--walk-y': '-60px' })
+
+    click(0, 320)
+    expect(elements['.chimera'].vars).toEqual({ '--walk-x': '-130px', '--walk-y': '90px' })
+  })
+
+  it('兩招都用 translate 移動 .chimera，有上下兩個方向', () => {
+    for (const id of ['arrow-walk', 'click-walk']) {
+      const move = moves.find((m) => m.id === id) as Move
+      expect(move.css, id).toContain('translate: var(--walk-x, 0px) var(--walk-y, 0px);')
+    }
+  })
+
+  it('招式改過名字，以前加過的也認得出來', () => {
+    const walk = moves.find((m) => m.id === 'arrow-walk') as Move
+    const old = {
+      ...starterChimera,
+      css: `${starterChimera.css}\n/* [move:arrow-walk] 方向鍵左右走 開始 */\n/* [move:arrow-walk] 結束 */`,
+    }
+    expect(hasMove(old, walk)).toBe(true)
   })
 
   it('定時眨眼：每 3 秒加上 blink，0.2 秒後拿掉', () => {

@@ -670,13 +670,13 @@ export const moves: Move[] = [
   {
     id: 'arrow-walk',
     level: 4,
-    name: '方向鍵左右走',
+    name: '方向鍵走路',
     concept: '`keydown`：按下鍵盤時觸發，`event.key` 告訴你按的是哪一個鍵。',
-    effect: '按左右方向鍵，合成獸往左、往右走，走到邊邊就停。對話框跟著一起走。',
+    effect: '按上下左右方向鍵，合成獸就往那個方向走，走到預覽框的邊邊就停。對話框跟著一起走。',
     keyboard: true,
     css: `/* 走路：移動外層的 .chimera，身體和對話框一起走；0.2s 是走一步花的時間 */
 .chimera {
-  translate: var(--walk-x, 0px) 0;
+  translate: var(--walk-x, 0px) var(--walk-y, 0px);
   transition: translate 0.2s;
 }`,
     js: `{
@@ -685,28 +685,39 @@ export const moves: Move[] = [
   if (chimera) {
     document.addEventListener('keydown', (event) => {
       let x = parseFloat(chimera.style.getPropertyValue('--walk-x')) || 0;
+      let y = parseFloat(chimera.style.getPropertyValue('--walk-y')) || 0;
       if (event.key === 'ArrowLeft') {
         x = x - 20;
       } else if (event.key === 'ArrowRight') {
         x = x + 20;
+      } else if (event.key === 'ArrowUp') {
+        y = y - 20;
+      } else if (event.key === 'ArrowDown') {
+        y = y + 20;
       } else {
         return;
       }
-      const edge = window.innerWidth / 2 - 70;
-      x = Math.max(-edge, Math.min(x, edge));
+      event.preventDefault();
+      const edgeX = window.innerWidth / 2 - 70;
+      const edgeY = window.innerHeight / 2 - 70;
+      x = Math.max(-edgeX, Math.min(x, edgeX));
+      y = Math.max(-edgeY, Math.min(y, edgeY));
       chimera.style.setProperty('--walk-x', x + 'px');
+      chimera.style.setProperty('--walk-y', y + 'px');
     });
   }
 }`,
     explain: [
       "`document.querySelector('.chimera')`：找到最外層的 .chimera，身體和對話框都在它裡面，移動它就會一起走。",
       "`document.addEventListener('keydown', …)`：整個頁面收鍵盤，不用先點到身體。",
+      '`let x`、`let y`：x 是左右，y 是上下；多一個方向，就是多一個變數。',
       "`parseFloat(chimera.style.getPropertyValue('--walk-x')) || 0`：讀出現在走到哪；還沒走過是空的，就當作 0。",
-      "`event.key === 'ArrowLeft'`：按的是左方向鍵，x 減 20 往左；`ArrowRight` 加 20 往右。",
+      '`ArrowLeft`、`ArrowRight` 改 x，`ArrowUp`、`ArrowDown` 改 y；往上是減、往下是加，因為畫面的 y 是從上面往下數。',
       '`else { return; }`：按的是別的鍵，後面就不做了。',
-      '`window.innerWidth / 2 - 70`：預覽框寬度的一半再少一點，就是最遠能走到哪。',
-      '`Math.max(-edge, Math.min(x, edge))`：把 x 夾在左右兩邊之間，不會走出畫面。',
-      '`translate: var(--walk-x, 0px) 0`：用 translate 移動，跟會呼吸的身體用的 scale 是不同的屬性，兩個不會互相蓋掉。',
+      '`event.preventDefault()`：方向鍵本來會捲動畫面，這行把它擋掉，只拿來走路。',
+      '`edgeX`、`edgeY`：預覽框寬度、高度的一半再少一點，就是左右、上下最遠能走到哪。',
+      '`Math.max(-edgeX, Math.min(x, edgeX))`：把 x 夾在左右兩邊之間，y 也一樣夾在上下之間，不會走出框。',
+      '`translate: var(--walk-x, 0px) var(--walk-y, 0px)`：第一個數字是左右、第二個是上下；跟會呼吸的身體用的 scale 是不同的屬性，跳和轉圈又是寫在 .body 上，都不會互相蓋掉。',
     ],
   },
   {
@@ -787,12 +798,12 @@ export const moves: Move[] = [
     id: 'click-walk',
     level: 4,
     name: '點哪裡走過去',
-    concept: '點擊位置換算：滑鼠座標從左邊算起，合成獸從中間出發，要先換算成同一個基準。',
+    concept: '點擊位置換算：滑鼠座標從左上角算起，合成獸從正中間出發，要先換算成同一個基準。',
     effect:
-      '點預覽區的任何地方，合成獸就左右走到那個位置，對話框跟著一起走。可以跟方向鍵左右走一起用。',
+      '點預覽框裡的任何地方，合成獸就走到那個點，上下左右都可以，不會走出框。對話框跟著一起走。可以跟方向鍵走路一起用。',
     css: `/* 走路：移動外層的 .chimera，身體和對話框一起走；0.6s 是走過去花的時間 */
 .chimera {
-  translate: var(--walk-x, 0px) 0;
+  translate: var(--walk-x, 0px) var(--walk-y, 0px);
   transition: translate 0.6s ease-in-out;
 }`,
     js: `{
@@ -800,17 +811,25 @@ export const moves: Move[] = [
 
   if (chimera) {
     document.addEventListener('click', (event) => {
-      const x = event.clientX - window.innerWidth / 2;
+      const edgeX = window.innerWidth / 2 - 70;
+      const edgeY = window.innerHeight / 2 - 70;
+      let x = event.clientX - window.innerWidth / 2;
+      let y = event.clientY - window.innerHeight / 2;
+      x = Math.max(-edgeX, Math.min(x, edgeX));
+      y = Math.max(-edgeY, Math.min(y, edgeY));
       chimera.style.setProperty('--walk-x', x + 'px');
+      chimera.style.setProperty('--walk-y', y + 'px');
     });
   }
 }`,
     explain: [
       "`document.querySelector('.chimera')`：找到最外層的 .chimera，移動它，身體和對話框就一起走。",
       "`document.addEventListener('click', …)`：點整個頁面的任何地方都收得到，不只身體。",
-      '`event.clientX`：點的位置離預覽框左邊多遠。',
-      '`- window.innerWidth / 2`：合成獸一開始在正中間，減掉一半寬度，就變成「離中間多遠」，左邊是負的、右邊是正的。',
-      "`setProperty('--walk-x', x + 'px')`：跟方向鍵左右走用同一個變數，兩招可以一起用。",
+      '`event.clientX`、`event.clientY`：點的位置離預覽框左邊、上面多遠。',
+      '`- window.innerWidth / 2`、`- window.innerHeight / 2`：合成獸一開始在正中間，減掉一半寬度、一半高度，就變成「離中間多遠」；左邊、上面是負的，右邊、下面是正的。',
+      '`let x`、`let y`：左右一個、上下一個；多一個方向，就是多一個變數。',
+      '`Math.max(-edgeX, Math.min(x, edgeX))`：點在邊邊的話，夾回框裡面，合成獸不會走出去一半；y 也一樣。',
+      "`setProperty('--walk-x', …)`、`setProperty('--walk-y', …)`：跟方向鍵走路用同一組變數，兩招可以一起用。",
     ],
   },
   {
@@ -879,9 +898,9 @@ function markers(move: Move) {
 }
 
 // 這招加過了沒：CSS 或 JS 任一格找得到開始標記就算加過
+// 只比對 id，不比對名稱：招式改過名字（例如「方向鍵左右走」改成「方向鍵走路」），以前加過的也認得出來
 export function hasMove(code: ChimeraCode, move: Move) {
-  const { cssStart, jsStart } = markers(move)
-  return code.css.includes(cssStart) || code.js.includes(jsStart)
+  return code.css.includes(`/* [move:${move.id}] `) || code.js.includes(`// [move:${move.id}] `)
 }
 
 // 把這招接在 CSS 和 JS 最後面，原本的程式碼不動；已經加過就原樣回傳
