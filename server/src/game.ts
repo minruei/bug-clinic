@@ -3,6 +3,7 @@ export const TIME_LIMIT = 60
 export const MISTAKE_PENALTY = 5
 export const EXP_REWARD = 20
 export const MIN_COINS = 5
+export const TUTORIAL_REWARD = 20
 
 // 剩餘生命值 = 時間限制 − 經過秒數 − 點錯次數 × 扣血
 export function remainingLife(secondsUsed: number, mistakes: number) {

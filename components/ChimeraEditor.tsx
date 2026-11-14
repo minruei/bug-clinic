@@ -7,33 +7,7 @@ import { css } from '@codemirror/lang-css'
 import { javascript } from '@codemirror/lang-javascript'
 import { colorPicker } from '@replit/codemirror-css-color-picker'
 
-export type ChimeraCode = {
-  html: string
-  css: string
-  js: string
-}
-
-// 還沒改過的合成獸：一個方形身體，毛色用變數，買了毛色零件就能改
-export const starterChimera: ChimeraCode = {
-  html: '<div class="chimera">\n  <div class="body"></div>\n  <!-- 零件裝在這裡 -->\n</div>',
-  css: `.chimera {
-  position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  margin: 0;
-}
-
-.body {
-  --fur-color: #b4b2a9;
-  width: 120px;
-  height: 100px;
-  background: var(--fur-color);
-  border: 4px solid #4a3426;
-}`,
-  js: '// 讓合成獸動起來的程式寫在這裡\n',
-}
+import { buildPage, starterChimera, type ChimeraCode, type EditorTab } from '@/lib/chimera'
 
 // 每一格用對應的語法上色；CSS 格多一個色票，色碼旁邊會出現小色塊，點了可以選色
 const tabs = [
@@ -41,45 +15,6 @@ const tabs = [
   { key: 'css', label: 'CSS 烤漆', extensions: [css(), colorPicker] },
   { key: 'js', label: 'JS 引擎', extensions: [javascript()] },
 ] as const
-
-// 把三格程式碼組成一整個網頁，丟進 iframe 顯示
-function buildPage(code: ChimeraCode) {
-  return `<!doctype html>
-<html>
-<head>
-<style>body { margin: 0; } ${code.css}</style>
-</head>
-<body>
-${code.html}
-<script>${code.js}</script>
-</body>
-</html>`
-}
-
-export type EditorTab = keyof ChimeraCode
-
-const PART_MARKER = '<!-- 零件裝在這裡 -->'
-
-// 把零件的程式碼加進合成獸：HTML 插在「零件裝在這裡」那行前面，CSS 和 JS 接在最後面
-export function installPart(code: ChimeraCode, part: ChimeraCode): ChimeraCode {
-  let html = code.html
-  if (part.html) {
-    html = html.includes(PART_MARKER)
-      ? html.replace(PART_MARKER, `${part.html}\n  ${PART_MARKER}`)
-      : `${html}\n${part.html}`
-  }
-
-  return {
-    html,
-    css: part.css ? `${code.css}\n\n${part.css}` : code.css,
-    js: part.js ? `${code.js}\n${part.js}` : code.js,
-  }
-}
-
-// 零件的每一段程式碼都已經在合成獸裡，就算裝過了
-export function isInstalled(code: ChimeraCode, part: ChimeraCode) {
-  return (Object.keys(part) as EditorTab[]).every((key) => code[key].includes(part[key]))
-}
 
 type EditorProps = {
   // 程式碼和目前分頁放在實驗室頁面保管，商店的「裝上」按鈕才改得到
@@ -153,5 +88,47 @@ export function ChimeraEditor({ code, onChange, tab, onTabChange, onSave }: Edit
         </div>
       )}
     </>
+  )
+}
+
+type CodeViewerProps = {
+  code: ChimeraCode
+  // 零件名稱，給螢幕閱讀器用
+  label: string
+}
+
+// 零件詳情裡的唯讀程式碼：語法上色跟編輯器一樣，但不能改
+// 只顯示有內容的分頁，例如花紋零件只有 CSS
+export function CodeViewer({ code, label }: CodeViewerProps) {
+  const [tab, setTab] = useState<EditorTab>('html')
+  const available = tabs.filter((t) => code[t.key])
+  // 換看另一個零件時，原本開的分頁可能是空的，就改開第一個有內容的
+  const current = available.find((t) => t.key === tab) ?? available[0]
+  if (!current) return null
+
+  return (
+    <div className="editor-code code-viewer">
+      <div className="editor-tabs">
+        {available.map((t) => (
+          <button
+            key={t.key}
+            className={`editor-tab ${current.key === t.key ? 'active' : ''}`}
+            onClick={() => setTab(t.key)}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+      <CodeMirror
+        className="editor-cm"
+        value={code[current.key]}
+        extensions={[...current.extensions]}
+        theme="dark"
+        readOnly
+        editable={false}
+        basicSetup={{ foldGutter: false, autocompletion: false }}
+        aria-label={`${label}的 ${current.label}`}
+      />
+    </div>
   )
 }

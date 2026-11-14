@@ -874,6 +874,35 @@ h2::before {
 }
 
 /* 合成獸實驗室：零件商店 */
+/* 9 個部位排成 3 × 3 */
+.slot-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.slot-tab {
+  padding: 6px 14px;
+  text-align: center;
+  background: var(--card);
+  color: var(--ink);
+  border: var(--pixel) solid var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+.slot-tab.active {
+  background: var(--green);
+  color: #fff;
+}
+
+.part-preview {
+  width: 100%;
+  height: 130px;
+  background: #fff;
+  border: 2px solid var(--ink);
+}
+
 .parts {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -908,6 +937,110 @@ h2::before {
   background: var(--green-soft);
 }
 
+.part-code-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 14px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* 正在看程式碼的那張卡片框成黃色，對得上上面的詳情框 */
+.part.viewing {
+  border-color: var(--yellow);
+  box-shadow:
+    0 0 0 3px var(--yellow),
+    var(--shadow);
+}
+
+.part.viewing .part-code-btn {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+/* 零件詳情框：上面名稱和按鈕，下面左邊預覽、右邊程式碼 */
+.part-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  background: var(--card);
+  border: var(--pixel) solid var(--yellow);
+  box-shadow: var(--shadow);
+  scroll-margin-top: 16px;
+}
+
+.part-detail-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.part-detail-name {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+/* ✕ 推到最右邊 */
+/* 44 × 44 是手機上手指點得到的大小；grid 置中讓 ✕ 在正中間 */
+.part-detail-close {
+  margin-left: auto;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  background: var(--card);
+  color: var(--ink);
+  border: var(--pixel) solid var(--ink);
+  font-size: 18px;
+  line-height: 0;
+  cursor: pointer;
+}
+
+.part-detail-head .price {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.part-detail-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.part-detail-preview {
+  width: 100%;
+  height: 360px;
+  background: #fff;
+  border: var(--pixel) solid var(--ink);
+  box-shadow: var(--shadow);
+}
+
+.code-viewer .editor-cm .cm-editor {
+  min-height: 320px;
+}
+
+/* 手機上預覽在上、程式碼在下 */
+@media (max-width: 640px) {
+  .part-detail-body {
+    grid-template-columns: 1fr;
+  }
+
+  .part-detail-preview {
+    height: 300px;
+  }
+
+  .code-viewer .editor-cm .cm-editor {
+    min-height: 200px;
+  }
+}
+
 .btn:disabled {
   background: var(--muted);
   cursor: not-allowed;
@@ -915,13 +1048,166 @@ h2::before {
 }
 
 .lab-message {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
   font-weight: 700;
   color: var(--green);
 }
 
+.lab-undo {
+  padding: 4px 12px;
+  font-size: 14px;
+}
+
+/* 新手教程：黃色便條紙的感覺，貼在編輯器上面 */
+.tutorial {
+  background: #fdf3d8;
+  border: var(--pixel) solid var(--ink);
+  box-shadow: var(--shadow);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tutorial-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.tutorial-title {
+  font-family: 'Cubic 11', 'Huninn', sans-serif;
+  font-size: 18px;
+  margin: 0;
+}
+
+.tutorial-skip {
+  background: none;
+  border: none;
+  color: var(--muted);
+  text-decoration: underline;
+}
+
+.tutorial-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tutorial-step {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.tutorial-step p {
+  margin: 0 0 6px;
+}
+
+/* 還沒輪到的步驟淡一點，做完的變綠色 */
+.tutorial-step.todo {
+  opacity: 0.5;
+}
+
+.tutorial-step.done .tutorial-step-title {
+  color: var(--green);
+  text-decoration: line-through;
+}
+
+.tutorial-step-title {
+  font-weight: 700;
+}
+
+.tutorial-mark {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--ink);
+  background: var(--card);
+  font-weight: 700;
+}
+
+.tutorial-step.now .tutorial-mark {
+  background: var(--yellow);
+}
+
+.tutorial-step.done .tutorial-mark {
+  background: var(--green);
+  color: #fff;
+}
+
+.tutorial-finish {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  border-top: 2px dashed var(--muted);
+  padding-top: 12px;
+}
+
+.tutorial-finish p {
+  margin: 0;
+  font-weight: 700;
+}
+
+.tutorial > .muted {
+  margin: 0;
+}
+
+.tutorial-replay {
+  align-self: flex-start;
+}
+
+.tutorial-error {
+  color: var(--red);
+  margin: 0;
+}
+
+/* 手機上也維持一排 3 張，卡片和字縮小，3 × 3 才不會被拆開 */
 @media (max-width: 520px) {
-  .parts {
-    grid-template-columns: repeat(2, 1fr);
+  .parts,
+  .slot-tabs {
+    gap: 6px;
+  }
+
+  .slot-tab {
+    padding: 6px 0;
+    font-size: 14px;
+  }
+
+  .part {
+    padding: 8px 4px;
+    gap: 4px;
+  }
+
+  .part-preview {
+    height: 90px;
+  }
+
+  .part .name {
+    font-size: 14px;
+  }
+
+  .part .tag,
+  .part .muted,
+  .part .price,
+  .part-code-btn {
+    font-size: 12px;
+  }
+
+  .part .btn {
+    padding: 4px 8px;
+    font-size: 13px;
   }
 }
 

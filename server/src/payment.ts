@@ -4,6 +4,12 @@ export const coinPackages = [
   { id: 2, name: '一大袋金幣', amount: 90, coins: 350 },
 ]
 
+// 依前端送來的方案編號找方案，找不到回 undefined
+// 金額一律用這裡查到的，前端偷改 packageId 也只會找不到，改不了價格
+export function findPackage(packageId: unknown) {
+  return coinPackages.find((p) => p.id === Number(packageId))
+}
+
 type TapPayResult = { status: number; msg: string; rec_trade_id?: string }
 
 // 拿前端給的 prime 向 TapPay 收款

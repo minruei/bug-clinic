@@ -5,8 +5,8 @@ import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { pool } from './db'
 import { getUser } from './auth'
-import { TIME_LIMIT, EXP_REWARD, remainingLife, coinsFor } from './game'
-import { coinPackages, payByPrime } from './payment'
+import { TIME_LIMIT, EXP_REWARD, TUTORIAL_REWARD, remainingLife, coinsFor } from './game'
+import { coinPackages, findPackage, payByPrime } from './payment'
 
 // 找出這個使用者、還沒結束的看診，順便拿到題目的答案和經過秒數
 // 不是本人的或已結束的都找不到，避免偷用別人的紀錄或重複領獎勵
@@ -121,10 +121,12 @@ app.get('/api/user/auth', async (req, res) => {
   }
 
   const [rows] = await pool.query<RowDataPacket[]>(
-    'SELECT id, name, email, coins, exp FROM users WHERE id = ?',
+    'SELECT id, name, email, coins, exp, tutorial_done FROM users WHERE id = ?',
     [tokenUser.id],
   )
-  res.json({ data: rows[0] ?? null })
+  const user = rows[0]
+  // MySQL 的 BOOLEAN 讀出來是 0 或 1，轉成 true / false 給前端
+  res.json({ data: user ? { ...user, tutorial_done: !!user.tutorial_done } : null })
 })
 
 // 開始看診：建立一筆練習紀錄，開始時間由資料庫自動記錄
@@ -329,17 +331,20 @@ app.get('/api/review', async (req, res) => {
 
 // 零件商店：列出所有零件，有登入的話標出自己買過哪些
 // 沒登入也能逛，owned 一律是 false
-// 起始程式碼是買了才拿得到的東西，沒買過的回 null
+// 起始程式碼一律回傳，商店卡片要拿來畫預覽；編輯器本來就能隨便寫，藏起來也保護不了什麼
+// 能不能裝上還是看 owned
+// 排序照商店分頁的部位順序，同部位再照價格
 app.get('/api/parts', async (req, res) => {
   const user = getUser(req)
 
   const [rows] = await pool.query<RowDataPacket[]>(
-    `SELECT p.id, p.name, p.category, p.price, p.sprite,
-            up.id IS NOT NULL AS owned,
-            CASE WHEN up.id IS NULL THEN NULL ELSE p.starter_code END AS starter_code
+    `SELECT p.id, p.name, p.category, p.slot, p.price, p.sprite, p.starter_code,
+            up.id IS NOT NULL AS owned
      FROM parts p
      LEFT JOIN user_parts up ON up.part_id = p.id AND up.user_id = ?
-     ORDER BY p.price, p.id`,
+     ORDER BY FIELD(p.slot, 'body', 'horn', 'eyes', 'mouth', 'pattern',
+                    'wings', 'tail', 'feet', 'accessory'),
+              p.price, p.id`,
     [user?.id ?? 0],
   )
 
@@ -421,6 +426,51 @@ app.post('/api/parts/:id/purchase', async (req, res) => {
   }
 })
 
+// 完成新手教程：發一次獎勵金幣
+// 跟答對發獎勵同一招：UPDATE 加上 WHERE tutorial_done = FALSE，
+// 同時送很多次也只有第一次改得到（affectedRows = 1），其他次都是 0，不會重複領
+app.post('/api/tutorial/complete', async (req, res) => {
+  const user = getUser(req)
+  if (!user) {
+    res.status(403).json({ error: true, message: '請先登入' })
+    return
+  }
+
+  const conn = await pool.getConnection()
+  try {
+    await conn.beginTransaction()
+
+    const [result] = await conn.query<ResultSetHeader>(
+      'UPDATE users SET tutorial_done = TRUE, coins = coins + ? WHERE id = ? AND tutorial_done = FALSE',
+      [TUTORIAL_REWARD, user.id],
+    )
+    if (result.affectedRows === 0) {
+      await conn.rollback()
+      res.status(400).json({ error: true, message: '已經領過教程獎勵了' })
+      return
+    }
+
+    // 金幣明細記一筆，reason 是 tutorial，attempt_id、part_id、order_id 都留 NULL
+    await conn.query(
+      `INSERT INTO coin_transactions (user_id, amount, reason)
+       VALUES (?, ?, 'tutorial')`,
+      [user.id, TUTORIAL_REWARD],
+    )
+
+    const [rows] = await conn.query<RowDataPacket[]>('SELECT coins FROM users WHERE id = ?', [
+      user.id,
+    ])
+
+    await conn.commit()
+    res.json({ data: { coins: rows[0].coins, reward: TUTORIAL_REWARD } })
+  } catch {
+    await conn.rollback()
+    res.status(500).json({ error: true, message: '領取失敗，請稍後再試' })
+  } finally {
+    conn.release()
+  }
+})
+
 // 讀取自己的合成獸，沒存過回 data: null，前端就用預設的樣子
 // 資料庫裡是一段 JSON 文字，拆回 html、css、js 三格再回傳
 app.get('/api/chimera', async (req, res) => {
@@ -490,7 +540,7 @@ app.post('/api/orders', async (req, res) => {
   }
 
   const { prime, packageId } = req.body ?? {}
-  const pack = coinPackages.find((p) => p.id === Number(packageId))
+  const pack = findPackage(packageId)
   if (typeof prime !== 'string' || !prime || !pack) {
     res.status(400).json({ error: true, message: '付款資料不完整' })
     return
