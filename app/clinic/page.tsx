@@ -299,7 +299,7 @@ export default function Clinic() {
           )}
 
           {playing && (
-            <p className="hint">
+            <p className={`hint ${stage}`}>
               {stage === 'find' && (
                 <>
                   <Pixel name="magnifier" size={22} /> 第一步：點出 bug 躲在哪一行
@@ -395,7 +395,7 @@ export default function Clinic() {
                     onClick={() => pickLine(line)}
                   >
                     <span className="num">{line}</span>
-                    <span>{text || ' '}</span>
+                    <span className="code-text">{text || ' '}</span>
                     {found && (
                       <span className="bug">
                         <Pixel name="bug" size={20} />

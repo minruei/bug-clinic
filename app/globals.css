@@ -279,6 +279,17 @@ h2::before {
   border-bottom: none;
 }
 
+/* 手機上一排放不下，結果那段文字換到下一行佔滿整排 */
+@media (max-width: 520px) {
+  .record {
+    flex-wrap: wrap;
+  }
+
+  .record .grow {
+    flex-basis: 100%;
+  }
+}
+
 .footnote {
   text-align: center;
   color: var(--muted);
@@ -286,6 +297,9 @@ h2::before {
 }
 
 .back {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   color: var(--green);
   font-size: 18px;
   font-weight: 700;
@@ -329,10 +343,11 @@ h2::before {
   }
 }
 
+/* 英文在單字之間換行，只有一個字長到放不下時才從中間斷 */
 .mono {
   font-family: ui-monospace, Menlo, monospace;
   font-size: 15px;
-  word-break: break-all;
+  overflow-wrap: anywhere;
 }
 
 .symptom .mono {
@@ -396,6 +411,33 @@ h2::before {
   margin-left: auto;
 }
 
+/* 手機上長的程式碼換行，不用左右滑就看得到整行；每一行還是一整個按鈕，高度至少 44px 好點 */
+/* 程式碼文字自己是一個區塊，換行後接下去的那一段會對齊在行號後面 */
+@media (max-width: 640px) {
+  .code {
+    font-size: 15px;
+  }
+
+  .line {
+    align-items: flex-start;
+    gap: 10px;
+    min-height: 44px;
+    padding: 10px 12px;
+    white-space: pre-wrap;
+    text-align: left;
+  }
+
+  .line .num {
+    width: 22px;
+  }
+
+  .line .code-text {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
 .options {
   display: flex;
   flex-direction: column;
@@ -448,6 +490,13 @@ h2::before {
   gap: 16px;
   flex-wrap: wrap;
   background: var(--green-soft);
+}
+
+/* 手機上「看這一位」放到文字下面佔滿一排，文字才不會被擠成一行三四個字 */
+@media (max-width: 520px) {
+  .daily .btn {
+    width: 100%;
+  }
 }
 
 .daily .big {
@@ -616,6 +665,7 @@ h2::before {
 }
 
 .switch {
+  min-height: 44px;
   color: var(--green);
   text-align: center;
   text-decoration: underline;
@@ -644,6 +694,37 @@ h2::before {
   border-style: dashed;
   box-shadow: none;
   background: transparent;
+}
+
+/* 900px 以下只有一欄：兩欄的外框攤平（display: contents），裡面的區塊直接用 order 排順序 */
+/* 程式碼排在藥的上面，選藥的時候不用往回捲就能對照是哪一行 */
+@media (max-width: 899px) {
+  .clinic-side,
+  .clinic-main {
+    display: contents;
+  }
+
+  .clinic-side > * {
+    order: 3;
+  }
+
+  .clinic-side > .patient {
+    order: 1;
+  }
+
+  .clinic-side > .symptom {
+    order: 2;
+  }
+
+  .clinic-main > * {
+    order: 4;
+  }
+
+  .clinic-side > .hint.treat,
+  .clinic-side > .options,
+  .clinic-side > .result {
+    order: 5;
+  }
 }
 
 /* 螢幕寬度 900px 以上才套用：看診頁分兩欄、診間排一整排 */
@@ -704,7 +785,7 @@ h2::before {
 
 .dex-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 12px;
   margin-bottom: 28px;
 }
@@ -712,11 +793,19 @@ h2::before {
 .dex-grid .tag {
   display: inline-block;
   margin: 4px 0;
+  white-space: normal;
+}
+
+/* 平板 5 欄太擠，稀有度標籤會把欄位撐出畫面 */
+@media (max-width: 899px) {
+  .dex-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 640px) {
   .dex-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -767,6 +856,7 @@ h2::before {
 .door-btn {
   display: inline-flex;
   align-items: center;
+  min-height: 44px;
   gap: 6px;
   font: inherit;
   color: var(--green);
@@ -882,6 +972,7 @@ h2::before {
 }
 
 .slot-tab {
+  min-height: 44px;
   padding: 6px 14px;
   text-align: center;
   background: var(--card);
@@ -1086,6 +1177,9 @@ h2::before {
 }
 
 .tutorial-skip {
+  flex: none;
+  min-height: 44px;
+  white-space: nowrap;
   background: none;
   border: none;
   color: var(--muted);
@@ -1199,15 +1293,29 @@ h2::before {
   }
 
   .part .tag,
-  .part .muted,
-  .part .price,
-  .part-code-btn {
+  .part .muted {
     font-size: 12px;
   }
 
+  .part .price {
+    font-size: 14px;
+  }
+
+  /* 卡片很窄，按鈕和「看程式碼」都撐滿卡片寬，點擊範圍才有 44px */
+  .part .btn,
+  .part-code-btn {
+    width: 100%;
+    min-height: 44px;
+  }
+
   .part .btn {
-    padding: 4px 8px;
+    padding: 4px;
+    font-size: 14px;
+  }
+
+  .part-code-btn {
     font-size: 13px;
+    text-align: center;
   }
 }
 
@@ -1233,7 +1341,8 @@ h2::before {
 
 .editor-tab {
   flex: 1;
-  padding: 6px 0;
+  min-height: 44px;
+  padding: 6px 4px;
   background: var(--card);
   color: var(--ink);
   border: none;
@@ -1292,6 +1401,9 @@ h2::before {
 
 /* 買金幣：方案卡片和 TapPay 卡號欄位 */
 .coin-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   margin-left: 8px;
   font-weight: 700;
   color: var(--green);
@@ -1301,6 +1413,16 @@ h2::before {
   font: inherit;
   color: inherit;
   cursor: pointer;
+}
+
+/* 只有兩個方案，平分一整排；字放大，手機上也看得清楚 */
+.coin-packs {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.coin-packs .part .price,
+.coin-packs .part .muted {
+  font-size: 16px;
 }
 
 .pay-form {

@@ -141,7 +141,7 @@ export default function CoinsPage() {
       {loggedIn && (
         <>
           <h2>選擇方案</h2>
-          <section className="parts">
+          <section className="parts coin-packs">
             {packages.map((p) => (
               <button
                 key={p.id}
