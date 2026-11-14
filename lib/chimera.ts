@@ -9,6 +9,8 @@ export type ChimeraCode = {
 
 // 合成獸的身體：一個方形身體，毛色用變數，買了毛色零件就能改
 // 零件裝在 .body 裡面，身體動的時候零件會跟著一起動；零件的位置跟著身體的大小和定位變數走
+// .body 是透明的容器，看得到的身體畫在 .body::before（底色和外框）和 .body::after（立體感），
+// 兩層都是 z-index: -1；翅膀、披風是 z-index: -2，排在身體後面，跳的時候還是跟著 .body 一起動
 // 對話框的預設文字，教程第二步要玩家換成自己想說的話
 export const SPEECH_PLACEHOLDER = '……'
 
@@ -37,15 +39,35 @@ const BODY_CSS = `.chimera {
   width: 120px;
   height: 100px;
   background: var(--fur-color);
-  border: 4px solid #4a3426;
+  /* 外框留 4px 的位置，真正畫出來的外框在下面的 .body::before */
+  border: 4px solid transparent;
+  /* .body 自己不畫底色，底色交給 .body::before 繼承過去畫，翅膀這類零件才排得到身體後面 */
+  -webkit-background-clip: text;
+  background-clip: text;
 }
 
-/* 立體感：左上亮一格、右下暗一格，畫在 .body::before，換毛色也一樣有效 */
-/* 不畫在 .body 的 box-shadow，留給玩家自己加影子；border-radius: inherit 讓身體改成圓的時候也跟著圓 */
+/* 看得到的身體：底色、花紋和 4px 外框，用 background: inherit 拿 .body 的底色，換毛色、花紋都有效 */
+/* z-index: -1 放在零件後面；border-radius: inherit 讓身體改成圓的時候也跟著圓 */
 .body::before {
   content: '';
   position: absolute;
+  inset: -4px;
+  z-index: -1;
+  background: inherit;
+  -webkit-background-clip: padding-box;
+  background-clip: padding-box;
+  border: 4px solid #4a3426;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* 立體感：左上亮一格、右下暗一格，疊在身體上面、零件下面 */
+/* 不畫在 .body 的 box-shadow，留給玩家自己加影子 */
+.body::after {
+  content: '';
+  position: absolute;
   inset: 0;
+  z-index: -1;
   border-radius: inherit;
   box-shadow:
     inset 4px 4px 0 rgb(251 248 241 / 45%),

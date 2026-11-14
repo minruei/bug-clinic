@@ -325,3 +325,34 @@ describe('寫在 .chimera 上的零件', () => {
     expect(hasChimeraWrapper('<div class="body">')).toBe(false)
   })
 })
+
+describe('身體是透明的容器', () => {
+  // 從 CSS 裡拿出某個選擇器的規則內容
+  function rule(css: string, selector: string) {
+    const start = css.indexOf(`${selector} {`)
+    return start === -1 ? '' : css.slice(start, css.indexOf('}', start))
+  }
+
+  it('預設合成獸和教程怪物的 .body 不畫自己的底色和外框', () => {
+    for (const code of [starterChimera, practiceChimera]) {
+      const body = rule(code.css, '.body')
+      expect(body).toContain('border: 4px solid transparent')
+      expect(body).toContain('background-clip: text')
+      // 底色還是寫在 .body 上，換毛色、花紋、教程第一步都照舊改這裡
+      expect(body).toContain('--fur-color: #b4b2a9')
+      expect(body).toContain('background: var(--fur-color)')
+    }
+  })
+
+  it('看得到的身體畫在 ::before，立體感畫在 ::after，兩層都在零件後面', () => {
+    const before = rule(starterChimera.css, '.body::before')
+    const after = rule(starterChimera.css, '.body::after')
+    expect(before).toContain('background: inherit')
+    expect(before).toContain('border: 4px solid #4a3426')
+    expect(before).toContain('z-index: -1')
+    // 教程第三步、每日任務「圓滾滾」改的是 .body 的 border-radius，兩層都要跟著圓
+    expect(before).toContain('border-radius: inherit')
+    expect(after).toContain('border-radius: inherit')
+    expect(after).toContain('z-index: -1')
+  })
+})

@@ -133,49 +133,264 @@ PARTS += [
         }
     '''),
     part('body', '布丁', 'css', 30, css='''
-        /* 上面那層焦糖用 inset 陰影畫，改 22px 調焦糖厚度 */
+        /* 上面那層焦糖用 inset 陰影畫，改 24px 調焦糖厚度 */
         /* 眼睛往下一點，才不會壓到焦糖 */
         .body {
           --eye-y: 34%;
           border-radius: 30px 30px 10px 10px;
-          box-shadow: inset 0 22px 0 #8a4f1d;
+          box-shadow: inset 0 24px 0 #8a4f1d;
+        }
+
+        /* 焦糖也畫在立體感那一層，身體做動畫的時候焦糖才不會被底色蓋住 */
+        .body::after {
+          box-shadow:
+            inset 0 24px 0 #8a4f1d,
+            inset -4px -4px 0 rgb(46 34 26 / 25%);
         }
     '''),
     part('body', '雲朵', 'css', 40, css='''
-        /* 頭上兩顆圓凸起，下緣不畫框、壓在身體的上框上，看起來就跟身體連在一起 */
-        /* 角往上移到凸起上面，對話框也抬高到凸起上面 */
+        /* 頭上兩顆圓凸起和身體畫成同一個形狀；角往上移到凸起上面，對話框也抬高到凸起上面 */
         .body {
           --horn-y: -56%;
           --wing-x: 4px;
-          border-radius: 50px;
         }
 
         .chimera {
           --speech-y: 122px;
         }
 
-        .body::before,
+        /* .body 只當透明的容器，看得到的雲朵畫在後面兩層，零件就不會被剪掉 */
+        .body {
+          border-color: transparent;
+          -webkit-background-clip: text;
+          background-clip: text;
+        }
+
+        /* 外框層：深棕色，剪成雲朵外面那一圈 */
+        .body::before {
+          content: '';
+          position: absolute;
+          inset: -68px auto auto -4px;
+          z-index: -1;
+          width: 128px;
+          height: 172px;
+          background: #4a3426;
+          border: 0;
+          border-radius: 0;
+          clip-path: var(--cloud-outer);
+          pointer-events: none;
+        }
+
+        /* 底色層：繼承 .body 的毛色和花紋，比外框層往內縮一格 */
         .body::after {
           content: '';
           position: absolute;
-          background: var(--fur-color);
-          border: 4px solid #4a3426;
-          border-bottom-color: transparent;
-          border-radius: 50%;
+          inset: -64px auto auto 0;
+          z-index: -1;
+          width: 120px;
+          height: 164px;
+          background: inherit;
+          -webkit-background-clip: border-box;
+          background-clip: border-box;
+          border-radius: 0;
+          box-shadow:
+            inset 4px 4px 0 rgb(251 248 241 / 45%),
+            inset -4px -4px 0 rgb(46 34 26 / 25%);
+          clip-path: var(--cloud-inner);
+          pointer-events: none;
         }
 
-        .body::before {
-          top: -54px;
-          left: 16px;
-          width: 50px;
-          height: 50px;
-        }
-
-        .body::after {
-          top: -64px;
-          right: 14px;
-          width: 60px;
-          height: 60px;
+        /* 下面是剪出形狀的程式，想改形狀再研究 */
+        /* 從左上開始順時針走一圈，每一行是一個轉角 */
+        .body {
+          --cloud-outer: polygon(
+            72px 4px,
+            96px 4px,
+            96px 8px,
+            104px 8px,
+            104px 12px,
+            108px 12px,
+            108px 16px,
+            112px 16px,
+            112px 20px,
+            116px 20px,
+            116px 36px,
+            120px 36px,
+            120px 40px,
+            116px 40px,
+            116px 56px,
+            112px 56px,
+            112px 60px,
+            108px 60px,
+            108px 64px,
+            104px 64px,
+            104px 72px,
+            108px 72px,
+            108px 76px,
+            112px 76px,
+            112px 80px,
+            116px 80px,
+            116px 84px,
+            120px 84px,
+            120px 88px,
+            124px 88px,
+            124px 100px,
+            128px 100px,
+            128px 136px,
+            124px 136px,
+            124px 148px,
+            120px 148px,
+            120px 152px,
+            116px 152px,
+            116px 156px,
+            112px 156px,
+            112px 160px,
+            108px 160px,
+            108px 164px,
+            104px 164px,
+            104px 168px,
+            92px 168px,
+            92px 172px,
+            36px 172px,
+            36px 168px,
+            24px 168px,
+            24px 164px,
+            20px 164px,
+            20px 160px,
+            16px 160px,
+            16px 156px,
+            12px 156px,
+            12px 152px,
+            8px 152px,
+            8px 148px,
+            4px 148px,
+            4px 136px,
+            0 136px,
+            0 100px,
+            4px 100px,
+            4px 88px,
+            8px 88px,
+            8px 84px,
+            12px 84px,
+            12px 80px,
+            16px 80px,
+            16px 76px,
+            20px 76px,
+            20px 72px,
+            24px 72px,
+            24px 68px,
+            32px 68px,
+            32px 64px,
+            28px 64px,
+            28px 60px,
+            24px 60px,
+            24px 52px,
+            20px 52px,
+            20px 32px,
+            24px 32px,
+            24px 24px,
+            28px 24px,
+            28px 20px,
+            36px 20px,
+            36px 16px,
+            60px 16px,
+            60px 12px,
+            64px 12px,
+            64px 8px,
+            72px 8px
+          );
+          --cloud-inner: polygon(
+            72px 4px,
+            88px 4px,
+            88px 8px,
+            96px 8px,
+            96px 12px,
+            100px 12px,
+            100px 16px,
+            104px 16px,
+            104px 20px,
+            108px 20px,
+            108px 48px,
+            104px 48px,
+            104px 52px,
+            100px 52px,
+            100px 56px,
+            96px 56px,
+            96px 72px,
+            100px 72px,
+            100px 76px,
+            104px 76px,
+            104px 80px,
+            108px 80px,
+            108px 84px,
+            112px 84px,
+            112px 88px,
+            116px 88px,
+            116px 100px,
+            120px 100px,
+            120px 128px,
+            116px 128px,
+            116px 140px,
+            112px 140px,
+            112px 144px,
+            108px 144px,
+            108px 148px,
+            104px 148px,
+            104px 152px,
+            100px 152px,
+            100px 156px,
+            96px 156px,
+            96px 160px,
+            84px 160px,
+            84px 164px,
+            36px 164px,
+            36px 160px,
+            24px 160px,
+            24px 156px,
+            20px 156px,
+            20px 152px,
+            16px 152px,
+            16px 148px,
+            12px 148px,
+            12px 144px,
+            8px 144px,
+            8px 140px,
+            4px 140px,
+            4px 128px,
+            0 128px,
+            0 100px,
+            4px 100px,
+            4px 88px,
+            8px 88px,
+            8px 84px,
+            12px 84px,
+            12px 80px,
+            16px 80px,
+            16px 76px,
+            20px 76px,
+            20px 72px,
+            24px 72px,
+            24px 68px,
+            32px 68px,
+            32px 56px,
+            28px 56px,
+            28px 52px,
+            24px 52px,
+            24px 44px,
+            20px 44px,
+            20px 32px,
+            24px 32px,
+            24px 24px,
+            28px 24px,
+            28px 20px,
+            36px 20px,
+            36px 16px,
+            60px 16px,
+            60px 12px,
+            64px 12px,
+            64px 8px,
+            72px 8px
+          );
         }
     '''),
     part('body', '會呼吸的身體', 'css', 40, css='''
@@ -1594,23 +1809,35 @@ PARTS += [
 ]
 
 # 翅膀：上緣在 --wing-y（預設 10%），接在身體左右邊緣外側
+# z-index: -2 排在身體的底色層（-1）後面，翅膀跟身體重疊的地方會被身體蓋住
 # 右邊那片多半是左邊那片用 scaleX(-1) 翻過來
 PARTS += [
     part('wings', '翅膀', 'css', 30, html='''
-        <div class="wing"></div>
+        <div class="wing left"></div>
+        <div class="wing right"></div>
     ''', css='''
         /* 想換顏色、移位置，改這裡就好 */
         .wing {
-          --wing-color: #6b8fb0;
+          --wing-color: #5a9a4a;
+          --vein-color: #2e221a;
           top: calc(var(--wing-y, 10%) + 4px);
+        }
+
+        .wing.left {
           left: calc(-66px + var(--wing-x, 0px));
         }
 
-        /* 翅膀 16 × 10 格；外框用 drop-shadow 往上下左右各畫一次 4px，外框就會跟著剪出來的形狀走 */
+        .wing.right {
+          left: calc(100% + 2px - var(--wing-x, 0px));
+        }
+
+        /* 一對葉子翅膀，每片 16 × 9 格，尖端朝外；z-index: -2 排在身體後面 */
+        /* 外框用 drop-shadow 往上下左右各畫一次 4px，外框就會跟著剪出來的形狀走 */
         .wing {
           position: absolute;
+          z-index: -2;
           width: 64px;
-          height: 40px;
+          height: 36px;
           filter:
             drop-shadow(4px 0 0 #4a3426)
             drop-shadow(-4px 0 0 #4a3426)
@@ -1618,43 +1845,69 @@ PARTS += [
             drop-shadow(0 -4px 0 #4a3426);
         }
 
+        /* 葉子本體，中間一條 1 格粗的葉脈 */
         .wing::before {
           content: '';
           position: absolute;
           inset: 0;
-          background: var(--wing-color);
+          background:
+            linear-gradient(transparent 16px, var(--vein-color) 16px 20px, transparent 20px),
+            var(--wing-color);
           box-shadow:
-            inset 4px 4px 0 rgb(255 255 255 / 35%),
+            inset 4px 4px 0 rgb(255 255 255 / 30%),
             inset -4px -4px 0 rgb(46 34 26 / 25%);
           clip-path: var(--wing-shape);
         }
 
         /* 下面是剪出形狀的程式，想改形狀再研究 */
-        /* 從左上開始順時針走一圈，每一行是一個轉角：左上和右下一階一階剪成圓弧，右上和左下保持直角 */
-        .wing {
+        /* 從左上開始順時針走一圈，每一行是一個轉角；右邊那片是左邊左右翻過來 */
+        .wing.left {
           --wing-shape: polygon(
-            24px 0,
+            32px 0,
             64px 0,
-            64px 24px,
-            60px 24px,
-            60px 28px,
-            56px 28px,
-            56px 32px,
-            48px 32px,
-            48px 36px,
-            40px 36px,
-            40px 40px,
-            0 40px,
-            0 20px,
+            64px 36px,
+            32px 36px,
+            32px 32px,
+            20px 32px,
+            20px 28px,
+            12px 28px,
+            12px 24px,
+            4px 24px,
             4px 20px,
+            0 20px,
+            0 16px,
             4px 16px,
-            8px 16px,
-            8px 12px,
+            4px 12px,
             12px 12px,
             12px 8px,
-            16px 8px,
-            16px 4px,
-            24px 4px
+            20px 8px,
+            20px 4px,
+            32px 4px
+          );
+        }
+
+        .wing.right {
+          --wing-shape: polygon(
+            0 0,
+            32px 0,
+            32px 4px,
+            44px 4px,
+            44px 8px,
+            52px 8px,
+            52px 12px,
+            60px 12px,
+            60px 16px,
+            64px 16px,
+            64px 20px,
+            60px 20px,
+            60px 24px,
+            52px 24px,
+            52px 28px,
+            44px 28px,
+            44px 32px,
+            32px 32px,
+            32px 36px,
+            0 36px
           );
         }
     '''),
@@ -1679,6 +1932,7 @@ PARTS += [
         /* 每片翅膀 10 × 7 格 */
         .wing-pair {
           position: absolute;
+          z-index: -2;
           width: 40px;
           height: 28px;
           /* 外框用 drop-shadow 往上下左右各畫一次 4px，外框就會跟著剪出來的形狀走 */
@@ -1757,6 +2011,7 @@ PARTS += [
         /* 三片羽毛由長到短往下疊，長度 13、10、7 格；上下兩片共用一條外框，疊起來就是一階一階的翅膀 */
         .wing-angel {
           position: absolute;
+          z-index: -2;
           width: 60px;
           height: 40px;
         }
@@ -1814,6 +2069,7 @@ PARTS += [
         /* 每片翅膀 18 × 11 格：上緣往外斜到翼尖，下緣三個尖角 */
         .wing-bat {
           position: absolute;
+          z-index: -2;
           width: 72px;
           height: 44px;
           /* 外框用 drop-shadow 往上下左右各畫一次 4px，外框就會跟著剪出來的形狀走 */
@@ -1959,6 +2215,7 @@ PARTS += [
         /* 上下兩片，上面大 10 × 8 格、下面小 7 × 6 格 */
         .wing-butterfly {
           position: absolute;
+          z-index: -2;
           width: 48px;
           height: 72px;
         }
@@ -2029,6 +2286,7 @@ PARTS += [
         .wing-dragonfly,
         .wing-dragonfly::after {
           position: absolute;
+          z-index: -2;
           height: 8px;
           background: var(--wing-color);
           border: 4px solid rgb(74 52 38 / 60%);
@@ -2074,6 +2332,7 @@ PARTS += [
         /* 每片翅膀 25 × 20 格：上緣是骨架往外伸，下緣三個大尖角 */
         .wing-dragon {
           position: absolute;
+          z-index: -2;
           width: 100px;
           height: 80px;
           /* 外框用 drop-shadow 往上下左右各畫一次 4px，外框就會跟著剪出來的形狀走 */
@@ -2263,6 +2522,7 @@ PARTS += [
         /* 每片翅膀 12 × 8 格；transform-origin 設在靠身體那一側，旋轉起來才像在拍 */
         .wing-flap {
           position: absolute;
+          z-index: -2;
           width: 48px;
           height: 32px;
           /* 外框用 drop-shadow 往上下左右各畫一次 4px，外框就會跟著剪出來的形狀走 */
@@ -2371,6 +2631,7 @@ PARTS += [
         /* 每片翅膀 12 × 8 格 */
         .wing-fly {
           position: absolute;
+          z-index: -2;
           width: 48px;
           height: 32px;
           cursor: pointer;
@@ -2946,7 +3207,7 @@ PARTS += [
 ]
 
 # 腳：從 --leg-y（預設 100%，身體下緣）往下長，左腳用 left、右腳用 right，兩邊同一個百分比，一定左右對稱；身體變寬腳也會分開
-# z-index: 1 讓腳畫在披風上面，不管哪個先裝，披風下襬都不會蓋住腳
+# z-index: 1 讓腳畫在身體和披風上面，腳的上緣疊在身體外框上也看得到
 PARTS += [
     part('feet', '小短腳', 'html', 10, html='''
         <div class="feet-short left"></div>
@@ -3600,44 +3861,39 @@ PARTS += [
           --cape-color: #c8553d;
         }
 
-        /* 披風疊在身體外框上，border-radius: inherit 讓它跟身體同一個形狀 */
-        /* 紅色用 box-shadow 畫：影子只畫在外框外面，身體那一塊永遠是空的，圓的、蛋形的身體也不會露白 */
-        /* 不用 z-index: -1，身體做動畫的時候會變成自己一層，披風就會跑到身體前面 */
+        /* 披風是一塊從肩膀往下張開的梯形，z-index: -2 排在身體後面，中間自然被身體蓋住，不用挖洞 */
+        /* 圓的、蛋形的身體也不會露白，跳的時候跟著身體一起動 */
         .accessory-cape {
           position: absolute;
-          top: -4px;
-          left: -4px;
-          width: calc(100% + 8px);
-          height: calc(100% + 8px);
-          border-radius: inherit;
-          box-shadow: 0 0 0 40px var(--cape-color);
+          z-index: -2;
+          top: 63%;
+          left: -16px;
+          width: calc(100% + 32px);
+          height: calc(37% + 16px);
+          background: var(--cape-color);
           clip-path: var(--cape-shape);
         }
 
         /* 下面是剪出形狀的程式，想改形狀再研究 */
-        /* 從肩膀（身體 63% 的高度）開始，左右兩邊每往下一段就往外一格，一階一階張開 */
+        /* 從左上開始順時針走一圈，左右兩邊每往下一段就往外一格，一階一階張開 */
         .accessory-cape {
           --cape-shape: polygon(
-            0 63%,
-            0 72%,
-            -4px 72%,
-            -4px 81%,
-            -8px 81%,
-            -8px 90%,
-            -12px 90%,
-            -12px 100%,
-            -16px 100%,
-            -16px calc(100% + 12px),
-            calc(100% + 16px) calc(100% + 12px),
-            calc(100% + 16px) 100%,
-            calc(100% + 12px) 100%,
-            calc(100% + 12px) 90%,
-            calc(100% + 8px) 90%,
-            calc(100% + 8px) 81%,
-            calc(100% + 4px) 81%,
-            calc(100% + 4px) 72%,
-            100% 72%,
-            100% 63%
+            12px 0,
+            calc(100% - 12px) 0,
+            calc(100% - 12px) 25%,
+            calc(100% - 8px) 25%,
+            calc(100% - 8px) 50%,
+            calc(100% - 4px) 50%,
+            calc(100% - 4px) 75%,
+            100% 75%,
+            100% 100%,
+            0 100%,
+            0 75%,
+            4px 75%,
+            4px 50%,
+            8px 50%,
+            8px 25%,
+            12px 25%
           );
         }
     '''),
@@ -3870,15 +4126,35 @@ STARTER = {
           width: 120px;
           height: 100px;
           background: var(--fur-color);
-          border: 4px solid #4a3426;
+          /* 外框留 4px 的位置，真正畫出來的外框在下面的 .body::before */
+          border: 4px solid transparent;
+          /* .body 自己不畫底色，底色交給 .body::before 繼承過去畫，翅膀這類零件才排得到身體後面 */
+          -webkit-background-clip: text;
+          background-clip: text;
         }
 
-        /* 立體感：左上亮一格、右下暗一格，畫在 .body::before，換毛色也一樣有效 */
-        /* 不畫在 .body 的 box-shadow，留給玩家自己加影子；border-radius: inherit 讓身體改成圓的時候也跟著圓 */
+        /* 看得到的身體：底色、花紋和 4px 外框，用 background: inherit 拿 .body 的底色，換毛色、花紋都有效 */
+        /* z-index: -1 放在零件後面；border-radius: inherit 讓身體改成圓的時候也跟著圓 */
         .body::before {
           content: '';
           position: absolute;
+          inset: -4px;
+          z-index: -1;
+          background: inherit;
+          -webkit-background-clip: padding-box;
+          background-clip: padding-box;
+          border: 4px solid #4a3426;
+          border-radius: inherit;
+          pointer-events: none;
+        }
+
+        /* 立體感：左上亮一格、右下暗一格，疊在身體上面、零件下面 */
+        /* 不畫在 .body 的 box-shadow，留給玩家自己加影子 */
+        .body::after {
+          content: '';
+          position: absolute;
           inset: 0;
+          z-index: -1;
           border-radius: inherit;
           box-shadow:
             inset 4px 4px 0 rgb(251 248 241 / 45%),
