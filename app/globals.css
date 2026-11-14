@@ -1405,6 +1405,57 @@ h2::before {
   flex-wrap: wrap;
 }
 
+/* 錯誤主控台：編輯器下面，深色底跟程式碼一樣 */
+.console {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 14px;
+  background: var(--code);
+  color: #f3e6c8;
+  border: var(--pixel) solid var(--ink);
+  box-shadow: var(--shadow);
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 14px;
+}
+
+.console-title {
+  color: #a08a72;
+  font-size: 13px;
+}
+
+.console-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* 每一筆錯誤是按鈕，點了跳到 JS 格的那一行；訊息很長就換行 */
+.console-error {
+  width: 100%;
+  min-height: 44px;
+  padding: 6px 8px;
+  background: rgba(200, 85, 61, 0.2);
+  color: #ff9a85;
+  border: none;
+  border-left: 4px solid var(--red);
+  font: inherit;
+  text-align: left;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.console-error:hover {
+  background: rgba(200, 85, 61, 0.35);
+}
+
+.console-ok {
+  color: #a08a72;
+}
+
 /* 版本紀錄：左邊存檔時間列表，右邊選到的版本預覽 */
 .versions {
   display: flex;

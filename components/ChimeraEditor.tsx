@@ -1,13 +1,20 @@
 'use client'
 
-import { useState } from 'react'
-import CodeMirror from '@uiw/react-codemirror'
+import { useEffect, useRef, useState } from 'react'
+import CodeMirror, { type ReactCodeMirrorRef } from '@uiw/react-codemirror'
 import { html } from '@codemirror/lang-html'
 import { css } from '@codemirror/lang-css'
 import { javascript } from '@codemirror/lang-javascript'
 import { colorPicker } from '@replit/codemirror-css-color-picker'
 
-import { buildPage, starterChimera, type ChimeraCode, type EditorTab } from '@/lib/chimera'
+import {
+  buildPage,
+  starterChimera,
+  toJsLine,
+  type ChimeraCode,
+  type EditorTab,
+} from '@/lib/chimera'
+import { addConsoleError, formatConsoleError, type ConsoleError } from '@/lib/console'
 import { VersionPanel } from '@/components/VersionPanel'
 
 // 每一格用對應的語法上色；CSS 格多一個色票，色碼旁邊會出現小色塊，點了可以選色
@@ -43,6 +50,60 @@ export function ChimeraEditor({
   // 存檔成功幾次，版本紀錄看到數字變了就重新拿列表
   const [savedCount, setSavedCount] = useState(0)
 
+  // 錯誤主控台：預覽頁抓到錯誤會 postMessage 出來
+  // 錯誤跟著是哪一版的預覽頁一起記，程式碼一改預覽頁就不一樣，舊的錯誤自然不顯示
+  const page = buildPage(code, { catchErrors: true })
+  const previewRef = useRef<HTMLIFrameElement>(null)
+  const [errors, setErrors] = useState<{ page: string; list: ConsoleError[] }>({
+    page: '',
+    list: [],
+  })
+  const consoleErrors = errors.page === page ? errors.list : []
+
+  useEffect(() => {
+    function onMessage(event: MessageEvent) {
+      // 只收自己這個預覽 iframe 傳來的，商店卡片的預覽或其他頁面傳的都不理
+      if (event.source !== previewRef.current?.contentWindow) return
+      if (event.data?.type !== 'chimera-error') return
+      const error = {
+        line: toJsLine(code, event.data.line, { catchErrors: true }),
+        message: String(event.data.message),
+      }
+      setErrors((prev) => ({
+        page,
+        list: addConsoleError(prev.page === page ? prev.list : [], error),
+      }))
+    }
+    window.addEventListener('message', onMessage)
+    return () => window.removeEventListener('message', onMessage)
+  }, [code, page])
+
+  // 點主控台的錯誤：切到 JS 格，游標移到出錯的那一行
+  // 要等 JS 格的內容換上去才能移，所以先記在 jumpLine，等分頁換好再移
+  const cmRef = useRef<ReactCodeMirrorRef>(null)
+  const jumpLine = useRef<number | null>(null)
+
+  function jumpTo(line: number | null) {
+    jumpLine.current = line
+    if (tab === 'js') moveToLine()
+    else onTabChange('js')
+  }
+
+  function moveToLine() {
+    const view = cmRef.current?.view
+    const line = jumpLine.current
+    jumpLine.current = null
+    if (!view || !line) return
+    const target = view.state.doc.line(Math.min(line, view.state.doc.lines))
+    view.dispatch({ selection: { anchor: target.from }, scrollIntoView: true })
+    view.focus()
+  }
+
+  useEffect(() => {
+    // 只有換分頁的時候才需要跑
+    if (tab === 'js' && jumpLine.current) moveToLine()
+  }, [tab])
+
   async function save() {
     if (!onSave) return
     setStatus('存檔中…')
@@ -72,6 +133,7 @@ export function ChimeraEditor({
             ))}
           </div>
           <CodeMirror
+            ref={cmRef}
             className="editor-cm"
             value={code[tab]}
             onChange={(value) => onChange({ ...code, [tab]: value })}
@@ -84,11 +146,28 @@ export function ChimeraEditor({
 
         {/* sandbox 只開 allow-scripts：裡面的 JS 可以跑，但碰不到外面的 localStorage 和頁面 */}
         <iframe
+          ref={previewRef}
           className="editor-preview"
           title="合成獸預覽"
           sandbox="allow-scripts"
-          srcDoc={buildPage(code)}
+          srcDoc={page}
         />
+      </section>
+      <section className="console" aria-live="polite">
+        <p className="console-title">主控台</p>
+        {consoleErrors.length ? (
+          <ul className="console-list">
+            {consoleErrors.map((e) => (
+              <li key={`${e.line}-${e.message}`}>
+                <button className="console-error" onClick={() => jumpTo(e.line)}>
+                  {formatConsoleError(e)}
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="console-ok">沒有錯誤</p>
+        )}
       </section>
       {onSave && (
         <div className="editor-actions">

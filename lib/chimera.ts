@@ -32,8 +32,32 @@ export const starterChimera: ChimeraCode = {
   js: '// 讓合成獸動起來的程式寫在這裡\n',
 }
 
-// 把三格程式碼組成一整個網頁，丟進 iframe 顯示；商店卡片的預覽也用這個
-export function buildPage(code: ChimeraCode) {
+// 錯誤主控台用：放在玩家的 JS 前面，抓到錯誤就把訊息和行號傳給外面的頁面
+// 預覽是 sandbox iframe，錯誤不會自己跑出來，要靠 postMessage 傳
+// 只抓得到 JS 執行時的錯誤；CSS、HTML 寫錯瀏覽器不會報錯，無窮迴圈會讓預覽卡住也抓不到
+const ERROR_CATCHER = `<script>
+(function () {
+  function send(message, line) {
+    parent.postMessage({ type: 'chimera-error', message: String(message), line: line || null }, '*')
+  }
+  window.addEventListener('error', function (e) {
+    send(e.error && e.error.message ? e.error.message : e.message, e.lineno)
+  })
+  window.addEventListener('unhandledrejection', function (e) {
+    var reason = e.reason
+    var found = reason && reason.stack ? /about:srcdoc:(\\d+)/.exec(reason.stack) : null
+    send(reason && reason.message ? reason.message : reason, found ? Number(found[1]) : null)
+  })
+})()
+</script>`
+
+type PageOptions = {
+  // 只有編輯器的預覽要接錯誤主控台，商店卡片和詳情框的預覽不用
+  catchErrors?: boolean
+}
+
+// 玩家 JS 前面那一段；buildPage 和行號換算都用這個，兩邊才不會對不上
+function pageBeforeJs(code: ChimeraCode, options: PageOptions) {
   return `<!doctype html>
 <html>
 <head>
@@ -41,9 +65,27 @@ export function buildPage(code: ChimeraCode) {
 </head>
 <body>
 ${code.html}
-<script>${code.js}</script>
+${options.catchErrors ? ERROR_CATCHER : ''}
+<script>
+`
+}
+
+// 把三格程式碼組成一整個網頁，丟進 iframe 顯示；商店卡片的預覽也用這個
+// 玩家的 JS 放在自己的 script 裡，從新的一行開始，寫錯了也不會影響前面抓錯誤的程式
+export function buildPage(code: ChimeraCode, options: PageOptions = {}) {
+  return `${pageBeforeJs(code, options)}${code.js}
+</script>
 </body>
 </html>`
+}
+
+// 錯誤回報的行號是整個預覽頁的第幾行，換算成 JS 引擎格裡的第幾行
+// 不是玩家 JS 裡的行（例如寫在 HTML 的 onclick），或根本沒有行號，就回 null
+export function toJsLine(code: ChimeraCode, pageLine: number | null, options: PageOptions = {}) {
+  if (!pageLine) return null
+  const linesBefore = pageBeforeJs(code, options).split('\n').length - 1
+  const line = pageLine - linesBefore
+  return line >= 1 && line <= code.js.split('\n').length ? line : null
 }
 
 export type EditorTab = keyof ChimeraCode
