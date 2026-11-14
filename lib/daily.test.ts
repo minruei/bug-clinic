@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { challenges } from '@/server/src/challenges'
 import { starterChimera, type ChimeraCode } from '@/lib/chimera'
 import { moves } from '@/lib/moves'
-import { dailyCheckPage, dailyKeys, passesDaily } from '@/lib/daily'
+import { dailyCheckPage, dailyKeys, passesDaily, pasteExample } from '@/lib/daily'
 
 const withCss = (css: string): ChimeraCode => ({
   ...starterChimera,
@@ -53,6 +53,12 @@ describe('每日任務的前端檢查', () => {
     const code = withCss('.body { border-radius: 50%; }')
     expect(passesDaily('round-body', code, { radius: ['50%', '50%', '50%', '50%'] })).toBe(true)
     expect(passesDaily('round-body', code, { radius: ['50%', '50%', '10px', '50%'] })).toBe(false)
+  })
+
+  it('每一題照第 3 層提示貼到預設合成獸上，寫法檢查就會過（不用先買零件）', () => {
+    for (const c of challenges) {
+      expect(c.check(pasteExample(starterChimera, c.example)), c.key).toBe(true)
+    }
   })
 
   it('不認得的題目一律不過', () => {

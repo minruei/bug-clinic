@@ -15,11 +15,22 @@ export type ChimeraCode = {
   js: string
 }
 
+// 難度：只改一格 CSS 是簡單，要動到 HTML 或兩格是普通，JS 題是挑戰
+export type DailyLevel = '簡單' | '普通' | '挑戰'
+
 export type Challenge = {
   key: string
   title: string
   description: string
+  level: DailyLevel
+  // 提示分三層，玩家按「再多一點提示」才看到下一層
+  // 第 1 層：方向，要改哪一格、改什麼；後端說「還沒完成喔」時也顯示這一層
   hint: string
+  // 第 2 層：去哪裡找參考（零件商店的「看程式碼」或動作參考的某一招），不叫玩家去買零件
+  reference: string
+  // 第 3 層：可以直接貼的範例程式碼，貼在預設合成獸上就能過關
+  // html 貼在「零件裝在這裡」那一行上面，css、js 貼在那一格的最後面
+  example: Partial<ChimeraCode>
   // 動作參考裡可以參考的招式 id（lib/moves.ts），JS 題才有
   moveId?: string
   check: (code: ChimeraCode) => boolean
@@ -60,8 +71,18 @@ export function pickChallenge(date: string): Challenge {
 
 // 給前端看的題目：不含檢查函式
 export function publicChallenge(challenge: Challenge) {
-  const { key, title, description, hint, moveId } = challenge
-  return { key, title, description, hint, moveId: moveId ?? null, reward: DAILY_REWARD }
+  const { key, title, description, level, hint, reference, example, moveId } = challenge
+  return {
+    key,
+    title,
+    description,
+    level,
+    hint,
+    reference,
+    example,
+    moveId: moveId ?? null,
+    reward: DAILY_REWARD,
+  }
 }
 
 export function stripCssComments(css: string) {
@@ -417,7 +438,28 @@ export const challenges: Challenge[] = [
     key: 'red-eyes',
     title: '紅眼睛',
     description: '把合成獸的眼睛變成紅色。',
-    hint: '先在商店裝上眼睛，再到 CSS 找到眼睛的選擇器（例如 .eye），把 background 改成紅色系，例如 #e53935。',
+    level: '普通',
+    hint: '眼睛要兩格一起改：HTML 放兩個 class 是 eye 的元素，CSS 的 .eye 把 background 設成紅色系，例如 #e53935。',
+    reference: '零件商店的「眼睛」分頁，點任何一個眼睛零件的「看程式碼」，就看得到眼睛的 HTML 和 CSS 怎麼寫，不用買。',
+    example: {
+      html: `<div class="eye left"></div>
+<div class="eye right"></div>`,
+      css: `.eye {
+  position: absolute;
+  top: 30%;
+  width: 14px;
+  height: 14px;
+  background: #e53935;
+}
+
+.eye.left {
+  left: 25%;
+}
+
+.eye.right {
+  right: 25%;
+}`,
+    },
     check: ({ css }) => {
       const value = lastValue(css, isEye, ['background', 'background-color'])
       const color = value ? findColor(value) : null
@@ -428,7 +470,14 @@ export const challenges: Challenge[] = [
     key: 'round-body',
     title: '圓滾滾',
     description: '把身體變成圓的。',
-    hint: '在 .body 加上 border-radius，用 50% 最圓；四個角都要夠圓才算。',
+    level: '簡單',
+    hint: '在 CSS 烤漆的 .body 加上 border-radius，四個角都要夠圓：至少 25% 或 30px，用 50% 最圓。',
+    reference: '零件商店的「身體」分頁，點「圓滾滾」的「看程式碼」，看它的 border-radius 怎麼寫。',
+    example: {
+      css: `.body {
+  border-radius: 50%;
+}`,
+    },
     // 每個角都要夠圓：百分比至少 25%，或至少 30px（em 換算成 16px）
     // 斜線後面是垂直半徑，只看前面的水平半徑
     check: ({ css }) => {
@@ -446,7 +495,18 @@ export const challenges: Challenge[] = [
     key: 'click-happy',
     title: '點一下就開心',
     description: '點一下身體，讓身體加上 happy 這個 class。',
-    hint: "跟預設的點一下跳一樣：在 click 事件裡寫 body.classList.add('happy')。",
+    level: '挑戰',
+    hint: "在 JS 引擎的 click 事件裡，幫身體加上 happy 這個 class：body.classList.add('happy')。",
+    reference: '動作參考第 5 招「點一下轉一圈」：一樣是點一下就幫身體加上 class，把 spin 換成 happy 就好。',
+    example: {
+      js: `body.addEventListener('click', () => {
+  body.classList.add('happy');
+});`,
+      css: `/* 開心的時候毛色變亮 */
+.body.happy {
+  --fur-color: #f2d16b;
+}`,
+    },
     moveId: 'click-spin',
     // 後端看不到真的點下去的結果，只確認 click 的處理函式裡有加上 happy
     check: ({ js }) => {
@@ -458,7 +518,14 @@ export const challenges: Challenge[] = [
     key: 'wide-body',
     title: '大胖子',
     description: '讓身體變寬，寬度 160px 以上。',
-    hint: '在 .body 把 width 改成 160px 以上，例如 width: 180px;',
+    level: '簡單',
+    hint: '在 CSS 烤漆的 .body 把 width 改成 160px 以上。',
+    reference: '零件商店的「身體」分頁，點「扁扁胖胖」的「看程式碼」，看它怎麼把身體變寬。',
+    example: {
+      css: `.body {
+  width: 180px;
+}`,
+    },
     check: ({ css }) => {
       const value = lastValue(css, isBody, ['width'])
       const len = value ? parseLength(value) : null
@@ -469,7 +536,19 @@ export const challenges: Challenge[] = [
     key: 'name-tag',
     title: '取個名字',
     description: '在身體裡加一個元素，寫上合成獸的名字。',
-    hint: '在 HTML 的 <div class="body"> 裡面加一行，例如 <p>小怪</p>。',
+    level: '普通',
+    hint: '在 HTML 骨架的 <div class="body"> 裡面加一個元素，裡面寫上名字，例如 <p>小怪</p>。',
+    reference: '打開 HTML 骨架，找到「零件裝在這裡」那一行，它就在 .body 裡面，寫在那一行上面的東西都會在身體裡。',
+    example: {
+      html: '<p class="name">小怪</p>',
+      css: `.name {
+  position: absolute;
+  bottom: 4px;
+  width: 100%;
+  margin: 0;
+  text-align: center;
+}`,
+    },
     // .body 裡面的某個元素（不含 .body 自己）有文字；script、style 裡的字不算
     check: ({ html }) =>
       parseHtml(html).some(
@@ -484,7 +563,15 @@ export const challenges: Challenge[] = [
     key: 'color-interval',
     title: '變色龍',
     description: '用 setInterval 讓合成獸每秒換一次毛色。',
-    hint: "setInterval 每 1000 毫秒執行一次，在裡面用 body.style.setProperty('--fur-color', 新顏色) 改毛色。",
+    level: '挑戰',
+    hint: "在 JS 引擎用 setInterval，每 1000 毫秒用 body.style.setProperty('--fur-color', 新顏色) 換一次毛色。",
+    reference: '動作參考第 6 招「定時眨眼」看 setInterval 怎麼寫，第 13 招「每次點換隨機顏色」看怎麼算出隨機的顏色。',
+    example: {
+      js: `setInterval(() => {
+  const hue = Math.floor(Math.random() * 360);
+  body.style.setProperty('--fur-color', 'hsl(' + hue + ' 70% 65%)');
+}, 1000);`,
+    },
     moveId: 'blink-interval',
     // setInterval 的括號裡有改毛色或背景色的寫法
     check: ({ js }) => {
@@ -501,7 +588,14 @@ export const challenges: Challenge[] = [
     key: 'blue-fur',
     title: '藍色的毛',
     description: '把合成獸的毛色變成藍色系。',
-    hint: '.body 裡的 --fur-color 就是毛色，改成藍色系，例如 #42a5f5。',
+    level: '簡單',
+    hint: '在 CSS 烤漆的 .body 把 --fur-color 改成藍色系，例如 #42a5f5。',
+    reference: 'CSS 烤漆最上面的 .body 就有 --fur-color，色碼旁邊的小色塊點下去可以直接選顏色。',
+    example: {
+      css: `.body {
+  --fur-color: #42a5f5;
+}`,
+    },
     // 只看 .body 的 --fur-color：寫在 :root 會被 .body 自己的 --fur-color 蓋掉，畫面不會變藍
     check: ({ css }) => {
       const value = lastValue(css, isBody, ['--fur-color'])
@@ -513,7 +607,30 @@ export const challenges: Challenge[] = [
     key: 'two-horns',
     title: '雙角獸',
     description: '讓合成獸有兩支以上的角。',
-    hint: '角是 class 開頭為 horn 的元素，在 HTML 再複製一個角，或到商店買雙角的零件。',
+    level: '普通',
+    hint: '在 HTML 骨架放兩個 class 開頭是 horn 的元素，再用 CSS 畫出角的樣子。',
+    reference: '零件商店的「角」分頁，點「雙角」的「看程式碼」，就看得到兩支角的 HTML 和 CSS，不用買。',
+    example: {
+      html: `<div class="horn left"></div>
+<div class="horn right"></div>`,
+      css: `.horn {
+  position: absolute;
+  top: -24px;
+  width: 12px;
+  height: 20px;
+  background: #fbf8f1;
+  border: 4px solid #4a3426;
+  border-bottom: 0;
+}
+
+.horn.left {
+  left: 20%;
+}
+
+.horn.right {
+  right: 20%;
+}`,
+    },
     // 一支角裡面的小零件（例如鹿角的分岔）不另外算，只算最外層的角
     check: ({ html }) =>
       parseHtml(html).filter((el) => isHorn(el) && !hasAncestor(el, isHorn)).length >= 2,
@@ -522,7 +639,18 @@ export const challenges: Challenge[] = [
     key: 'dblclick-toggle',
     title: '點兩下換表情',
     description: '點兩下身體，用 classList.toggle 切換一個 class。',
-    hint: "用 dblclick 事件，裡面寫 body.classList.toggle('squint')，再到 CSS 寫 .body.squint 的樣子。",
+    level: '挑戰',
+    hint: "在 JS 引擎加一個 dblclick 事件，裡面寫 body.classList.toggle('squint')，再到 CSS 寫 .body.squint 的樣子。",
+    reference: '動作參考第 3 招「點兩下換表情」：dblclick 加上 classList.toggle，就是這一題要的寫法。',
+    example: {
+      js: `body.addEventListener('dblclick', () => {
+  body.classList.toggle('squint');
+});`,
+      css: `/* 點兩下壓扁，再點兩下變回來 */
+.body.squint {
+  scale: 1 0.8;
+}`,
+    },
     moveId: 'dblclick-squint',
     // dblclick 的處理函式裡有 classList.toggle
     check: ({ js }) => {
@@ -534,7 +662,14 @@ export const challenges: Challenge[] = [
     key: 'body-shadow',
     title: '影子',
     description: '幫身體加上陰影。',
-    hint: '在 .body 加上 box-shadow，例如 box-shadow: 4px 4px 0 #4a3426;',
+    level: '簡單',
+    hint: '在 CSS 烤漆的 .body 加上 box-shadow，例如 box-shadow: 8px 8px 0 #4a3426;',
+    reference: '零件商店的「身體」分頁，點「布丁」的「看程式碼」，它也是用 box-shadow 畫出焦糖那一層。',
+    example: {
+      css: `.body {
+  box-shadow: 8px 8px 0 #4a3426;
+}`,
+    },
     check: ({ css }) => {
       const value = lastValue(css, isBody, ['box-shadow'])
       return !!value && value.toLowerCase() !== 'none'

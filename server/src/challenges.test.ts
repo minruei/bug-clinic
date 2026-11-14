@@ -108,10 +108,32 @@ describe('題目清單', () => {
     }
   })
 
-  it('給前端的資料不含檢查函式', () => {
+  it('給前端的資料不含檢查函式，有難度和三層提示', () => {
     const data = publicChallenge(challenges[0])
     expect(data).not.toHaveProperty('check')
     expect(data.reward).toBe(20)
+    expect(Object.keys(data)).toEqual(expect.arrayContaining(['level', 'hint', 'reference', 'example']))
+  })
+
+  it('每一題都有難度、三層提示，範例至少有一格程式碼', () => {
+    for (const c of challenges) {
+      expect(['簡單', '普通', '挑戰'], c.key).toContain(c.level)
+      expect(c.hint, c.key).not.toBe('')
+      expect(c.reference, c.key).not.toBe('')
+      expect(Object.values(c.example).some((code) => code && code.trim()), c.key).toBe(true)
+    }
+  })
+
+  it('JS 題（有 moveId 的）都標成挑戰', () => {
+    for (const c of challenges.filter((c) => c.moveId)) expect(c.level, c.key).toBe('挑戰')
+    for (const c of challenges.filter((c) => !c.moveId)) expect(c.level, c.key).not.toBe('挑戰')
+  })
+
+  // 「看程式碼，不用買」可以，「去買」「先買」「到商店買」「先裝上」不行
+  it('提示不叫玩家去買零件', () => {
+    for (const c of challenges) {
+      expect(`${c.hint}${c.reference}`, c.key).not.toMatch(/去買|先買|到商店買|買一個|先在商店|裝上/)
+    }
   })
 })
 
@@ -375,6 +397,16 @@ describe('過關檢查', () => {
     describe(key, () => {
       it('預設合成獸不會過', () => {
         expect(challenge(key).check(base)).toBe(false)
+      })
+      // 第 3 層提示的範例：照提示貼在預設合成獸上就會過，不用先買零件
+      it('照第 3 層提示貼上範例就會過', () => {
+        const { html, css, js } = challenge(key).example
+        const code: ChimeraCode = {
+          html: html ? BASE_HTML.replace('<!-- 零件裝在這裡 -->', `${html}\n<!-- 零件裝在這裡 -->`) : BASE_HTML,
+          css: css ? `${BASE_CSS}\n\n${css}` : BASE_CSS,
+          js: js ? `${BASE_JS}\n${js}` : BASE_JS,
+        }
+        expect(challenge(key).check(code)).toBe(true)
       })
       for (const [name, code] of pass) {
         it(`會過：${name}`, () => expect(challenge(key).check(code)).toBe(true))
