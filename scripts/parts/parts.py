@@ -259,21 +259,211 @@ PARTS += [
           pointer-events: none;
         }
     '''),
-    part('body', '蛋形', 'css', 20, css='''
+    part('body', '蛋形', 'css', 25, css='''
+        /* 想換顏色、移位置，改這裡就好 */
         /* 上窄下寬：上面的垂直半徑比較大 */
         .body {
           --horn-y: 9%;
           --leg-y: 93%;
           --neck-y: 76%;
           --wing-x: 9px;
-          width: 110px;
+          width: 112px;
           height: 120px;
+          /* 圓角看不到，但點身體的範圍會跟著變圓 */
           border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
         }
 
         /* 身體比較高，對話框跟著往上移：身體高度的一半 + 50px */
         .chimera {
           --speech-y: 110px;
+        }
+
+        /* 下面是剪出形狀的程式，想改形狀再研究 */
+        /* .body 只當透明的容器，看得到的身體畫在後面兩層，零件就不會被剪掉 */
+        /* background-clip: text 讓 .body 的底色只畫在文字裡，.body 沒有文字就看不到；::after 用 background: inherit 拿到同一個底色 */
+        /* 左邊、上面的點從左上角量；右邊、下面的點用 calc(100% - ...) 從右下角量，身體變寬變高時形狀跟著撐開 */
+        .body {
+          border-color: transparent;
+          -webkit-background-clip: text;
+          background-clip: text;
+          --body-outer: polygon(
+            48px 0,
+            calc(100% - 48px) 0,
+            calc(100% - 48px) 4px,
+            calc(100% - 36px) 4px,
+            calc(100% - 36px) 8px,
+            calc(100% - 32px) 8px,
+            calc(100% - 32px) 12px,
+            calc(100% - 24px) 12px,
+            calc(100% - 24px) 16px,
+            calc(100% - 20px) 16px,
+            calc(100% - 20px) 20px,
+            calc(100% - 16px) 20px,
+            calc(100% - 16px) 28px,
+            calc(100% - 12px) 28px,
+            calc(100% - 12px) 36px,
+            calc(100% - 8px) 36px,
+            calc(100% - 8px) 44px,
+            calc(100% - 4px) 44px,
+            calc(100% - 4px) 56px,
+            100% 56px,
+            100% calc(100% - 40px),
+            calc(100% - 4px) calc(100% - 40px),
+            calc(100% - 4px) calc(100% - 28px),
+            calc(100% - 8px) calc(100% - 28px),
+            calc(100% - 8px) calc(100% - 24px),
+            calc(100% - 12px) calc(100% - 24px),
+            calc(100% - 12px) calc(100% - 20px),
+            calc(100% - 16px) calc(100% - 20px),
+            calc(100% - 16px) calc(100% - 16px),
+            calc(100% - 20px) calc(100% - 16px),
+            calc(100% - 20px) calc(100% - 12px),
+            calc(100% - 24px) calc(100% - 12px),
+            calc(100% - 24px) calc(100% - 8px),
+            calc(100% - 32px) calc(100% - 8px),
+            calc(100% - 32px) calc(100% - 4px),
+            calc(100% - 44px) calc(100% - 4px),
+            calc(100% - 44px) 100%,
+            44px 100%,
+            44px calc(100% - 4px),
+            32px calc(100% - 4px),
+            32px calc(100% - 8px),
+            24px calc(100% - 8px),
+            24px calc(100% - 12px),
+            20px calc(100% - 12px),
+            20px calc(100% - 16px),
+            16px calc(100% - 16px),
+            16px calc(100% - 20px),
+            12px calc(100% - 20px),
+            12px calc(100% - 24px),
+            8px calc(100% - 24px),
+            8px calc(100% - 28px),
+            4px calc(100% - 28px),
+            4px calc(100% - 40px),
+            0 calc(100% - 40px),
+            0 56px,
+            4px 56px,
+            4px 44px,
+            8px 44px,
+            8px 36px,
+            12px 36px,
+            12px 28px,
+            16px 28px,
+            16px 20px,
+            20px 20px,
+            20px 16px,
+            24px 16px,
+            24px 12px,
+            32px 12px,
+            32px 8px,
+            36px 8px,
+            36px 4px,
+            48px 4px
+          );
+          --body-inner: polygon(
+            48px 0,
+            calc(100% - 48px) 0,
+            calc(100% - 48px) 4px,
+            calc(100% - 36px) 4px,
+            calc(100% - 36px) 8px,
+            calc(100% - 32px) 8px,
+            calc(100% - 32px) 12px,
+            calc(100% - 24px) 12px,
+            calc(100% - 24px) 16px,
+            calc(100% - 20px) 16px,
+            calc(100% - 20px) 20px,
+            calc(100% - 16px) 20px,
+            calc(100% - 16px) 28px,
+            calc(100% - 12px) 28px,
+            calc(100% - 12px) 36px,
+            calc(100% - 8px) 36px,
+            calc(100% - 8px) 44px,
+            calc(100% - 4px) 44px,
+            calc(100% - 4px) 56px,
+            100% 56px,
+            100% calc(100% - 40px),
+            calc(100% - 4px) calc(100% - 40px),
+            calc(100% - 4px) calc(100% - 28px),
+            calc(100% - 8px) calc(100% - 28px),
+            calc(100% - 8px) calc(100% - 24px),
+            calc(100% - 12px) calc(100% - 24px),
+            calc(100% - 12px) calc(100% - 20px),
+            calc(100% - 16px) calc(100% - 20px),
+            calc(100% - 16px) calc(100% - 16px),
+            calc(100% - 20px) calc(100% - 16px),
+            calc(100% - 20px) calc(100% - 12px),
+            calc(100% - 24px) calc(100% - 12px),
+            calc(100% - 24px) calc(100% - 8px),
+            calc(100% - 32px) calc(100% - 8px),
+            calc(100% - 32px) calc(100% - 4px),
+            calc(100% - 44px) calc(100% - 4px),
+            calc(100% - 44px) 100%,
+            44px 100%,
+            44px calc(100% - 4px),
+            32px calc(100% - 4px),
+            32px calc(100% - 8px),
+            24px calc(100% - 8px),
+            24px calc(100% - 12px),
+            20px calc(100% - 12px),
+            20px calc(100% - 16px),
+            16px calc(100% - 16px),
+            16px calc(100% - 20px),
+            12px calc(100% - 20px),
+            12px calc(100% - 24px),
+            8px calc(100% - 24px),
+            8px calc(100% - 28px),
+            4px calc(100% - 28px),
+            4px calc(100% - 40px),
+            0 calc(100% - 40px),
+            0 56px,
+            4px 56px,
+            4px 44px,
+            8px 44px,
+            8px 36px,
+            12px 36px,
+            12px 28px,
+            16px 28px,
+            16px 20px,
+            20px 20px,
+            20px 16px,
+            24px 16px,
+            24px 12px,
+            32px 12px,
+            32px 8px,
+            36px 8px,
+            36px 4px,
+            48px 4px
+          );
+        }
+
+        /* 外框層：深棕色，剪成外面那一圈 */
+        .body::before {
+          content: '';
+          position: absolute;
+          inset: -4px;
+          z-index: -1;
+          background: #4a3426;
+          border: 0;
+          border-radius: 0;
+          clip-path: var(--body-outer);
+          pointer-events: none;
+        }
+
+        /* 底色層：繼承 .body 的毛色和花紋，比外框層往內縮一格 */
+        .body::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          z-index: -1;
+          background: inherit;
+          -webkit-background-clip: border-box;
+          background-clip: border-box;
+          border-radius: 0;
+          box-shadow:
+            inset 4px 4px 0 rgb(251 248 241 / 45%),
+            inset -4px -4px 0 rgb(46 34 26 / 25%);
+          clip-path: var(--body-inner);
+          pointer-events: none;
         }
     '''),
     part('body', '麵包', 'css', 25, css='''
@@ -412,26 +602,114 @@ PARTS += [
         }
     '''),
     part('body', '高高瘦瘦', 'css', 25, css='''
+        /* 想換顏色、移位置，改這裡就好 */
         .body {
-          width: 90px;
-          height: 126px;
+          width: 92px;
+          height: 124px;
+          /* 圓角看不到，但點身體的範圍會跟著變圓 */
           border-radius: 16px;
         }
 
         /* 身體比較高，對話框跟著往上移：身體高度的一半 + 50px */
         .chimera {
-          --speech-y: 113px;
+          --speech-y: 112px;
+        }
+
+        /* 下面是剪出形狀的程式，想改形狀再研究 */
+        /* .body 只當透明的容器，看得到的身體畫在後面兩層，零件就不會被剪掉 */
+        /* background-clip: text 讓 .body 的底色只畫在文字裡，.body 沒有文字就看不到；::after 用 background: inherit 拿到同一個底色 */
+        /* 左邊、上面的點從左上角量；右邊、下面的點用 calc(100% - ...) 從右下角量，身體變寬變高時形狀跟著撐開 */
+        .body {
+          border-color: transparent;
+          -webkit-background-clip: text;
+          background-clip: text;
+          --body-outer: polygon(
+            8px 0,
+            calc(100% - 8px) 0,
+            calc(100% - 8px) 4px,
+            calc(100% - 4px) 4px,
+            calc(100% - 4px) 8px,
+            100% 8px,
+            100% calc(100% - 8px),
+            calc(100% - 4px) calc(100% - 8px),
+            calc(100% - 4px) calc(100% - 4px),
+            calc(100% - 8px) calc(100% - 4px),
+            calc(100% - 8px) 100%,
+            8px 100%,
+            8px calc(100% - 4px),
+            4px calc(100% - 4px),
+            4px calc(100% - 8px),
+            0 calc(100% - 8px),
+            0 8px,
+            4px 8px,
+            4px 4px,
+            8px 4px
+          );
+          --body-inner: polygon(
+            8px 0,
+            calc(100% - 8px) 0,
+            calc(100% - 8px) 4px,
+            calc(100% - 4px) 4px,
+            calc(100% - 4px) 8px,
+            100% 8px,
+            100% calc(100% - 8px),
+            calc(100% - 4px) calc(100% - 8px),
+            calc(100% - 4px) calc(100% - 4px),
+            calc(100% - 8px) calc(100% - 4px),
+            calc(100% - 8px) 100%,
+            8px 100%,
+            8px calc(100% - 4px),
+            4px calc(100% - 4px),
+            4px calc(100% - 8px),
+            0 calc(100% - 8px),
+            0 8px,
+            4px 8px,
+            4px 4px,
+            8px 4px
+          );
+        }
+
+        /* 外框層：深棕色，剪成外面那一圈 */
+        .body::before {
+          content: '';
+          position: absolute;
+          inset: -4px;
+          z-index: -1;
+          background: #4a3426;
+          border: 0;
+          border-radius: 0;
+          clip-path: var(--body-outer);
+          pointer-events: none;
+        }
+
+        /* 底色層：繼承 .body 的毛色和花紋，比外框層往內縮一格 */
+        .body::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          z-index: -1;
+          background: inherit;
+          -webkit-background-clip: border-box;
+          background-clip: border-box;
+          border-radius: 0;
+          box-shadow:
+            inset 4px 4px 0 rgb(251 248 241 / 45%),
+            inset -4px -4px 0 rgb(46 34 26 / 25%);
+          clip-path: var(--body-inner);
+          pointer-events: none;
         }
     '''),
     part('body', '扁扁胖胖', 'css', 25, css='''
+        /* 想換顏色、移位置，改這裡就好 */
         /* 身體比較矮：眼睛、嘴巴、脖子往上挪一點，領結才不會掉到身體外面 */
         .body {
           --eye-y: 25%;
           --mouth-y: 48%;
           --neck-y: 70%;
           --wing-x: 4px;
-          width: 150px;
+          width: 152px;
           height: 80px;
+          /* 圓角看不到，但點身體的範圍會跟著變圓 */
           border-radius: 40px;
         }
 
@@ -439,21 +717,241 @@ PARTS += [
         .chimera {
           --speech-y: 90px;
         }
-    '''),
-    part('body', '布丁', 'css', 30, css='''
-        /* 上面那層焦糖用 inset 陰影畫，改 24px 調焦糖厚度 */
-        /* 眼睛往下一點，才不會壓到焦糖 */
+
+        /* 下面是剪出形狀的程式，想改形狀再研究 */
+        /* .body 只當透明的容器，看得到的身體畫在後面兩層，零件就不會被剪掉 */
+        /* background-clip: text 讓 .body 的底色只畫在文字裡，.body 沒有文字就看不到；::after 用 background: inherit 拿到同一個底色 */
+        /* 左邊、上面的點從左上角量；右邊、下面的點用 calc(100% - ...) 從右下角量，身體變寬變高時形狀跟著撐開 */
         .body {
-          --eye-y: 34%;
-          border-radius: 30px 30px 10px 10px;
-          box-shadow: inset 0 24px 0 #8a4f1d;
+          border-color: transparent;
+          -webkit-background-clip: text;
+          background-clip: text;
+          --body-outer: polygon(
+            28px 0,
+            calc(100% - 28px) 0,
+            calc(100% - 28px) 4px,
+            calc(100% - 20px) 4px,
+            calc(100% - 20px) 8px,
+            calc(100% - 12px) 8px,
+            calc(100% - 12px) 12px,
+            calc(100% - 8px) 12px,
+            calc(100% - 8px) 20px,
+            calc(100% - 4px) 20px,
+            calc(100% - 4px) 28px,
+            100% 28px,
+            100% calc(100% - 28px),
+            calc(100% - 4px) calc(100% - 28px),
+            calc(100% - 4px) calc(100% - 20px),
+            calc(100% - 8px) calc(100% - 20px),
+            calc(100% - 8px) calc(100% - 12px),
+            calc(100% - 12px) calc(100% - 12px),
+            calc(100% - 12px) calc(100% - 8px),
+            calc(100% - 20px) calc(100% - 8px),
+            calc(100% - 20px) calc(100% - 4px),
+            calc(100% - 28px) calc(100% - 4px),
+            calc(100% - 28px) 100%,
+            28px 100%,
+            28px calc(100% - 4px),
+            20px calc(100% - 4px),
+            20px calc(100% - 8px),
+            12px calc(100% - 8px),
+            12px calc(100% - 12px),
+            8px calc(100% - 12px),
+            8px calc(100% - 20px),
+            4px calc(100% - 20px),
+            4px calc(100% - 28px),
+            0 calc(100% - 28px),
+            0 28px,
+            4px 28px,
+            4px 20px,
+            8px 20px,
+            8px 12px,
+            12px 12px,
+            12px 8px,
+            20px 8px,
+            20px 4px,
+            28px 4px
+          );
+          --body-inner: polygon(
+            28px 0,
+            calc(100% - 28px) 0,
+            calc(100% - 28px) 4px,
+            calc(100% - 20px) 4px,
+            calc(100% - 20px) 8px,
+            calc(100% - 12px) 8px,
+            calc(100% - 12px) 12px,
+            calc(100% - 8px) 12px,
+            calc(100% - 8px) 20px,
+            calc(100% - 4px) 20px,
+            calc(100% - 4px) 28px,
+            100% 28px,
+            100% calc(100% - 28px),
+            calc(100% - 4px) calc(100% - 28px),
+            calc(100% - 4px) calc(100% - 20px),
+            calc(100% - 8px) calc(100% - 20px),
+            calc(100% - 8px) calc(100% - 12px),
+            calc(100% - 12px) calc(100% - 12px),
+            calc(100% - 12px) calc(100% - 8px),
+            calc(100% - 20px) calc(100% - 8px),
+            calc(100% - 20px) calc(100% - 4px),
+            calc(100% - 28px) calc(100% - 4px),
+            calc(100% - 28px) 100%,
+            28px 100%,
+            28px calc(100% - 4px),
+            20px calc(100% - 4px),
+            20px calc(100% - 8px),
+            12px calc(100% - 8px),
+            12px calc(100% - 12px),
+            8px calc(100% - 12px),
+            8px calc(100% - 20px),
+            4px calc(100% - 20px),
+            4px calc(100% - 28px),
+            0 calc(100% - 28px),
+            0 28px,
+            4px 28px,
+            4px 20px,
+            8px 20px,
+            8px 12px,
+            12px 12px,
+            12px 8px,
+            20px 8px,
+            20px 4px,
+            28px 4px
+          );
         }
 
-        /* 焦糖也畫在立體感那一層，身體做動畫的時候焦糖才不會被底色蓋住 */
+        /* 外框層：深棕色，剪成外面那一圈 */
+        .body::before {
+          content: '';
+          position: absolute;
+          inset: -4px;
+          z-index: -1;
+          background: #4a3426;
+          border: 0;
+          border-radius: 0;
+          clip-path: var(--body-outer);
+          pointer-events: none;
+        }
+
+        /* 底色層：繼承 .body 的毛色和花紋，比外框層往內縮一格 */
         .body::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          z-index: -1;
+          background: inherit;
+          -webkit-background-clip: border-box;
+          background-clip: border-box;
+          border-radius: 0;
           box-shadow:
-            inset 0 24px 0 #8a4f1d,
+            inset 4px 4px 0 rgb(251 248 241 / 45%),
             inset -4px -4px 0 rgb(46 34 26 / 25%);
+          clip-path: var(--body-inner);
+          pointer-events: none;
+        }
+    '''),
+    part('body', '布丁', 'css', 30, css='''
+        /* 想換顏色、移位置，改這裡就好 */
+        /* --caramel-color 是焦糖的顏色，--caramel-height 是焦糖的厚度 */
+        /* 眼睛往下一點，才不會壓到焦糖 */
+        .body {
+          --caramel-color: #8a4f1d;
+          --caramel-height: 24px;
+          --eye-y: 34%;
+          /* 圓角看不到，但點身體的範圍會跟著變圓 */
+          border-radius: 30px 30px 10px 10px;
+        }
+
+        /* 下面是剪出形狀的程式，想改形狀再研究 */
+        /* .body 只當透明的容器，看得到的身體畫在後面兩層，零件就不會被剪掉 */
+        /* background-clip: text 讓 .body 的底色只畫在文字裡，.body 沒有文字就看不到；::after 用 background: inherit 拿到同一個底色 */
+        /* 左邊、上面的點從左上角量；右邊、下面的點用 calc(100% - ...) 從右下角量，身體變寬變高時形狀跟著撐開 */
+        .body {
+          border-color: transparent;
+          -webkit-background-clip: text;
+          background-clip: text;
+          --body-outer: polygon(
+            20px 0,
+            calc(100% - 20px) 0,
+            calc(100% - 20px) 4px,
+            calc(100% - 12px) 4px,
+            calc(100% - 12px) 8px,
+            calc(100% - 8px) 8px,
+            calc(100% - 8px) 12px,
+            calc(100% - 4px) 12px,
+            calc(100% - 4px) 20px,
+            100% 20px,
+            100% calc(100% - 4px),
+            calc(100% - 4px) calc(100% - 4px),
+            calc(100% - 4px) 100%,
+            4px 100%,
+            4px calc(100% - 4px),
+            0 calc(100% - 4px),
+            0 20px,
+            4px 20px,
+            4px 12px,
+            8px 12px,
+            8px 8px,
+            12px 8px,
+            12px 4px,
+            20px 4px
+          );
+          --body-inner: polygon(
+            20px 0,
+            calc(100% - 20px) 0,
+            calc(100% - 20px) 4px,
+            calc(100% - 12px) 4px,
+            calc(100% - 12px) 8px,
+            calc(100% - 8px) 8px,
+            calc(100% - 8px) 12px,
+            calc(100% - 4px) 12px,
+            calc(100% - 4px) 20px,
+            100% 20px,
+            100% calc(100% - 4px),
+            calc(100% - 4px) calc(100% - 4px),
+            calc(100% - 4px) 100%,
+            4px 100%,
+            4px calc(100% - 4px),
+            0 calc(100% - 4px),
+            0 20px,
+            4px 20px,
+            4px 12px,
+            8px 12px,
+            8px 8px,
+            12px 8px,
+            12px 4px,
+            20px 4px
+          );
+        }
+
+        /* 外框層：深棕色，剪成外面那一圈 */
+        .body::before {
+          content: '';
+          position: absolute;
+          inset: -4px;
+          z-index: -1;
+          background: #4a3426;
+          border: 0;
+          border-radius: 0;
+          clip-path: var(--body-outer);
+          pointer-events: none;
+        }
+
+        /* 底色層：繼承 .body 的毛色和花紋，比外框層往內縮一格；焦糖用 inset 陰影畫在這一層上面 */
+        .body::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          z-index: -1;
+          background: inherit;
+          -webkit-background-clip: border-box;
+          background-clip: border-box;
+          border-radius: 0;
+          box-shadow:
+            inset 0 var(--caramel-height) 0 var(--caramel-color),
+            inset -4px -4px 0 rgb(46 34 26 / 25%);
+          clip-path: var(--body-inner);
+          pointer-events: none;
         }
     '''),
     part('body', '雲朵', 'css', 40, css='''
@@ -2048,65 +2546,125 @@ PARTS += [
         }
     '''),
     part('pattern', '格子', 'css', 20, css='''
-        /* 直的、橫的半透明條紋疊在一起，交叉的地方比較深 */
+        /* 想換顏色，改這裡就好：--check-color 是格子的顏色，用半透明才看得到底下的毛色 */
+        .body {
+          --check-color: rgb(46 34 26 / 12%);
+        }
+
+        /* 直的、橫的條紋疊在一起，交叉的地方比較深；每 32px（8 × 8 格）一個循環 */
         .body {
           background-image:
-            linear-gradient(90deg, rgba(0, 0, 0, 0.12) 50%, transparent 50%),
-            linear-gradient(rgba(0, 0, 0, 0.12) 50%, transparent 50%);
-          background-size: 24px 24px;
+            linear-gradient(90deg, var(--check-color) 50%, transparent 50%),
+            linear-gradient(var(--check-color) 50%, transparent 50%);
+          background-size: 32px 32px;
         }
     '''),
     part('pattern', '漸層', 'css', 25, css='''
-        /* 上面疊白、下面疊黑，看起來像有光從上面照下來 */
+        /* 想換顏色，改這裡就好：上面疊亮色、下面疊暗色，看起來像有光從上面照下來 */
         .body {
-          background-image: linear-gradient(rgba(255, 255, 255, 0.45), rgba(0, 0, 0, 0.25));
+          --light-color: rgb(251 248 241 / 45%);
+          --dark-color: rgb(46 34 26 / 25%);
+        }
+
+        /* 像素風的漸層：不讓顏色慢慢變，分成 5 段一段一段變暗 */
+        /* 每一段寫兩個位置（例如 20% 40%），同一段裡顏色一樣，邊緣就是直的 */
+        .body {
+          background-image: linear-gradient(
+            var(--light-color) 0 20%,
+            rgb(251 248 241 / 20%) 20% 40%,
+            transparent 40% 60%,
+            rgb(46 34 26 / 12%) 60% 80%,
+            var(--dark-color) 80%
+          );
         }
     '''),
     part('pattern', '彩虹', 'css', 30, css='''
+        /* 想換顏色，改這裡就好：五段彩虹的顏色 */
+        .body {
+          --rainbow-1: #c8553d;
+          --rainbow-2: #e8a33d;
+          --rainbow-3: #f2d16b;
+          --rainbow-4: #8cc47a;
+          --rainbow-5: #6b8fb0;
+        }
+
+        /* 由上往下五段，每段佔身體高度的 20%，邊緣是直的 */
         .body {
           background-image: linear-gradient(
-            rgba(230, 102, 102, 0.6) 0 17%,
-            rgba(242, 165, 65, 0.6) 17% 33%,
-            rgba(245, 213, 71, 0.6) 33% 50%,
-            rgba(124, 195, 107, 0.6) 50% 67%,
-            rgba(90, 169, 230, 0.6) 67% 83%,
-            rgba(155, 127, 209, 0.6) 83%
+            var(--rainbow-1) 0 20%,
+            var(--rainbow-2) 20% 40%,
+            var(--rainbow-3) 40% 60%,
+            var(--rainbow-4) 60% 80%,
+            var(--rainbow-5) 80%
           );
         }
     '''),
     part('pattern', '斑馬紋', 'css', 25, css='''
+        /* 想換顏色，改這裡就好：--zebra-color 是條紋的顏色 */
         .body {
-          background-image: repeating-linear-gradient(
-            100deg,
-            transparent 0 10px,
-            rgba(43, 29, 20, 0.8) 10px 16px
-          );
+          --zebra-color: #2e221a;
+        }
+
+        /* 下面是畫條紋的程式，想改形狀再研究 */
+        /* 一塊 32 × 24 的磁磚裡有兩小段 12px 寬的條紋：上面那段在左邊，下面那段往右挪 4px，排起來是鋸齒狀的直條紋 */
+        /* conic-gradient 從 270 度（左邊）開始畫 25%，剛好畫出 12px 12px 那個點左上角的方塊 */
+        .body {
+          background-image:
+            conic-gradient(from 270deg at 12px 12px, var(--zebra-color) 25%, transparent 0),
+            conic-gradient(from 270deg at 12px 12px, var(--zebra-color) 25%, transparent 0);
+          background-size: 32px 24px;
+          background-position:
+            0 0,
+            4px 12px;
         }
     '''),
     part('pattern', '星空', 'css', 30, css='''
-        /* 兩層大小不同的白點錯開放，最下面一層是深藍色 */
+        /* 想換顏色，改這裡就好：--star-color 是星星，--sky-top 和 --sky-bottom 是夜空上下兩段的顏色 */
+        .body {
+          --star-color: #fbf8f1;
+          --sky-top: #1d2b53;
+          --sky-bottom: #3b3f7a;
+        }
+
+        /* 兩層方方的星星（一格 4px），間距不一樣、錯開放，最下面一層是上下兩段的夜空 */
+        /* conic-gradient 最後 25% 是左上角，在 4px 4px 的位置轉，剛好畫出一格 4px 的方塊 */
         .body {
           background-image:
-            radial-gradient(#ffffff 1.5px, transparent 2px),
-            radial-gradient(#ffffff 1px, transparent 1.5px),
-            linear-gradient(#1d2b53, #3b3f7a);
+            conic-gradient(at 4px 4px, transparent 75%, var(--star-color) 0),
+            conic-gradient(at 4px 4px, transparent 75%, var(--star-color) 0),
+            linear-gradient(var(--sky-top) 50%, var(--sky-bottom) 50%);
           background-size:
-            26px 26px,
-            17px 17px,
+            28px 28px,
+            20px 20px,
             100% 100%;
           background-position:
-            0 0,
-            8px 11px,
+            4px 4px,
+            12px 16px,
             0 0;
         }
     '''),
     part('pattern', '白肚子', 'css', 20, css='''
+        /* 想換顏色，改這裡就好：--belly-color 是肚子的顏色 */
         .body {
-          background-image: radial-gradient(
-            ellipse 36% 30% at 50% 68%,
-            #f3ead8 96%,
-            transparent 100%
-          );
+          --belly-color: #fbf8f1;
+        }
+
+        /* 三塊一樣顏色的長方形疊成一個階梯狀的橢圓，中心都在身體下緣往上 32px 的地方 */
+        /* linear-gradient 頭尾同一個顏色就是一塊色塊，用 background-size 決定色塊多大 */
+        .body {
+          background-image:
+            linear-gradient(var(--belly-color), var(--belly-color)),
+            linear-gradient(var(--belly-color), var(--belly-color)),
+            linear-gradient(var(--belly-color), var(--belly-color));
+          background-size:
+            40px 40px,
+            56px 32px,
+            64px 24px;
+          background-position:
+            50% calc(100% - 12px),
+            50% calc(100% - 16px),
+            50% calc(100% - 20px);
+          background-repeat: no-repeat;
         }
     '''),
     part('pattern', '點一下換毛色', 'js', 50, css='''
