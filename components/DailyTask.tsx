@@ -154,11 +154,14 @@ export function DailyTask({ code, onSave, onCoins, onShowMove }: Props) {
       <div className="daily-task-head">
         <span className="tag">每日任務</span>
         <h3 className="daily-task-title">{task.title}</h3>
-        <span className={`daily-task-level level-${levelClass[task.level] ?? 'easy'}`}>
-          {task.level}
-        </span>
-        <span className="daily-task-reward">
-          <Pixel name="coin" size={18} /> {task.reward}
+        {/* 難度和金幣包在一起：手機上放不下時兩個一起換到下一行 */}
+        <span className="daily-task-meta">
+          <span className={`daily-task-level level-${levelClass[task.level] ?? 'easy'}`}>
+            難度：{task.level}
+          </span>
+          <span className="daily-task-reward">
+            <Pixel name="coin" size={18} /> {task.reward}
+          </span>
         </span>
       </div>
       <p>
