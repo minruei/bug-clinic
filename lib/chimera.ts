@@ -42,6 +42,7 @@ const BODY_CSS = `.chimera {
   /* 外框留 4px 的位置，真正畫出來的外框在下面的 .body::before */
   border: 4px solid transparent;
   /* .body 自己不畫底色，底色交給 .body::before 繼承過去畫，翅膀這類零件才排得到身體後面 */
+  /* background-clip: text 是「底色只畫在文字的形狀裡」，.body 自己沒有文字，底色就藏起來了；寫 transparent 的話 ::before 繼承到的也是透明 */
   -webkit-background-clip: text;
   background-clip: text;
 }

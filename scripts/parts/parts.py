@@ -67,14 +67,196 @@ PARTS = []
 
 # 身體：只改形狀，不設 background
 PARTS += [
-    part('body', '圓滾滾', 'css', 20, css='''
+    part('body', '圓滾滾', 'css', 25, css='''
+        /* 想換顏色、移位置，改這裡就好 */
         /* 圓的上下比較窄：角往下、腳往上，翅膀往內靠，才不會跟身體分開 */
         .body {
           --horn-y: 7%;
           --leg-y: 93%;
           --neck-y: 72%;
           --wing-x: 5px;
+          /* 圓角看不到，但點身體的範圍會跟著變圓 */
           border-radius: 50%;
+        }
+
+        /* 下面是剪出形狀的程式，想改形狀再研究 */
+        /* .body 只當透明的容器，看得到的身體畫在後面兩層，零件就不會被剪掉 */
+        /* background-clip: text 讓 .body 的底色只畫在文字裡，.body 沒有文字就看不到；::after 用 background: inherit 拿到同一個底色 */
+        /* 左邊、上面的點從左上角量；右邊、下面的點用 calc(100% - ...) 從右下角量，身體變寬變高時形狀跟著撐開 */
+        .body {
+          border-color: transparent;
+          -webkit-background-clip: text;
+          background-clip: text;
+          --body-outer: polygon(
+            48px 0,
+            calc(100% - 48px) 0,
+            calc(100% - 48px) 4px,
+            calc(100% - 36px) 4px,
+            calc(100% - 36px) 8px,
+            calc(100% - 28px) 8px,
+            calc(100% - 28px) 12px,
+            calc(100% - 20px) 12px,
+            calc(100% - 20px) 16px,
+            calc(100% - 16px) 16px,
+            calc(100% - 16px) 20px,
+            calc(100% - 12px) 20px,
+            calc(100% - 12px) 24px,
+            calc(100% - 8px) 24px,
+            calc(100% - 8px) 32px,
+            calc(100% - 4px) 32px,
+            calc(100% - 4px) 40px,
+            100% 40px,
+            100% calc(100% - 40px),
+            calc(100% - 4px) calc(100% - 40px),
+            calc(100% - 4px) calc(100% - 32px),
+            calc(100% - 8px) calc(100% - 32px),
+            calc(100% - 8px) calc(100% - 24px),
+            calc(100% - 12px) calc(100% - 24px),
+            calc(100% - 12px) calc(100% - 20px),
+            calc(100% - 16px) calc(100% - 20px),
+            calc(100% - 16px) calc(100% - 16px),
+            calc(100% - 20px) calc(100% - 16px),
+            calc(100% - 20px) calc(100% - 12px),
+            calc(100% - 28px) calc(100% - 12px),
+            calc(100% - 28px) calc(100% - 8px),
+            calc(100% - 36px) calc(100% - 8px),
+            calc(100% - 36px) calc(100% - 4px),
+            calc(100% - 48px) calc(100% - 4px),
+            calc(100% - 48px) 100%,
+            48px 100%,
+            48px calc(100% - 4px),
+            36px calc(100% - 4px),
+            36px calc(100% - 8px),
+            28px calc(100% - 8px),
+            28px calc(100% - 12px),
+            20px calc(100% - 12px),
+            20px calc(100% - 16px),
+            16px calc(100% - 16px),
+            16px calc(100% - 20px),
+            12px calc(100% - 20px),
+            12px calc(100% - 24px),
+            8px calc(100% - 24px),
+            8px calc(100% - 32px),
+            4px calc(100% - 32px),
+            4px calc(100% - 40px),
+            0 calc(100% - 40px),
+            0 40px,
+            4px 40px,
+            4px 32px,
+            8px 32px,
+            8px 24px,
+            12px 24px,
+            12px 20px,
+            16px 20px,
+            16px 16px,
+            20px 16px,
+            20px 12px,
+            28px 12px,
+            28px 8px,
+            36px 8px,
+            36px 4px,
+            48px 4px
+          );
+          --body-inner: polygon(
+            48px 0,
+            calc(100% - 48px) 0,
+            calc(100% - 48px) 4px,
+            calc(100% - 36px) 4px,
+            calc(100% - 36px) 8px,
+            calc(100% - 28px) 8px,
+            calc(100% - 28px) 12px,
+            calc(100% - 20px) 12px,
+            calc(100% - 20px) 16px,
+            calc(100% - 16px) 16px,
+            calc(100% - 16px) 20px,
+            calc(100% - 12px) 20px,
+            calc(100% - 12px) 24px,
+            calc(100% - 8px) 24px,
+            calc(100% - 8px) 32px,
+            calc(100% - 4px) 32px,
+            calc(100% - 4px) 40px,
+            100% 40px,
+            100% calc(100% - 40px),
+            calc(100% - 4px) calc(100% - 40px),
+            calc(100% - 4px) calc(100% - 32px),
+            calc(100% - 8px) calc(100% - 32px),
+            calc(100% - 8px) calc(100% - 24px),
+            calc(100% - 12px) calc(100% - 24px),
+            calc(100% - 12px) calc(100% - 20px),
+            calc(100% - 16px) calc(100% - 20px),
+            calc(100% - 16px) calc(100% - 16px),
+            calc(100% - 20px) calc(100% - 16px),
+            calc(100% - 20px) calc(100% - 12px),
+            calc(100% - 28px) calc(100% - 12px),
+            calc(100% - 28px) calc(100% - 8px),
+            calc(100% - 36px) calc(100% - 8px),
+            calc(100% - 36px) calc(100% - 4px),
+            calc(100% - 48px) calc(100% - 4px),
+            calc(100% - 48px) 100%,
+            48px 100%,
+            48px calc(100% - 4px),
+            36px calc(100% - 4px),
+            36px calc(100% - 8px),
+            28px calc(100% - 8px),
+            28px calc(100% - 12px),
+            20px calc(100% - 12px),
+            20px calc(100% - 16px),
+            16px calc(100% - 16px),
+            16px calc(100% - 20px),
+            12px calc(100% - 20px),
+            12px calc(100% - 24px),
+            8px calc(100% - 24px),
+            8px calc(100% - 32px),
+            4px calc(100% - 32px),
+            4px calc(100% - 40px),
+            0 calc(100% - 40px),
+            0 40px,
+            4px 40px,
+            4px 32px,
+            8px 32px,
+            8px 24px,
+            12px 24px,
+            12px 20px,
+            16px 20px,
+            16px 16px,
+            20px 16px,
+            20px 12px,
+            28px 12px,
+            28px 8px,
+            36px 8px,
+            36px 4px,
+            48px 4px
+          );
+        }
+
+        /* 外框層：深棕色，剪成外面那一圈 */
+        .body::before {
+          content: '';
+          position: absolute;
+          inset: -4px;
+          z-index: -1;
+          background: #4a3426;
+          border: 0;
+          border-radius: 0;
+          clip-path: var(--body-outer);
+          pointer-events: none;
+        }
+
+        /* 底色層：繼承 .body 的毛色和花紋，比外框層往內縮一格 */
+        .body::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          z-index: -1;
+          background: inherit;
+          -webkit-background-clip: border-box;
+          background-clip: border-box;
+          border-radius: 0;
+          box-shadow:
+            inset 4px 4px 0 rgb(251 248 241 / 45%),
+            inset -4px -4px 0 rgb(46 34 26 / 25%);
+          clip-path: var(--body-inner);
+          pointer-events: none;
         }
     '''),
     part('body', '蛋形', 'css', 20, css='''
@@ -94,13 +276,139 @@ PARTS += [
           --speech-y: 110px;
         }
     '''),
-    part('body', '麵包', 'css', 20, css='''
+    part('body', '麵包', 'css', 25, css='''
+        /* 想換顏色、移位置，改這裡就好 */
         /* 上面圓、下面平 */
         .body {
           --horn-y: 8%;
           --neck-y: 74%;
           --wing-x: 8px;
+          /* 圓角看不到，但點身體的範圍會跟著變圓 */
           border-radius: 60px 60px 8px 8px;
+        }
+
+        /* 下面是剪出形狀的程式，想改形狀再研究 */
+        /* .body 只當透明的容器，看得到的身體畫在後面兩層，零件就不會被剪掉 */
+        /* background-clip: text 讓 .body 的底色只畫在文字裡，.body 沒有文字就看不到；::after 用 background: inherit 拿到同一個底色 */
+        /* 左邊、上面的點從左上角量；右邊、下面的點用 calc(100% - ...) 從右下角量，身體變寬變高時形狀跟著撐開 */
+        .body {
+          border-color: transparent;
+          -webkit-background-clip: text;
+          background-clip: text;
+          --body-outer: polygon(
+            44px 0,
+            calc(100% - 44px) 0,
+            calc(100% - 44px) 4px,
+            calc(100% - 32px) 4px,
+            calc(100% - 32px) 8px,
+            calc(100% - 28px) 8px,
+            calc(100% - 28px) 12px,
+            calc(100% - 20px) 12px,
+            calc(100% - 20px) 16px,
+            calc(100% - 16px) 16px,
+            calc(100% - 16px) 20px,
+            calc(100% - 12px) 20px,
+            calc(100% - 12px) 28px,
+            calc(100% - 8px) 28px,
+            calc(100% - 8px) 32px,
+            calc(100% - 4px) 32px,
+            calc(100% - 4px) 44px,
+            100% 44px,
+            100% calc(100% - 4px),
+            calc(100% - 4px) calc(100% - 4px),
+            calc(100% - 4px) 100%,
+            4px 100%,
+            4px calc(100% - 4px),
+            0 calc(100% - 4px),
+            0 44px,
+            4px 44px,
+            4px 32px,
+            8px 32px,
+            8px 28px,
+            12px 28px,
+            12px 20px,
+            16px 20px,
+            16px 16px,
+            20px 16px,
+            20px 12px,
+            28px 12px,
+            28px 8px,
+            32px 8px,
+            32px 4px,
+            44px 4px
+          );
+          --body-inner: polygon(
+            44px 0,
+            calc(100% - 44px) 0,
+            calc(100% - 44px) 4px,
+            calc(100% - 32px) 4px,
+            calc(100% - 32px) 8px,
+            calc(100% - 28px) 8px,
+            calc(100% - 28px) 12px,
+            calc(100% - 20px) 12px,
+            calc(100% - 20px) 16px,
+            calc(100% - 16px) 16px,
+            calc(100% - 16px) 20px,
+            calc(100% - 12px) 20px,
+            calc(100% - 12px) 28px,
+            calc(100% - 8px) 28px,
+            calc(100% - 8px) 32px,
+            calc(100% - 4px) 32px,
+            calc(100% - 4px) 44px,
+            100% 44px,
+            100% calc(100% - 4px),
+            calc(100% - 4px) calc(100% - 4px),
+            calc(100% - 4px) 100%,
+            4px 100%,
+            4px calc(100% - 4px),
+            0 calc(100% - 4px),
+            0 44px,
+            4px 44px,
+            4px 32px,
+            8px 32px,
+            8px 28px,
+            12px 28px,
+            12px 20px,
+            16px 20px,
+            16px 16px,
+            20px 16px,
+            20px 12px,
+            28px 12px,
+            28px 8px,
+            32px 8px,
+            32px 4px,
+            44px 4px
+          );
+        }
+
+        /* 外框層：深棕色，剪成外面那一圈 */
+        .body::before {
+          content: '';
+          position: absolute;
+          inset: -4px;
+          z-index: -1;
+          background: #4a3426;
+          border: 0;
+          border-radius: 0;
+          clip-path: var(--body-outer);
+          pointer-events: none;
+        }
+
+        /* 底色層：繼承 .body 的毛色和花紋，比外框層往內縮一格 */
+        .body::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          z-index: -1;
+          background: inherit;
+          -webkit-background-clip: border-box;
+          background-clip: border-box;
+          border-radius: 0;
+          box-shadow:
+            inset 4px 4px 0 rgb(251 248 241 / 45%),
+            inset -4px -4px 0 rgb(46 34 26 / 25%);
+          clip-path: var(--body-inner);
+          pointer-events: none;
         }
     '''),
     part('body', '高高瘦瘦', 'css', 25, css='''
@@ -160,6 +468,7 @@ PARTS += [
         }
 
         /* .body 只當透明的容器，看得到的雲朵畫在後面兩層，零件就不會被剪掉 */
+        /* background-clip: text 讓 .body 的底色只畫在文字裡，.body 沒有文字就看不到；::after 用 background: inherit 拿到同一個底色 */
         .body {
           border-color: transparent;
           -webkit-background-clip: text;
@@ -1725,10 +2034,17 @@ PARTS += [
         }
     '''),
     part('pattern', '點點', 'css', 20, css='''
-        /* 改 background-size 調點點的間距 */
+        /* 想換顏色，改這裡就好：--dot-color 是點點的顏色 */
         .body {
-          background-image: radial-gradient(rgba(255, 255, 255, 0.5) 22%, transparent 26%);
-          background-size: 20px 20px;
+          --dot-color: rgb(251 248 241 / 55%);
+        }
+
+        /* 方方的像素點點：每 16px（4 × 4 格）一個循環，右上角 8px（2 × 2 格）是點點 */
+        /* conic-gradient 從 12 點鐘方向順時針畫，前 25% 剛好是右上角那一塊 */
+        /* 改 background-size 調點點的間距，用 4 的倍數才會對齊像素格子 */
+        .body {
+          background-image: conic-gradient(var(--dot-color) 25%, transparent 0);
+          background-size: 16px 16px;
         }
     '''),
     part('pattern', '格子', 'css', 20, css='''
@@ -4129,6 +4445,7 @@ STARTER = {
           /* 外框留 4px 的位置，真正畫出來的外框在下面的 .body::before */
           border: 4px solid transparent;
           /* .body 自己不畫底色，底色交給 .body::before 繼承過去畫，翅膀這類零件才排得到身體後面 */
+          /* background-clip: text 是「底色只畫在文字的形狀裡」，.body 自己沒有文字，底色就藏起來了；寫 transparent 的話 ::before 繼承到的也是透明 */
           -webkit-background-clip: text;
           background-clip: text;
         }
