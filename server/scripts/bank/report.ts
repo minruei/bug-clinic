@@ -52,7 +52,9 @@ const genAccepted = accepted.length + reviseRejected.length
 const pct = (a: number, b: number) => (b ? `${((a / b) * 100).toFixed(0)}%` : '-')
 const revisedKept = accepted.filter((p) => (p as { revised?: boolean }).revised).length
 lines.push(
-  `收下 ${accepted.length} 題：舊題照新規則改寫後留下 ${revisedKept} 題，新出 ${accepted.length - revisedKept} 題補齊。`,
+  revisedKept
+    ? `收下 ${accepted.length} 題：舊題照新規則改寫後留下 ${revisedKept} 題，新出 ${accepted.length - revisedKept} 題補齊。`
+    : `收下 ${accepted.length} 題，全部是新出的。`,
   `出題通過率 ${pct(genAccepted, genAccepted + genRejected.length)}（出題 ${genAccepted + genRejected.length} 次，驗證通過 ${genAccepted} 次）。`,
   `累計花費 US$${cost.usd.toFixed(2)}（含試跑和改寫）。`,
   '',
@@ -70,6 +72,7 @@ for (const t of topics) {
 }
 
 function table(title: string, list: Rejected[]) {
+  if (!list.length) return
   const counts = new Map<string, number>()
   for (const r of list) counts.set(bucket(r), (counts.get(bucket(r)) ?? 0) + 1)
   lines.push('', `## ${title}`, '', '| 原因 | 次數 |', '| --- | --- |')

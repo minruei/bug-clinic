@@ -13,7 +13,7 @@
 
 | 功能         | 說明                                                                                           |
 | ------------ | ---------------------------------------------------------------------------------------------- |
-| 除錯練習     | 10 個主題、100 題。找錯誤行時點錯扣 5 秒可以再找；選修法只有一次機會，選錯就公布正確答案和解說 |
+| 除錯練習     | 10 個主題、300 題。找錯誤行時點錯扣 5 秒可以再找；選修法只有一次機會，選錯就公布正確答案和解說 |
 | 會員         | 自己實作註冊登入，密碼用 bcrypt 雜湊，登入後發 JWT                                             |
 | 病歷本       | 每次練習的題目、結果、花費秒數                                                                 |
 | 住院部       | 最後一次沒答對的題目會留在這裡，答對才出院                                                     |
@@ -108,6 +108,7 @@ erDiagram
 mysql -u root -p < server/db/schema.sql
 mysql -u root -p bug_clinic < server/db/seed.sql
 mysql -u root -p bug_clinic < server/db/add-bank.sql
+mysql -u root -p bug_clinic < server/db/add-bank-2.sql
 mysql -u root -p bug_clinic < server/db/add-lab.sql
 mysql -u root -p bug_clinic < server/db/seed-parts.sql
 ```

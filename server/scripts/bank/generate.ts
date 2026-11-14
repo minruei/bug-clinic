@@ -366,12 +366,17 @@ async function runTopic(t: Topic) {
           mine.filter((p) => p.difficulty === lv).length <
           LEVELS.slice(0, i + 1).filter((x) => x === lv).length,
       ) ?? LEVELS[done() % LEVELS.length]
-    const newOnes = accepted
+    // 前面幾批收下的題目也要列出來，不然會一直出已經有的觀念
+    const newOnes = [...otherBatches, ...accepted]
       .filter((p) => p.topic_key === t.key)
       .map((p) => `- ${p.concept}｜${p.error_message}`)
       .join('\n')
+    const tried = rejected
+      .filter((r) => r.topic_key === t.key && r.draft && /重複|太像|相似/.test(r.reasons.join('')))
+      .map((r) => `- ${r.draft!.concept}`)
+      .join('\n')
     const user = `請出一題難度 ${level} 的新題目。
-${newOnes ? `這一輪已經收了下面這些新題，也不能重複：\n${newOnes}\n` : ''}${lastReason ? `上一題被退回的原因（請避開）：${lastReason}\n` : ''}`
+${newOnes ? `之前新出的這些題目也不能重複：\n${newOnes}\n` : ''}${tried ? `這些觀念試過了，都跟現有題目重複，不要再出：\n${tried}\n` : ''}${lastReason ? `上一題被退回的原因（請避開）：${lastReason}\n` : ''}`
     const reject = (stage: string, reasons: string[], draft?: Draft) => {
       rejected.push({ topic_key: t.key, batch, stage, reasons, draft })
       save(`rejects-${batch}.json`, rejected)
