@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { toJsLine, type ChimeraCode } from '@/lib/chimera'
+import { PixelToggle } from '@/components/PixelToggle'
 import { addConsoleError, type ConsoleError } from '@/lib/console'
 import { PLAY_EXIT, playPage } from '@/lib/play'
 
@@ -10,11 +11,14 @@ type Props = {
   code: ChimeraCode
   // 關掉時把玩的時候抓到的錯誤交回去，編輯器的主控台才看得到
   onClose: (errors: ConsoleError[]) => void
+  // 像素模式：跟編輯器的預覽共用同一個開關，在這裡切換，回到編輯器也是同一個狀態
+  pixel: boolean
+  onPixelChange: (pixel: boolean) => void
 }
 
 // 遊玩模式：合成獸放大到接近全螢幕，可以點、可以按鍵盤玩自己寫的動作
 // 蓋在整個頁面上面，底下的編輯器沒有拿掉，關掉之後程式碼和捲動位置都跟原本一樣
-export function PlayMode({ code, onClose }: Props) {
+export function PlayMode({ code, onClose, pixel, onPixelChange }: Props) {
   const frameRef = useRef<HTMLIFrameElement>(null)
   const [errors, setErrors] = useState<ConsoleError[]>([])
   // Esc 是在 effect 裡收的，用 ref 拿到最新的錯誤
@@ -22,7 +26,7 @@ export function PlayMode({ code, onClose }: Props) {
   useEffect(() => {
     errorsRef.current = errors
   }, [errors])
-  const page = playPage(code)
+  const page = playPage(code, pixel)
 
   // 預覽傳來的訊息：Esc 就關掉，錯誤就記下來；只收自己這個預覽的
   useEffect(() => {
@@ -31,7 +35,7 @@ export function PlayMode({ code, onClose }: Props) {
       if (event.data?.type === PLAY_EXIT) onClose(errorsRef.current)
       if (event.data?.type === 'chimera-error') {
         const error = {
-          line: toJsLine(code, event.data.line, { catchErrors: true }),
+          line: toJsLine(code, event.data.line, { catchErrors: true, pixel }),
           message: String(event.data.message),
         }
         setErrors((prev) => addConsoleError(prev, error))
@@ -47,7 +51,7 @@ export function PlayMode({ code, onClose }: Props) {
       window.removeEventListener('message', onMessage)
       window.removeEventListener('keydown', onKey)
     }
-  }, [code, onClose])
+  }, [code, pixel, onClose])
 
   // 玩的時候底下的頁面不要跟著捲；關掉時放回原本的設定，捲動位置不會變
   useEffect(() => {
@@ -69,6 +73,8 @@ export function PlayMode({ code, onClose }: Props) {
         // 載入好就讓預覽拿到焦點，方向鍵、空白鍵不用先點一下就能用
         onLoad={(e) => e.currentTarget.focus()}
       />
+      {/* 切換時預覽會重新載入，玩到一半的狀態會從頭開始 */}
+      <PixelToggle pixel={pixel} onChange={onPixelChange} className="play-mode-pixel" />
       <button className="play-mode-close" onClick={() => onClose(errors)} aria-label="離開遊玩模式">
         <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
           <path d="M3 3l12 12M15 3L3 15" stroke="currentColor" strokeWidth="3" />

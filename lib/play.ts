@@ -13,8 +13,9 @@ document.addEventListener('keydown', function (e) {
 </script>`
 
 // 插在最後一個 </body> 前面，玩家的 HTML 裡就算寫了 </body> 也不會插錯地方
-export function playPage(code: ChimeraCode) {
-  const page = buildPage(code, { catchErrors: true })
+// pixel：像素模式，跟編輯器的預覽用同一個開關
+export function playPage(code: ChimeraCode, pixel = false) {
+  const page = buildPage(code, { catchErrors: true, pixel })
   const at = page.lastIndexOf('</body>')
   return `${page.slice(0, at)}${EXIT_SCRIPT}\n${page.slice(at)}`
 }

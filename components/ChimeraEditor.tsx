@@ -17,6 +17,7 @@ import {
 } from '@/lib/chimera'
 import { addConsoleError, formatConsoleError, type ConsoleError } from '@/lib/console'
 import { VersionPanel } from '@/components/VersionPanel'
+import { PixelToggle } from '@/components/PixelToggle'
 import { PlayMode } from '@/components/PlayMode'
 
 // 每一格用對應的語法上色；CSS 格多一個色票，色碼旁邊會出現小色塊，點了可以選色
@@ -61,6 +62,8 @@ export function ChimeraEditor({
   const [collapsedState, setCollapsed] = useState(false)
   const collapsed = canCollapse && collapsedState
   const [playing, setPlaying] = useState(false)
+  // 像素模式：預覽變成 4px 的馬賽克，遊玩模式也用同一個開關；不存檔，重新整理就恢復關閉
+  const [pixel, setPixel] = useState(false)
   const playButtonRef = useRef<HTMLButtonElement>(null)
 
   const [showVersions, setShowVersions] = useState(false)
@@ -69,7 +72,7 @@ export function ChimeraEditor({
 
   // 錯誤主控台：預覽頁抓到錯誤會 postMessage 出來
   // 錯誤跟著是哪一版的預覽頁一起記，程式碼一改預覽頁就不一樣，舊的錯誤自然不顯示
-  const page = buildPage(code, { catchErrors: true })
+  const page = buildPage(code, { catchErrors: true, pixel })
   const previewRef = useRef<HTMLIFrameElement>(null)
   const [errors, setErrors] = useState<{ page: string; list: ConsoleError[] }>({
     page: '',
@@ -116,7 +119,7 @@ export function ChimeraEditor({
       }
       if (event.data?.type !== 'chimera-error') return
       const error = {
-        line: toJsLine(code, event.data.line, { catchErrors: true }),
+        line: toJsLine(code, event.data.line, { catchErrors: true, pixel }),
         message: String(event.data.message),
       }
       setErrors((prev) => ({
@@ -126,7 +129,7 @@ export function ChimeraEditor({
     }
     window.addEventListener('message', onMessage)
     return () => window.removeEventListener('message', onMessage)
-  }, [code, page, onPreview])
+  }, [code, page, pixel, onPreview])
 
   // 點主控台的錯誤：切到 JS 格，游標移到出錯的那一行
   // 要等 JS 格的內容換上去才能移，所以先記在 jumpLine，等分頁換好再移
@@ -245,6 +248,7 @@ export function ChimeraEditor({
             sandbox="allow-scripts"
             srcDoc={page}
           />
+          <PixelToggle pixel={pixel} onChange={setPixel} className="editor-pixel" />
           {canPlay && (
             <button
               ref={playButtonRef}
@@ -288,7 +292,9 @@ export function ChimeraEditor({
           {status && <span className="muted">{status}</span>}
         </div>
       )}
-      {playing && canPlay && <PlayMode code={code} onClose={closePlay} />}
+      {playing && canPlay && (
+        <PlayMode code={code} onClose={closePlay} pixel={pixel} onPixelChange={setPixel} />
+      )}
       {onSave && onRestore && showVersions && (
         <VersionPanel savedCount={savedCount} onRestore={onRestore} />
       )}

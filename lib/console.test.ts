@@ -20,6 +20,12 @@ describe('toJsLine', () => {
     expect(toJsLine(code, pageLineOf(page, 'tail.classList'), { catchErrors: true })).toBe(3)
   })
 
+  it('像素模式多了濾鏡，換算還是對的', () => {
+    const pixelPage = buildPage(code, { catchErrors: true, pixel: true })
+    const options = { catchErrors: true, pixel: true }
+    expect(toJsLine(code, pageLineOf(pixelPage, 'tail.classList'), options)).toBe(3)
+  })
+
   it('有沒有接主控台，換算出來都對', () => {
     const plain = buildPage(code)
     expect(toJsLine(code, pageLineOf(plain, 'tail.classList'))).toBe(3)

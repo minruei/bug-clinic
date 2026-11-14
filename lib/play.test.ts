@@ -17,4 +17,11 @@ describe('遊玩模式的預覽頁', () => {
     const page = playPage({ ...starterChimera, html: '<p></body></p>' })
     expect(page.indexOf(PLAY_EXIT)).toBeGreaterThan(page.indexOf('<p></body></p>'))
   })
+
+  it('像素模式跟編輯器的預覽用同一個濾鏡，預設關閉', () => {
+    expect(playPage(starterChimera)).not.toContain('pixel-mode')
+    const page = playPage(starterChimera, true)
+    const editor = buildPage(starterChimera, { catchErrors: true, pixel: true })
+    expect(page.startsWith(editor.slice(0, editor.lastIndexOf('</body>')))).toBe(true)
+  })
 })

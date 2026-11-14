@@ -1498,6 +1498,45 @@ h2::before {
   padding: 6px 16px;
 }
 
+/* 像素模式的開關：方塊打勾代表開著，編輯器放在預覽左上角，遊玩模式放在 X 的左邊 */
+.pixel-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 6px 12px;
+  background: var(--card);
+  color: var(--ink);
+  border: var(--pixel) solid var(--ink);
+  box-shadow: var(--shadow);
+  font: inherit;
+  font-size: 16px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.pixel-toggle-box {
+  width: 16px;
+  height: 16px;
+  background: var(--card);
+  border: var(--pixel) solid var(--ink);
+}
+
+.pixel-toggle[aria-pressed='true'] {
+  background: var(--green-soft);
+}
+
+.pixel-toggle[aria-pressed='true'] .pixel-toggle-box {
+  background: var(--green);
+  box-shadow: inset 0 0 0 2px var(--card);
+}
+
+.editor-pixel {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+}
+
 .editor-preview {
   flex: 1;
   width: 100%;
@@ -1956,6 +1995,13 @@ h2::before {
   box-shadow: var(--shadow);
 }
 
+/* 像素模式的開關放在 X 的左邊，44px 的 X 加上 12px 的間隔 */
+.play-mode-pixel {
+  position: absolute;
+  top: 24px;
+  right: 80px;
+}
+
 /* 右上角的 X，44px 手機上也好按 */
 .play-mode-close {
   position: absolute;
@@ -1998,6 +2044,11 @@ h2::before {
   .play-mode-close {
     top: 16px;
     right: 16px;
+  }
+
+  .play-mode-pixel {
+    top: 16px;
+    right: 72px;
   }
 
   .play-mode-errors {

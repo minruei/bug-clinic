@@ -235,19 +235,44 @@ type PageOptions = {
   catchErrors?: boolean
   // 商店卡片和詳情框只是要看零件，不顯示對話框；接在 CSS 最後面，用 !important 蓋過 .chimera > .speech，不改到程式碼
   hideSpeech?: boolean
+  // 像素模式：預覽畫面變成 4px 一格的馬賽克，只在組預覽頁的時候插進去，玩家的程式碼和存檔都不變
+  pixel?: boolean
 }
+
+// 像素模式的濾鏡：每 4 × 4 格只取一個點的顏色，再把那個點放大填滿整格
+// 1. feFlood 在 (1, 1) 畫一個 1px 的點，feOffset 把範圍限制在 4 × 4，feTile 鋪滿整個畫面，變成每 4px 一個點的網格
+// 2. feComposite in：只留下合成獸在網格點上的顏色
+// 3. feMorphology 把每個點往外長 1px 變成 3 × 3，再往右、往下各複製一份，變成剛好 4 × 4
+// 濾鏡的座標從 .body 的左上角算起，跟零件一樣用 4px 一格對齊；跳躍、走路時格子跟著 .body 一起動
+// 用百分比定位的零件（例如眼睛在 --eye-y: 30%）不一定剛好在格線上，打開時會往格子靠，最多差 2px
+// 加在 .body 上：對話框在 .body 外面，文字不會被打馬賽克；寫在玩家的 CSS 前面，玩家自己對 .body 寫 filter 時以玩家的為準
+const PIXEL_STYLE = '<style>.body { filter: url(#pixel-mode); }</style>\n'
+const PIXEL_FILTER = `<svg width="0" height="0" style="position: absolute" aria-hidden="true">
+<filter id="pixel-mode" filterUnits="userSpaceOnUse" primitiveUnits="userSpaceOnUse" x="-400" y="-400" width="1000" height="1000" color-interpolation-filters="sRGB">
+<feFlood x="1" y="1" width="1" height="1" flood-color="#000"/>
+<feOffset x="0" y="0" width="4" height="4"/>
+<feTile result="grid"/>
+<feComposite in="SourceGraphic" in2="grid" operator="in"/>
+<feMorphology operator="dilate" radius="1" result="dot"/>
+<feOffset dx="1" result="dotRight"/>
+<feMerge result="row"><feMergeNode in="dot"/><feMergeNode in="dotRight"/></feMerge>
+<feOffset dy="1" result="rowDown"/>
+<feMerge><feMergeNode in="row"/><feMergeNode in="rowDown"/></feMerge>
+</filter>
+</svg>
+`
 
 // 玩家 JS 前面那一段；buildPage 和行號換算都用這個，兩邊才不會對不上
 function pageBeforeJs(code: ChimeraCode, options: PageOptions) {
   return `<!doctype html>
 <html>
 <head>
-<style>body { margin: 0; } ${code.css}${options.hideSpeech ? '\n.speech { display: none !important; }' : ''}</style>
+${options.pixel ? PIXEL_STYLE : ''}<style>body { margin: 0; } ${code.css}${options.hideSpeech ? '\n.speech { display: none !important; }' : ''}</style>
 </head>
 <body>
 ${code.html}
 ${options.catchErrors ? ERROR_CATCHER : ''}
-<script>
+${options.pixel ? PIXEL_FILTER : ''}<script>
 `
 }
 

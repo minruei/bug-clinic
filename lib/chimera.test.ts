@@ -356,3 +356,38 @@ describe('身體是透明的容器', () => {
     expect(after).toContain('z-index: -1')
   })
 })
+
+describe('像素模式', () => {
+  const plain = buildPage(starterChimera, { catchErrors: true })
+  const pixel = buildPage(starterChimera, { catchErrors: true, pixel: true })
+
+  it('預設關閉，沒有濾鏡', () => {
+    expect(plain).not.toContain('pixel-mode')
+  })
+
+  it('打開時 .body 加上濾鏡，寫在玩家的 CSS 前面，玩家自己寫的 filter 以玩家的為準', () => {
+    const rule = pixel.indexOf('.body { filter: url(#pixel-mode); }')
+    expect(rule).toBeGreaterThan(-1)
+    expect(rule).toBeLessThan(pixel.indexOf(starterChimera.css))
+    expect(pixel).toContain('<filter id="pixel-mode"')
+  })
+
+  it('濾鏡每 4px 取一個點，格子從 .body 的左上角算起', () => {
+    expect(pixel).toContain('filterUnits="userSpaceOnUse"')
+    expect(pixel).toContain('<feOffset x="0" y="0" width="4" height="4"/>')
+  })
+
+  it('玩家的三格程式碼原封不動，濾鏡放在玩家的 HTML 後面、JS 前面', () => {
+    expect(pixel).toContain(starterChimera.css)
+    expect(pixel).toContain(starterChimera.html)
+    expect(pixel).toContain(starterChimera.js)
+    expect(pixel.indexOf('<svg')).toBeGreaterThan(pixel.indexOf(starterChimera.html))
+    expect(pixel.indexOf('<svg')).toBeLessThan(pixel.indexOf(starterChimera.js))
+  })
+
+  it('濾鏡只加在 .body，對話框在 .body 外面不會被打馬賽克', () => {
+    const page = buildPage(practiceChimera, { pixel: true })
+    expect(page).not.toMatch(/\.speech[^{]*\{[^}]*pixel-mode/)
+    expect(page.match(/url\(#pixel-mode\)/g)).toHaveLength(1)
+  })
+})

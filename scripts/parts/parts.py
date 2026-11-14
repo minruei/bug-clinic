@@ -2532,9 +2532,9 @@ PARTS += [
         }
     '''),
     part('pattern', '點點', 'css', 20, css='''
-        /* 想換顏色，改這裡就好：--dot-color 是點點的顏色 */
+        /* 想換顏色，改這裡就好：點點是 --dot-color，點點以外的地方是身體的 --fur-color */
         .body {
-          --dot-color: rgb(251 248 241 / 55%);
+          --dot-color: #fbf8f1;
         }
 
         /* 方方的像素點點：每 16px（4 × 4 格）一個循環，右上角 8px（2 × 2 格）是點點 */
@@ -2546,35 +2546,41 @@ PARTS += [
         }
     '''),
     part('pattern', '格子', 'css', 20, css='''
-        /* 想換顏色，改這裡就好：--check-color 是格子的顏色，用半透明才看得到底下的毛色 */
+        /* 想換顏色，改這裡就好：一半的格子是 --check-color，另一半是身體的 --fur-color */
         .body {
-          --check-color: rgb(46 34 26 / 12%);
+          --check-color: #e8e0d0;
         }
 
-        /* 直的、橫的條紋疊在一起，交叉的地方比較深；每 32px（8 × 8 格）一個循環 */
+        /* 棋盤格：每 32px（8 × 8 格）一個循環，切成四塊，右上和左下塗 --check-color */
+        /* conic-gradient 從 12 點鐘方向順時針畫：0~25% 是右上、25~50% 右下、50~75% 左下、75~100% 左上 */
+        /* transparent 的那兩塊透出底下的 --fur-color */
         .body {
-          background-image:
-            linear-gradient(90deg, var(--check-color) 50%, transparent 50%),
-            linear-gradient(var(--check-color) 50%, transparent 50%);
+          background-image: conic-gradient(
+            var(--check-color) 0 25%,
+            transparent 25% 50%,
+            var(--check-color) 50% 75%,
+            transparent 75%
+          );
           background-size: 32px 32px;
         }
     '''),
     part('pattern', '漸層', 'css', 25, css='''
         /* 想換顏色，改這裡就好：上面疊亮色、下面疊暗色，看起來像有光從上面照下來 */
         .body {
-          --light-color: rgb(251 248 241 / 45%);
-          --dark-color: rgb(46 34 26 / 25%);
+          --light-color: #fbf8f1;
+          --dark-color: #2e221a;
         }
 
-        /* 像素風的漸層：不讓顏色慢慢變，分成 5 段一段一段變暗 */
+        /* 像素風的漸層：不讓顏色慢慢變，分成 5 段一段一段變暗，中間那段透出 --fur-color */
+        /* color-mix 把顏色調成半透明：45% 就是只疊上四成五的亮色 */
         /* 每一段寫兩個位置（例如 20% 40%），同一段裡顏色一樣，邊緣就是直的 */
         .body {
           background-image: linear-gradient(
-            var(--light-color) 0 20%,
-            rgb(251 248 241 / 20%) 20% 40%,
+            color-mix(in srgb, var(--light-color) 45%, transparent) 0 20%,
+            color-mix(in srgb, var(--light-color) 20%, transparent) 20% 40%,
             transparent 40% 60%,
-            rgb(46 34 26 / 12%) 60% 80%,
-            var(--dark-color) 80%
+            color-mix(in srgb, var(--dark-color) 12%, transparent) 60% 80%,
+            color-mix(in srgb, var(--dark-color) 25%, transparent) 80%
           );
         }
     '''),
