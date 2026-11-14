@@ -1405,6 +1405,83 @@ h2::before {
   flex-wrap: wrap;
 }
 
+/* 版本紀錄：左邊存檔時間列表，右邊選到的版本預覽 */
+.versions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: var(--card);
+  border: var(--pixel) solid var(--ink);
+  box-shadow: var(--shadow);
+}
+
+.versions-title {
+  font-weight: 700;
+}
+
+.versions-body {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 14px;
+}
+
+/* 最多 20 筆，太長就在列表裡面捲 */
+.versions-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.versions-item {
+  width: 100%;
+  min-height: 44px;
+  padding: 6px 10px;
+  background: var(--card);
+  color: var(--ink);
+  border: 2px solid var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.versions-item.active {
+  background: var(--green);
+  color: #fff;
+}
+
+.versions-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.versions-preview iframe {
+  width: 100%;
+  height: 220px;
+  background: #fff;
+  border: var(--pixel) solid var(--ink);
+}
+
+/* 手機上時間列表在上面、預覽在下面，列表改成橫的一排排 */
+@media (max-width: 640px) {
+  .versions-body {
+    grid-template-columns: 1fr;
+  }
+
+  .versions-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    max-height: 200px;
+  }
+}
+
 /* 買金幣：方案卡片和 TapPay 卡號欄位 */
 .coin-link {
   display: inline-flex;

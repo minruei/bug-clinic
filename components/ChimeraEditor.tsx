@@ -8,6 +8,7 @@ import { javascript } from '@codemirror/lang-javascript'
 import { colorPicker } from '@replit/codemirror-css-color-picker'
 
 import { buildPage, starterChimera, type ChimeraCode, type EditorTab } from '@/lib/chimera'
+import { VersionPanel } from '@/components/VersionPanel'
 
 // 每一格用對應的語法上色；CSS 格多一個色票，色碼旁邊會出現小色塊，點了可以選色
 const tabs = [
@@ -24,17 +25,30 @@ type EditorProps = {
   onTabChange: (tab: EditorTab) => void
   // 有傳 onSave 才會出現存檔按鈕，回傳 true 代表存成功
   onSave?: (code: ChimeraCode) => Promise<boolean>
+  // 有傳 onRestore 才會出現版本紀錄，選好的版本交給實驗室頁面放進編輯器
+  onRestore?: (code: ChimeraCode, label: string) => void
 }
 
 // 合成獸編輯器：左邊改程式碼，右邊即時預覽
-export function ChimeraEditor({ code, onChange, tab, onTabChange, onSave }: EditorProps) {
+export function ChimeraEditor({
+  code,
+  onChange,
+  tab,
+  onTabChange,
+  onSave,
+  onRestore,
+}: EditorProps) {
   const [status, setStatus] = useState('')
+  const [showVersions, setShowVersions] = useState(false)
+  // 存檔成功幾次，版本紀錄看到數字變了就重新拿列表
+  const [savedCount, setSavedCount] = useState(0)
 
   async function save() {
     if (!onSave) return
     setStatus('存檔中…')
     const ok = await onSave(code)
     setStatus(ok ? '存好了！' : '存檔失敗，再試一次')
+    if (ok) setSavedCount((n) => n + 1)
   }
 
   function reset() {
@@ -84,8 +98,16 @@ export function ChimeraEditor({ code, onChange, tab, onTabChange, onSave }: Edit
           <button className="btn ghost" onClick={reset}>
             還原預設
           </button>
+          {onRestore && (
+            <button className="btn ghost" onClick={() => setShowVersions((v) => !v)}>
+              {showVersions ? '收起版本紀錄' : '版本紀錄'}
+            </button>
+          )}
           {status && <span className="muted">{status}</span>}
         </div>
+      )}
+      {onSave && onRestore && showVersions && (
+        <VersionPanel savedCount={savedCount} onRestore={onRestore} />
       )}
     </>
   )

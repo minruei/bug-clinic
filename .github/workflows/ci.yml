@@ -22,6 +22,10 @@ jobs:
         with:
           node-version: 22
           cache: npm
+          # 前端和後端各有一個 lock 檔，兩個都列進來才會一起快取
+          cache-dependency-path: |
+            package-lock.json
+            server/package-lock.json
       - run: npm ci
       - name: Format
         run: npm run format:check
@@ -29,10 +33,22 @@ jobs:
         run: npm run lint
       - name: Type check
         run: npm run typecheck
+      - name: Unit test
+        run: npm test
       - name: Security audit
         run: npm audit --omit=dev --audit-level=high
       - name: Build
         run: npm run build
+      # 前端的 tsconfig 排除 server，後端要自己裝套件、檢查型別、跑測試
+      - name: Backend install
+        working-directory: server
+        run: npm ci
+      - name: Backend type check
+        working-directory: server
+        run: npx tsc --noEmit
+      - name: Backend unit test
+        working-directory: server
+        run: npm test
 
   e2e:
     needs: check

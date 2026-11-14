@@ -192,6 +192,14 @@ export default function LabPage() {
     setMessage('已復原')
   }
 
+  // 從版本紀錄還原：跟換零件一樣先記下現在的程式碼，按「復原」可以回到還原前的樣子
+  function restoreVersion(version: ChimeraCode, label: string) {
+    if (!code) return
+    setUndoCode(code)
+    setCode(version)
+    setMessage(`已還原到 ${label} 的版本，按存檔才會保存`)
+  }
+
   // 玩家自己在編輯器打字之後就不能復原了，不然會把打的字一起蓋掉
   function editCode(next: ChimeraCode) {
     setCode(next)
@@ -331,8 +339,9 @@ export default function LabPage() {
           onChange={editCode}
           tab={tab}
           onTabChange={setTab}
-          // 教程中不給存檔，避免練習用的合成獸蓋掉自己的作品
+          // 教程中不給存檔，避免練習用的合成獸蓋掉自己的作品；版本紀錄也一樣不顯示
           onSave={loggedIn && !practicing ? saveChimera : undefined}
+          onRestore={loggedIn && !practicing ? restoreVersion : undefined}
         />
       )}
 

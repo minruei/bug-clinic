@@ -7,6 +7,8 @@ import { pool } from './db'
 import { getUser } from './auth'
 import { TIME_LIMIT, EXP_REWARD, TUTORIAL_REWARD, remainingLife, coinsFor } from './game'
 import { coinPackages, findPackage, payByPrime } from './payment'
+import { loginLimit, orderLimit, registerLimit } from './limits'
+import { getVersion, listVersions, saveChimera } from './versions'
 
 // 找出這個使用者、還沒結束的看診，順便拿到題目的答案和經過秒數
 // 不是本人的或已結束的都找不到，避免偷用別人的紀錄或重複領獎勵
@@ -26,6 +28,11 @@ async function findOpenAttempt(attemptId: number, userId: number) {
 // 前端只要先看有沒有 error，再從 data 拿資料
 const app = express()
 const port = 8000
+
+// 後端在 Nginx 後面，要信任 Nginx 傳來的 X-Forwarded-For 才拿得到玩家真正的 IP
+// 不設定的話 req.ip 都是 Nginx 的 127.0.0.1，所有玩家會共用同一個流量限制
+// 設 1 是只信任前面那一層 Nginx，玩家自己亂塞的 X-Forwarded-For 不會被當真
+app.set('trust proxy', 1)
 
 // 讓 req.body 能讀到前端送來的 JSON
 app.use(express.json())
@@ -57,7 +64,7 @@ app.get('/api/problems', async (req, res) => {
 })
 
 // 註冊：信箱重複回 400，密碼雜湊後才存進資料庫
-app.post('/api/user', async (req, res) => {
+app.post('/api/user', registerLimit, async (req, res) => {
   const { name, email, password } = req.body
 
   if (!name || !email || !password) {
@@ -82,7 +89,7 @@ app.post('/api/user', async (req, res) => {
 })
 
 // 登入：帳密正確就發 JWT，7 天後失效
-app.put('/api/user/auth', async (req, res) => {
+app.put('/api/user/auth', loginLimit, async (req, res) => {
   const { email, password } = req.body
 
   if (!email || !password) {
@@ -496,6 +503,7 @@ app.get('/api/chimera', async (req, res) => {
 })
 
 // 存檔：一個玩家只有一隻，第一次存是新增，之後都是覆蓋
+// 每次存檔順便留一個版本，玩家改壞了可以從版本紀錄還原
 app.put('/api/chimera', async (req, res) => {
   const user = getUser(req)
   if (!user) {
@@ -516,14 +524,42 @@ app.put('/api/chimera', async (req, res) => {
     return
   }
 
-  // user_id 有 UNIQUE：沒有這個玩家的資料就新增，已經有就改成新的程式碼
-  await pool.query(
-    `INSERT INTO chimeras (user_id, code) VALUES (?, ?)
-     ON DUPLICATE KEY UPDATE code = ?`,
-    [user.id, code, code],
-  )
+  try {
+    await saveChimera(user.id, code)
+  } catch {
+    res.status(500).json({ error: true, message: '存檔失敗，請稍後再試' })
+    return
+  }
 
   res.json({ data: { ok: true } })
+})
+
+// 自己的版本紀錄列表，新的在前；只回存檔時間，點進去才拿程式碼
+app.get('/api/chimera/versions', async (req, res) => {
+  const user = getUser(req)
+  if (!user) {
+    res.status(403).json({ error: true, message: '請先登入' })
+    return
+  }
+
+  res.json({ data: await listVersions(user.id) })
+})
+
+// 拿一個版本的程式碼，只能拿自己的；別人的跟不存在一樣回 404，不透露那個 id 存不存在
+app.get('/api/chimera/versions/:id', async (req, res) => {
+  const user = getUser(req)
+  if (!user) {
+    res.status(403).json({ error: true, message: '請先登入' })
+    return
+  }
+
+  const version = await getVersion(user.id, Number(req.params.id))
+  if (!version) {
+    res.status(404).json({ error: true, message: '找不到這個版本' })
+    return
+  }
+
+  res.json({ data: version })
 })
 
 // 金幣方案列表，不用登入也能看
@@ -532,7 +568,7 @@ app.get('/api/coin-packages', (req, res) => {
 })
 
 // 買金幣：建立訂單 → 向 TapPay 收款 → 成功才加金幣
-app.post('/api/orders', async (req, res) => {
+app.post('/api/orders', orderLimit, async (req, res) => {
   const user = getUser(req)
   if (!user) {
     res.status(403).json({ error: true, message: '請先登入' })
