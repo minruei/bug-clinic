@@ -371,6 +371,10 @@ h2::before {
   font-family: ui-monospace, Menlo, monospace;
   font-size: 16px;
   overflow-x: auto;
+  /* 只有一欄，欄寬至少是最長那一行，行都很短時就撐滿區塊，每一行都一樣寬 */
+  /* 長的行往右滑時，找到的黃色、點錯的紅色才不會在區塊邊緣斷掉 */
+  display: grid;
+  grid-template-columns: minmax(max-content, 1fr);
 }
 
 .line {
@@ -414,8 +418,10 @@ h2::before {
 /* 手機上長的程式碼換行，不用左右滑就看得到整行；每一行還是一整個按鈕，高度至少 44px 好點 */
 /* 程式碼文字自己是一個區塊，換行後接下去的那一段會對齊在行號後面 */
 @media (max-width: 640px) {
+  /* 手機上會換行，欄寬跟著區塊就好，不然 max-content 會讓長的行不換行 */
   .code {
     font-size: 15px;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .line {
