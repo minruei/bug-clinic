@@ -6,13 +6,18 @@
 加上 --preview 會另外輸出一張預覽頁，用瀏覽器打開就能一次看全部零件：
   python3 scripts/parts/parts.py --preview /tmp/parts-preview.html
 
+加上 --check 會輸出檢查頁：8 種身體 × 每一個零件全部排出來，看零件有沒有貼好身體：
+  python3 scripts/parts/parts.py --check /tmp/parts-check.html
+
 座標規則：
 - 零件裝在 .body 裡，用 position: absolute 跟著身體定位
 - 上下位置讀身體定義的變數，百分比是身體高度的幾成，沒定義就用預設身體（120×100）的位置：
   --horn-y 0%（上緣）、--eye-y 30%、--mouth-y 60%、--neck-y 80%、--wing-y 10%、--tail-y 60%、--leg-y 100%（下緣）
+  矮的或下面比較窄的身體（圓滾滾、蛋形、麵包、扁扁胖胖）會把 --neck-y 往上調
 - 翅膀、尾巴、背包、雨傘、氣球接在身體左右邊緣（0 或 100%），身體變寬變窄會跟著走
 - 圓形的身體左右邊會往內縮，用 --wing-x 讓翅膀往內靠
-- 眼睛、嘴巴、角、腳左右照中線 calc(50% ± Npx) 擺
+- 眼睛、嘴巴、角左右照中線 calc(50% ± Npx) 擺
+- 寬度跟身體有關的零件用百分比：項鍊、領結、勳章、墨鏡、圍巾、披風、章魚觸手、輪軸，腳和鬍鬚的左右位置也是
 - 預設合成獸沒有對話框，動作參考第 11、14 招會用 JS 生一個放在 .chimera 裡
   身體變高變矮時在 .chimera 定義 --speech-y（中心到對話框底部多遠），那個對話框會跟著調整
 - 線條 #4a3426、奶油色 #f3ead8
@@ -67,6 +72,7 @@ PARTS += [
         .body {
           --horn-y: 7%;
           --leg-y: 93%;
+          --neck-y: 72%;
           --wing-x: 5px;
           border-radius: 50%;
         }
@@ -76,6 +82,7 @@ PARTS += [
         .body {
           --horn-y: 9%;
           --leg-y: 93%;
+          --neck-y: 76%;
           --wing-x: 9px;
           width: 110px;
           height: 120px;
@@ -91,6 +98,7 @@ PARTS += [
         /* 上面圓、下面平 */
         .body {
           --horn-y: 8%;
+          --neck-y: 74%;
           --wing-x: 8px;
           border-radius: 60px 60px 8px 8px;
         }
@@ -111,8 +119,8 @@ PARTS += [
         /* 身體比較矮：眼睛、嘴巴、脖子往上挪一點，領結才不會掉到身體外面 */
         .body {
           --eye-y: 25%;
-          --mouth-y: 52%;
-          --neck-y: 72%;
+          --mouth-y: 48%;
+          --neck-y: 70%;
           --wing-x: 4px;
           width: 150px;
           height: 80px;
@@ -126,7 +134,9 @@ PARTS += [
     '''),
     part('body', '布丁', 'css', 30, css='''
         /* 上面那層焦糖用 inset 陰影畫，改 22px 調焦糖厚度 */
+        /* 眼睛往下一點，才不會壓到焦糖 */
         .body {
+          --eye-y: 34%;
           border-radius: 30px 30px 10px 10px;
           box-shadow: inset 0 22px 0 #8a4f1d;
         }
@@ -223,12 +233,14 @@ PARTS += [
 ]
 
 # 角：底部對到 --horn-y（預設 0%，身體上緣）
+# z-index: 1 讓角畫在身體偽元素（例如雲朵頭上的凸起）上面，不會被蓋住
 PARTS += [
     part('horn', '小角', 'html', 10, html='''
         <div class="horn"></div>
     ''', css='''
         .horn {
           position: absolute;
+          z-index: 1;
           top: calc(var(--horn-y, 0%) - 24px);
           left: calc(50% - 10px);
           border-left: 10px solid transparent;
@@ -242,6 +254,7 @@ PARTS += [
     ''', css='''
         .horn-twin {
           position: absolute;
+          z-index: 1;
           top: calc(var(--horn-y, 0%) - 22px);
           border-left: 9px solid transparent;
           border-right: 9px solid transparent;
@@ -262,6 +275,7 @@ PARTS += [
         /* 用 clip-path 切成細長三角形，斜條紋是 repeating-linear-gradient */
         .horn-unicorn {
           position: absolute;
+          z-index: 1;
           top: calc(var(--horn-y, 0%) - 50px);
           left: calc(50% - 8px);
           width: 16px;
@@ -281,6 +295,7 @@ PARTS += [
         /* 一根直的主幹，加一根橫的分岔，分岔尾端再往上長一小段 */
         .horn-deer {
           position: absolute;
+          z-index: 1;
           top: calc(var(--horn-y, 0%) - 42px);
           width: 6px;
           height: 40px;
@@ -335,6 +350,7 @@ PARTS += [
         /* 圓圈只畫兩邊的邊框，就是一段彎月形 */
         .horn-ox {
           position: absolute;
+          z-index: 1;
           top: calc(var(--horn-y, 0%) - 40px);
           width: 24px;
           height: 24px;
@@ -358,6 +374,7 @@ PARTS += [
     ''', css='''
         .horn-antenna {
           position: absolute;
+          z-index: 1;
           top: calc(var(--horn-y, 0%) - 34px);
           left: calc(50% - 2px);
           width: 4px;
@@ -384,6 +401,7 @@ PARTS += [
         /* 外面深棕色大三角，::after 疊一個粉紅小三角 */
         .horn-cat {
           position: absolute;
+          z-index: 1;
           top: calc(var(--horn-y, 0%) - 30px);
           border-left: 18px solid transparent;
           border-right: 18px solid transparent;
@@ -414,6 +432,7 @@ PARTS += [
     ''', css='''
         .horn-bunny {
           position: absolute;
+          z-index: 1;
           top: calc(var(--horn-y, 0%) - 66px);
           width: 22px;
           height: 60px;
@@ -449,6 +468,7 @@ PARTS += [
         .horn-color {
           --horn-color: #f3ead8;
           position: absolute;
+          z-index: 1;
           top: calc(var(--horn-y, 0%) - 32px);
           left: calc(50% - 14px);
           border-left: 14px solid transparent;
@@ -618,11 +638,12 @@ PARTS += [
           <span class="eye-shades-lens right"></span>
         </div>
     ''', css='''
+        /* 寬度是身體的 67%，鏡片和鼻樑也用百分比，跟著身體變寬變窄 */
         .eye-shades {
           position: absolute;
           top: calc(var(--eye-y, 30%) - 6px);
-          left: calc(50% - 40px);
-          width: 80px;
+          left: 16.5%;
+          width: 67%;
           height: 20px;
         }
 
@@ -631,8 +652,8 @@ PARTS += [
           content: '';
           position: absolute;
           top: 4px;
-          left: 26px;
-          width: 28px;
+          left: 32%;
+          width: 36%;
           height: 4px;
           background: #2b1d14;
         }
@@ -640,7 +661,7 @@ PARTS += [
         .eye-shades-lens {
           position: absolute;
           top: 0;
-          width: 30px;
+          width: 38%;
           height: 20px;
           background: #2b1d14;
           border-radius: 2px 2px 14px 14px;
@@ -885,12 +906,13 @@ PARTS += [
           width: 40px;
         }
 
+        /* 從身體左右邊緣往內 30px 長出來，露在外面 10px，身體變寬變窄都一樣 */
         .mouth-whisker.left {
-          left: calc(50% - 70px);
+          left: -10px;
         }
 
         .mouth-whisker.right {
-          left: calc(50% + 30px);
+          left: calc(100% - 30px);
         }
 
         .mouth-whisker span {
@@ -1652,7 +1674,8 @@ PARTS += [
     '''),
 ]
 
-# 腳：從 --leg-y（預設 100%，身體下緣）往下長，左右腳大約在 50% - 40px 和 50% + 20px
+# 腳：從 --leg-y（預設 100%，身體下緣）往下長，左腳用 left、右腳用 right，兩邊同一個百分比，一定左右對稱；身體變寬腳也會分開
+# z-index: 1 讓腳畫在披風上面，不管哪個先裝，披風下襬都不會蓋住腳
 PARTS += [
     part('feet', '小短腳', 'html', 10, html='''
         <div class="feet-short left"></div>
@@ -1660,6 +1683,7 @@ PARTS += [
     ''', css='''
         .feet-short {
           position: absolute;
+          z-index: 1;
           top: calc(var(--leg-y, 100%) + 4px);
           width: 20px;
           height: 16px;
@@ -1667,11 +1691,11 @@ PARTS += [
         }
 
         .feet-short.left {
-          left: calc(50% - 40px);
+          left: 16.67%;
         }
 
         .feet-short.right {
-          left: calc(50% + 20px);
+          right: 16.67%;
         }
     '''),
     part('feet', '肉球腳掌', 'html', 15, html='''
@@ -1680,6 +1704,7 @@ PARTS += [
     ''', css='''
         .feet-paw {
           position: absolute;
+          z-index: 1;
           top: var(--leg-y, 100%);
           width: 26px;
           height: 18px;
@@ -1689,11 +1714,11 @@ PARTS += [
         }
 
         .feet-paw.left {
-          left: calc(50% - 46px);
+          left: 11.67%;
         }
 
         .feet-paw.right {
-          left: calc(50% + 14px);
+          right: 11.67%;
         }
 
         /* 底下的粉紅肉球 */
@@ -1714,6 +1739,7 @@ PARTS += [
     ''', css='''
         .feet-long {
           position: absolute;
+          z-index: 1;
           top: calc(var(--leg-y, 100%) + 4px);
           width: 8px;
           height: 38px;
@@ -1721,11 +1747,11 @@ PARTS += [
         }
 
         .feet-long.left {
-          left: calc(50% - 34px);
+          left: 21.67%;
         }
 
         .feet-long.right {
-          left: calc(50% + 26px);
+          right: 21.67%;
         }
 
         /* 腳掌往外側伸出去 */
@@ -1752,6 +1778,7 @@ PARTS += [
     ''', css='''
         .feet-duck {
           position: absolute;
+          z-index: 1;
           top: calc(var(--leg-y, 100%) + 4px);
           width: 6px;
           height: 10px;
@@ -1759,11 +1786,11 @@ PARTS += [
         }
 
         .feet-duck.left {
-          left: calc(50% - 33px);
+          left: 22.5%;
         }
 
         .feet-duck.right {
-          left: calc(50% + 27px);
+          right: 22.5%;
         }
 
         /* 扇形的蹼，下緣切成三個尖 */
@@ -1784,6 +1811,7 @@ PARTS += [
     ''', css='''
         .feet-hoof {
           position: absolute;
+          z-index: 1;
           top: calc(var(--leg-y, 100%) + 4px);
           width: 16px;
           height: 22px;
@@ -1791,11 +1819,11 @@ PARTS += [
         }
 
         .feet-hoof.left {
-          left: calc(50% - 38px);
+          left: 18.33%;
         }
 
         .feet-hoof.right {
-          left: calc(50% + 22px);
+          right: 18.33%;
         }
 
         .feet-hoof-tip {
@@ -1811,11 +1839,13 @@ PARTS += [
         <div class="feet-octopus"><span></span><span></span><span></span><span></span></div>
     ''', css='''
         /* 每條觸手只畫兩個邊再把角弄圓，就是一條彎彎的線；左右兩邊往外彎 */
+        /* 整排寬度是身體的 83%，身體變寬觸手會分開一點 */
         .feet-octopus {
           position: absolute;
+          z-index: 1;
           top: calc(var(--leg-y, 100%) + 2px);
-          left: calc(50% - 50px);
-          width: 100px;
+          left: 8.5%;
+          width: 83%;
           display: flex;
           justify-content: space-between;
         }
@@ -1841,17 +1871,20 @@ PARTS += [
         <div class="feet-wheel left"></div>
         <div class="feet-wheel right"></div>
     ''', css='''
+        /* 輪軸是身體寬度的一半，兩個輪子裝在輪軸兩端 */
         .feet-wheel-axle {
           position: absolute;
+          z-index: 1;
           top: calc(var(--leg-y, 100%) + 18px);
-          left: calc(50% - 30px);
-          width: 60px;
+          left: 25%;
+          width: 50%;
           height: 4px;
           background: #4a3426;
         }
 
         .feet-wheel {
           position: absolute;
+          z-index: 1;
           top: calc(var(--leg-y, 100%) + 4px);
           width: 26px;
           height: 26px;
@@ -1861,11 +1894,11 @@ PARTS += [
         }
 
         .feet-wheel.left {
-          left: calc(50% - 46px);
+          left: calc(25% - 16px);
         }
 
         .feet-wheel.right {
-          left: calc(50% + 14px);
+          right: calc(25% - 16px);
         }
 
         /* 輪子中間的輪框 */
@@ -1887,6 +1920,7 @@ PARTS += [
         /* 斜斜的條紋疊起來像一圈一圈的彈簧，::after 是底下的腳墊 */
         .feet-spring {
           position: absolute;
+          z-index: 1;
           top: calc(var(--leg-y, 100%) + 4px);
           width: 16px;
           height: 30px;
@@ -1898,11 +1932,11 @@ PARTS += [
         }
 
         .feet-spring.left {
-          left: calc(50% - 38px);
+          left: 18.33%;
         }
 
         .feet-spring.right {
-          left: calc(50% + 22px);
+          right: 18.33%;
         }
 
         .feet-spring::after {
@@ -1921,6 +1955,7 @@ PARTS += [
     ''', css='''
         .feet-walk {
           position: absolute;
+          z-index: 1;
           top: calc(var(--leg-y, 100%) + 4px);
           width: 16px;
           height: 22px;
@@ -1929,11 +1964,11 @@ PARTS += [
         }
 
         .feet-walk.left {
-          left: calc(50% - 38px);
+          left: 18.33%;
         }
 
         .feet-walk.right {
-          left: calc(50% + 22px);
+          right: 18.33%;
         }
 
         /* 走路時兩隻腳輪流抬起來，右腳晚半拍；JS 只負責加上、拿掉 walking */
@@ -1969,38 +2004,40 @@ PARTS += [
     part('accessory', '領結', 'html', 10, html='''
         <div class="accessory-bowtie"><span></span></div>
     ''', css='''
-        /* 左右兩個三角形對在一起，中間的 span 是結 */
+        /* 左右兩個三角形對在一起，中間的 span 是結；寬度是身體的 28%，身體變寬領結也跟著變寬 */
         .accessory-bowtie {
           position: absolute;
-          top: calc(var(--neck-y, 80%) + 2px);
-          left: calc(50% - 17px);
-          width: 34px;
+          top: calc(var(--neck-y, 80%) - 4px);
+          left: 36%;
+          width: 28%;
           height: 18px;
         }
 
+        /* 三角形用 clip-path 切，寬度用百分比才會跟著領結變寬 */
         .accessory-bowtie::before,
         .accessory-bowtie::after {
           content: '';
           position: absolute;
           top: 0;
-          border-top: 9px solid transparent;
-          border-bottom: 9px solid transparent;
+          width: 50%;
+          height: 100%;
+          background: #c8553d;
         }
 
         .accessory-bowtie::before {
           left: 0;
-          border-left: 15px solid #c8553d;
+          clip-path: polygon(0 0, 100% 50%, 0 100%);
         }
 
         .accessory-bowtie::after {
           right: 0;
-          border-right: 15px solid #c8553d;
+          clip-path: polygon(100% 0, 0 50%, 100% 100%);
         }
 
         .accessory-bowtie span {
           position: absolute;
           top: 4px;
-          left: 12px;
+          left: calc(50% - 5px);
           width: 10px;
           height: 10px;
           background: #9c3f2c;
@@ -2036,13 +2073,13 @@ PARTS += [
     part('accessory', '項鍊', 'html', 15, html='''
         <div class="accessory-necklace"></div>
     ''', css='''
-        /* dotted 邊框剛好是一顆一顆的珠子，::after 是墜子 */
+        /* dotted 邊框剛好是一顆一顆的珠子，::after 是墜子；寬度是身體的 53%，跟著身體變寬 */
         .accessory-necklace {
           position: absolute;
-          top: calc(var(--neck-y, 80%) - 8px);
-          left: calc(50% - 36px);
-          width: 64px;
-          height: 22px;
+          top: calc(var(--neck-y, 80%) - 16px);
+          left: calc(23.5% - 4px);
+          width: 53%;
+          height: 16px;
           border: 4px dotted #f3ead8;
           border-top: none;
           border-radius: 0 0 40px 40px;
@@ -2052,7 +2089,7 @@ PARTS += [
           content: '';
           position: absolute;
           bottom: -11px;
-          left: 26px;
+          left: calc(50% - 8px);
           width: 12px;
           height: 12px;
           background: #e8a33d;
@@ -2066,6 +2103,7 @@ PARTS += [
         /* 中間是花心，四片花瓣用 box-shadow 複製出來 */
         .accessory-flower {
           position: absolute;
+          z-index: 1;
           top: calc(var(--horn-y, 0%) + 6px);
           left: calc(50% + 38px);
           width: 10px;
@@ -2082,19 +2120,21 @@ PARTS += [
     part('accessory', '勳章', 'html', 20, html='''
         <div class="accessory-medal">★</div>
     ''', css='''
+        /* 掛在胸口左邊，大小是身體寬度的 17%，用 aspect-ratio 保持圓形 */
         .accessory-medal {
           position: absolute;
-          top: calc(var(--neck-y, 80%) - 8px);
-          left: calc(50% - 54px);
-          width: 20px;
-          height: 20px;
+          top: calc(var(--neck-y, 80%) - 14px);
+          left: 5%;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          width: 17%;
+          aspect-ratio: 1;
           background: #f5c542;
           border: 3px solid #4a3426;
           border-radius: 50%;
           color: #c8553d;
           font-size: 14px;
-          line-height: 20px;
-          text-align: center;
         }
 
         /* 上面的緞帶 */
@@ -2102,7 +2142,7 @@ PARTS += [
           content: '';
           position: absolute;
           top: -14px;
-          left: 4px;
+          left: calc(50% - 6px);
           width: 12px;
           height: 12px;
           background: #5aa9e6;
@@ -2140,16 +2180,19 @@ PARTS += [
     part('accessory', '披風', 'css', 25, html='''
         <div class="accessory-cape"></div>
     ''', css='''
-        /* 比身體大一圈的梯形扣掉身體那一塊，只剩露在左右和下面的部分，看起來就像在身體後面 */
-        /* 不用 z-index: -1，身體做動畫的時候披風才不會蓋到身體前面 */
+        /* 披風疊在身體外框上，border-radius: inherit 讓它跟身體同一個形狀 */
+        /* 紅色用 box-shadow 畫：影子只畫在外框外面，身體那一塊永遠是空的，圓的、蛋形的身體也不會露白 */
+        /* 再用 clip-path 切成從肩膀往下張開的梯形 */
+        /* 不用 z-index: -1，身體做動畫的時候會變成自己一層，披風就會跑到身體前面 */
         .accessory-cape {
           position: absolute;
-          top: 63%;
-          left: -20px;
-          width: calc(100% + 40px);
-          height: calc(37% + 16px);
-          background: #c8553d;
-          clip-path: polygon(16px 0, 0 100%, 100% 100%, calc(100% - 16px) 0, calc(100% - 16px) calc(100% - 12px), 16px calc(100% - 12px));
+          top: -4px;
+          left: -4px;
+          width: calc(100% + 8px);
+          height: calc(100% + 8px);
+          border-radius: inherit;
+          box-shadow: 0 0 0 40px #c8553d;
+          clip-path: polygon(0 63%, -16px calc(100% + 12px), calc(100% + 16px) calc(100% + 12px), 100% 63%);
         }
     '''),
     part('accessory', '小雨傘', 'html', 25, html='''
@@ -2158,7 +2201,7 @@ PARTS += [
         /* 上半圓是傘面，::after 是傘柄 */
         .accessory-umbrella {
           position: absolute;
-          top: calc(var(--horn-y, 0%) - 42px);
+          top: calc(var(--wing-y, 10%) - 52px);
           left: calc(100% - 12px);
           width: 56px;
           height: 28px;
@@ -2183,7 +2226,7 @@ PARTS += [
     ''', css='''
         .accessory-balloon {
           position: absolute;
-          top: calc(var(--horn-y, 0%) - 50px);
+          top: calc(var(--wing-y, 10%) - 60px);
           left: calc(100% + 2px);
           width: 30px;
           height: 36px;
@@ -2437,6 +2480,45 @@ def build_preview(parts):
     return f'<!doctype html><meta charset="utf-8"><style>{style}</style>{"".join(sections)}'
 
 
+# 檢查頁：每個部位一張表，橫的是 8 種身體，直的是這個部位的每一個零件
+# 改了零件位置之後打開看一遍，哪個組合沒貼好身體一眼就看得出來
+CHECK_BODIES = [None, '圓滾滾', '蛋形', '麵包', '高高瘦瘦', '扁扁胖胖', '布丁', '雲朵']
+
+
+def build_check(parts):
+    by_name = {p['name']: (i, p) for i, p in enumerate(parts, 1)}
+    small = '\n.chimera { transform: scale(0.55); }\nbody { overflow: hidden; }'
+
+    def cell(names):
+        chimera = STARTER
+        for name in names:
+            i, p = by_name[name]
+            chimera = install(chimera, p, i)
+        page = build_page(chimera, small)
+        return f'<td><iframe sandbox="allow-scripts" srcdoc="{html_lib.escape(page)}"></iframe></td>'
+
+    head = '<tr><th></th>' + ''.join(f'<th>{body or "預設"}</th>' for body in CHECK_BODIES) + '</tr>'
+    sections = []
+    for slot, label in SLOTS:
+        if slot == 'body':
+            continue
+        rows = [
+            f'<tr><th>{p["name"]}</th>'
+            + ''.join(cell(([body] if body else []) + [p['name']]) for body in CHECK_BODIES)
+            + '</tr>'
+            for p in parts
+            if p['slot'] == slot
+        ]
+        sections.append(f'<h2 id="{slot}">{label}</h2><table>{head}{"".join(rows)}</table>')
+
+    style = (
+        'body{font-family:sans-serif;background:#efe9dd;color:#4a3426;padding:16px}'
+        'table{border-collapse:collapse}th,td{padding:2px;font-size:13px}th{white-space:nowrap}'
+        'iframe{display:block;width:150px;height:190px;border:1px solid #4a3426;background:#fff}'
+    )
+    return f'<!doctype html><meta charset="utf-8"><style>{style}</style>{"".join(sections)}'
+
+
 def main():
     check(PARTS)
     SQL_PATH.write_text(build_sql(PARTS), encoding='utf-8')
@@ -2446,6 +2528,11 @@ def main():
         out = Path(sys.argv[sys.argv.index('--preview') + 1])
         out.write_text(build_preview(PARTS), encoding='utf-8')
         print(f'預覽頁：{out}')
+
+    if '--check' in sys.argv:
+        out = Path(sys.argv[sys.argv.index('--check') + 1])
+        out.write_text(build_check(PARTS), encoding='utf-8')
+        print(f'檢查頁：{out}')
 
 
 if __name__ == '__main__':
