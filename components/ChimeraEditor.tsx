@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
 import CodeMirror, { type ReactCodeMirrorRef } from '@uiw/react-codemirror'
 import { html } from '@codemirror/lang-html'
 import { css } from '@codemirror/lang-css'
@@ -9,9 +9,11 @@ import { colorPicker } from '@replit/codemirror-css-color-picker'
 
 import {
   buildPage,
+  splitPartCss,
   starterChimera,
   toJsLine,
   type ChimeraCode,
+  type PartCode,
   type PreviewEvent,
   type EditorTab,
 } from '@/lib/chimera'
@@ -21,10 +23,12 @@ import { PixelToggle } from '@/components/PixelToggle'
 import { PlayMode } from '@/components/PlayMode'
 
 // 每一格用對應的語法上色；CSS 格多一個色票，色碼旁邊會出現小色塊，點了可以選色
+// 零件形狀放零件和身體一大段畫形狀的 CSS，組預覽頁時排在 CSS 烤漆前面
 const tabs = [
   { key: 'html', label: 'HTML 骨架', extensions: [html()] },
   { key: 'css', label: 'CSS 烤漆', extensions: [css(), colorPicker] },
   { key: 'js', label: 'JS 引擎', extensions: [javascript()] },
+  { key: 'shapes', label: '零件形狀', extensions: [css(), colorPicker] },
 ] as const
 
 type EditorProps = {
@@ -43,6 +47,8 @@ type EditorProps = {
   canCollapse?: boolean
   // 可不可以進遊玩模式；新手教程進行中不行
   canPlay?: boolean
+  // 顯不顯示零件形狀那一格；新手教程進行中不顯示，預覽照樣套用
+  showShapes?: boolean
 }
 
 // 合成獸編輯器：左邊改程式碼，右邊即時預覽
@@ -56,7 +62,9 @@ export function ChimeraEditor({
   onPreview,
   canCollapse = true,
   canPlay = true,
+  showShapes = true,
 }: EditorProps) {
+  const visibleTabs = showShapes ? tabs : tabs.filter((t) => t.key !== 'shapes')
   const [status, setStatus] = useState('')
   // 程式碼區收起來了沒，不存檔，重新整理就恢復打開
   const [collapsedState, setCollapsed] = useState(false)
@@ -191,8 +199,11 @@ export function ChimeraEditor({
     <>
       <section className={`editor ${collapsed ? 'collapsed' : ''}`}>
         <div className="editor-code">
-          <div className={`editor-tabs main ${canCollapse ? 'with-toggle' : ''}`}>
-            {tabs.map((t) => (
+          <div
+            className={`editor-tabs main ${canCollapse ? 'with-toggle' : ''}`}
+            style={{ '--tab-count': visibleTabs.length } as CSSProperties}
+          >
+            {visibleTabs.map((t) => (
               <button
                 key={t.key}
                 className={`editor-tab ${tab === t.key && !collapsed ? 'active' : ''}`}
@@ -303,15 +314,19 @@ export function ChimeraEditor({
 }
 
 type CodeViewerProps = {
-  code: ChimeraCode
+  // 零件在資料庫裡的三格，形狀還寫在 CSS 裡，這裡拆開來顯示
+  code: PartCode
   // 零件名稱，給螢幕閱讀器用
   label: string
 }
 
 // 零件詳情裡的唯讀程式碼：語法上色跟編輯器一樣，但不能改
-// 只顯示有內容的分頁，例如花紋零件只有 CSS
-export function CodeViewer({ code, label }: CodeViewerProps) {
+// 只顯示有內容的分頁，例如花紋零件只有 CSS 和零件形狀
+// 分頁跟裝上去之後一樣：顏色和位置在 CSS 烤漆，形狀在零件形狀
+export function CodeViewer({ code: partCode, label }: CodeViewerProps) {
   const [tab, setTab] = useState<EditorTab>('html')
+  const split = splitPartCss(partCode.css)
+  const code: ChimeraCode = { ...partCode, css: split.css, shapes: split.shapes }
   const available = tabs.filter((t) => code[t.key])
   // 換看另一個零件時，原本開的分頁可能是空的，就改開第一個有內容的
   const current = available.find((t) => t.key === tab) ?? available[0]

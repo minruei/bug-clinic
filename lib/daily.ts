@@ -2,7 +2,7 @@
 // 分兩層，兩層都過才算完成：
 // 1. 寫法檢查：直接用後端的 challenges.ts，跟領獎時後端的判斷一模一樣，前端不會比後端寬鬆
 // 2. 效果檢查：在 sandbox 預覽裡真的跑起來，量畫面上的結果（真的點一下、真的等兩秒），只會比後端嚴格
-import { challenges, isBluish, isReddish, parseColor } from '@/server/src/challenges'
+import { challenges, codeForCheck, isBluish, isReddish, parseColor } from '@/server/src/challenges'
 import { buildPage, type ChimeraCode } from '@/lib/chimera'
 
 // GET /api/daily 回傳的今日任務
@@ -35,6 +35,7 @@ export function pasteExample(code: ChimeraCode, example: Partial<ChimeraCode>): 
     html: example.html ? code.html.replace(marker, `${example.html}\n${marker}`) : code.html,
     css: example.css ? `${code.css}\n\n${example.css}` : code.css,
     js: example.js ? `${code.js}\n${example.js}` : code.js,
+    shapes: code.shapes,
   }
 }
 
@@ -177,5 +178,6 @@ export function passesDaily(key: string, code: ChimeraCode, measure: DailyMeasur
   const challenge = challenges.find((c) => c.key === key)
   const effect = effectChecks[key]
   if (!challenge || !effect) return false
-  return challenge.check(code) && effect(measure)
+  // 零件形狀接在 CSS 前面一起檢查，跟後端領獎時一樣
+  return challenge.check(codeForCheck(code)) && effect(measure)
 }

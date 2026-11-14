@@ -2,12 +2,52 @@ import 'dotenv/config'
 import type { ResultSetHeader } from 'mysql2'
 import { afterAll, describe, expect, it } from 'vitest'
 import { pool } from './db'
-import { KEEP_VERSIONS, getVersion, listVersions, saveChimera } from './versions'
+import {
+  KEEP_VERSIONS,
+  MAX_CODE_BYTES,
+  chimeraCodeJson,
+  getVersion,
+  listVersions,
+  saveChimera,
+} from './versions'
 
 // 這組測試要連資料庫：本機有 .env 才跑，CI 沒有資料庫就跳過
 // import db 只會建立連線池，真的查詢才會連線，所以 CI 跳過時不會出錯
 // 本機要先跑過 server/db/add-versions.sql
 const hasDb = !!process.env.DB_HOST
+
+// 存檔前的檢查不用連資料庫，CI 也會跑
+describe('存檔的程式碼格式', () => {
+  it('四格都是字串就包成 JSON，零件形狀一起存', () => {
+    const result = chimeraCodeJson({ html: '<p></p>', css: 'p {}', js: '', shapes: '.a {}' })
+    expect(result).toEqual({
+      code: JSON.stringify({ html: '<p></p>', css: 'p {}', js: '', shapes: '.a {}' }),
+    })
+  })
+
+  it('舊版前端沒送零件形狀，存成空字串', () => {
+    const result = chimeraCodeJson({ html: '', css: '', js: '' })
+    expect(result).toEqual({ code: JSON.stringify({ html: '', css: '', js: '', shapes: '' }) })
+  })
+
+  it('格式不對就不存：少一格、不是字串、零件形狀不是字串', () => {
+    expect(chimeraCodeJson(undefined)).toEqual({ error: '程式碼格式不對' })
+    expect(chimeraCodeJson({ html: '', css: '' })).toEqual({ error: '程式碼格式不對' })
+    expect(chimeraCodeJson({ html: '', css: 1, js: '' })).toEqual({ error: '程式碼格式不對' })
+    expect(chimeraCodeJson({ html: '', css: '', js: '', shapes: null })).toEqual({
+      error: '程式碼格式不對',
+    })
+  })
+
+  it('長度用位元組算：英文剛好在上限內可以存，中文字一個算 3 個', () => {
+    const room = MAX_CODE_BYTES - JSON.stringify({ html: '', css: '', js: '', shapes: '' }).length
+    expect('code' in chimeraCodeJson({ html: '', css: 'a'.repeat(room), js: '' })).toBe(true)
+    expect('error' in chimeraCodeJson({ html: '', css: 'a'.repeat(room + 1), js: '' })).toBe(true)
+    // 中文字的字數只有上限的三分之一多一點，換成位元組就超過了
+    const chinese = '字'.repeat(Math.ceil(room / 3) + 1)
+    expect('error' in chimeraCodeJson({ html: '', css: chinese, js: '' })).toBe(true)
+  })
+})
 
 describe.skipIf(!hasDb)('版本紀錄（連本機資料庫）', () => {
   const userIds: number[] = []

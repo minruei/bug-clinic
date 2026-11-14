@@ -79,6 +79,8 @@ PARTS += [
           border-radius: 50%;
         }
 
+        /* ===== 零件形狀 ===== */
+
         /* 下面是剪出形狀的程式，想改形狀再研究 */
         /* .body 只當透明的容器，看得到的身體畫在後面兩層，零件就不會被剪掉 */
         /* background-clip: text 讓 .body 的底色只畫在文字裡，.body 沒有文字就看不到；::after 用 background: inherit 拿到同一個底色 */
@@ -277,6 +279,8 @@ PARTS += [
         .chimera {
           --speech-y: 110px;
         }
+
+        /* ===== 零件形狀 ===== */
 
         /* 下面是剪出形狀的程式，想改形狀再研究 */
         /* .body 只當透明的容器，看得到的身體畫在後面兩層，零件就不會被剪掉 */
@@ -477,6 +481,8 @@ PARTS += [
           border-radius: 60px 60px 8px 8px;
         }
 
+        /* ===== 零件形狀 ===== */
+
         /* 下面是剪出形狀的程式，想改形狀再研究 */
         /* .body 只當透明的容器，看得到的身體畫在後面兩層，零件就不會被剪掉 */
         /* background-clip: text 讓 .body 的底色只畫在文字裡，.body 沒有文字就看不到；::after 用 background: inherit 拿到同一個底色 */
@@ -615,6 +621,8 @@ PARTS += [
           --speech-y: 112px;
         }
 
+        /* ===== 零件形狀 ===== */
+
         /* 下面是剪出形狀的程式，想改形狀再研究 */
         /* .body 只當透明的容器，看得到的身體畫在後面兩層，零件就不會被剪掉 */
         /* background-clip: text 讓 .body 的底色只畫在文字裡，.body 沒有文字就看不到；::after 用 background: inherit 拿到同一個底色 */
@@ -717,6 +725,8 @@ PARTS += [
         .chimera {
           --speech-y: 90px;
         }
+
+        /* ===== 零件形狀 ===== */
 
         /* 下面是剪出形狀的程式，想改形狀再研究 */
         /* .body 只當透明的容器，看得到的身體畫在後面兩層，零件就不會被剪掉 */
@@ -862,6 +872,8 @@ PARTS += [
           border-radius: 30px 30px 10px 10px;
         }
 
+        /* ===== 零件形狀 ===== */
+
         /* 下面是剪出形狀的程式，想改形狀再研究 */
         /* .body 只當透明的容器，看得到的身體畫在後面兩層，零件就不會被剪掉 */
         /* background-clip: text 讓 .body 的底色只畫在文字裡，.body 沒有文字就看不到；::after 用 background: inherit 拿到同一個底色 */
@@ -955,6 +967,7 @@ PARTS += [
         }
     '''),
     part('body', '雲朵', 'css', 40, css='''
+        /* 想換顏色、移位置，改這裡就好 */
         /* 頭上兩顆圓凸起和身體畫成同一個形狀；角往上移到凸起上面，對話框也抬高到凸起上面 */
         .body {
           --horn-y: -56%;
@@ -964,6 +977,8 @@ PARTS += [
         .chimera {
           --speech-y: 122px;
         }
+
+        /* ===== 零件形狀 ===== */
 
         /* .body 只當透明的容器，看得到的雲朵畫在後面兩層，零件就不會被剪掉 */
         /* background-clip: text 讓 .body 的底色只畫在文字裡，.body 沒有文字就看不到；::after 用 background: inherit 拿到同一個底色 */
@@ -1267,6 +1282,8 @@ PARTS += [
           left: calc(50% - 14px);
         }
 
+        /* ===== 零件形狀 ===== */
+
         /* 角分三層，由下往上寬 5 格、3 格、1 格，疊起來就是一階一階的尖角 */
         /* 一格是 4px，外框也是一格；上面兩層沒有下框，往下蓋住下一層的上框，三層才會連在一起 */
         .horn {
@@ -1324,6 +1341,8 @@ PARTS += [
           left: calc(50% + 20px);
         }
 
+        /* ===== 零件形狀 ===== */
+
         /* 每支角兩層：下層 3 × 2 格，上層 1 格寬的尖端 */
         .horn-twin {
           position: absolute;
@@ -1358,6 +1377,8 @@ PARTS += [
           top: calc(var(--horn-y, 0%) - 20px);
           left: calc(50% - 10px);
         }
+
+        /* ===== 零件形狀 ===== */
 
         /* 下層 3 × 3 格，上面接一根 1 格寬、4 格高的尖端 */
         /* 條紋是一格白、一格粉紅一直重複，邊緣是直的，跟像素圖一樣 */
@@ -1409,6 +1430,8 @@ PARTS += [
         .horn-deer.right {
           left: calc(50% + 24px);
         }
+
+        /* ===== 零件形狀 ===== */
 
         /* 一根 2 格寬的主幹，旁邊伸出一根分岔，分岔尾端再往上長一段，全部都是方塊 */
         /* 外框用 drop-shadow 往上下左右各畫一次 4px，會沿著整支鹿角的形狀走 */
@@ -1477,6 +1500,8 @@ PARTS += [
           left: calc(50% + 40px);
         }
 
+        /* ===== 零件形狀 ===== */
+
         /* 一條往外長的橫條，末端往上翹兩格，看起來就是彎彎的牛角 */
         .horn-ox {
           position: absolute;
@@ -1517,6 +1542,8 @@ PARTS += [
           top: calc(var(--horn-y, 0%) - 28px);
           left: calc(50% - 2px);
         }
+
+        /* ===== 零件形狀 ===== */
 
         /* 一根 1 格寬的細桿，頂端一顆 3 × 3 格的方球 */
         .horn-antenna {
@@ -1559,6 +1586,8 @@ PARTS += [
         .horn-cat.right {
           left: calc(50% + 22px);
         }
+
+        /* ===== 零件形狀 ===== */
 
         /* 耳朵三層，由下往上寬 5 格、3 格、1 格；中間那層是粉紅色的耳朵內側 */
         .horn-cat {
@@ -1614,6 +1643,8 @@ PARTS += [
           left: calc(50% + 14px);
         }
 
+        /* ===== 零件形狀 ===== */
+
         /* 一隻耳朵 3 格寬、10 格高，頂端多一格收尖 */
         .horn-bunny {
           position: absolute;
@@ -1657,6 +1688,8 @@ PARTS += [
           top: calc(var(--horn-y, 0%) - 16px);
           left: calc(50% - 14px);
         }
+
+        /* ===== 零件形狀 ===== */
 
         /* 角分三層，由下往上寬 5 格、3 格、1 格；三層都用 --horn-color，換色時一起變 */
         .horn-color,
@@ -1728,6 +1761,8 @@ PARTS += [
           left: calc(50% + 20px);
         }
 
+        /* ===== 零件形狀 ===== */
+
         /* 一隻眼睛 3 × 3 格 */
         .eye {
           position: absolute;
@@ -1765,6 +1800,8 @@ PARTS += [
         .eye-round.right {
           left: calc(50% + 16px);
         }
+
+        /* ===== 零件形狀 ===== */
 
         /* 白色的眼睛 4 × 4 格 */
         .eye-round {
@@ -1818,6 +1855,8 @@ PARTS += [
           left: calc(50% + 18px);
         }
 
+        /* ===== 零件形狀 ===== */
+
         /* 瞇起來的眼睛是 4 格排成一個彎彎的倒 V：上面兩格、下面左右各一格 */
         /* 元素本身是上排左邊那一格，另外 3 格用 box-shadow 複製出來 */
         .eye-squint {
@@ -1841,6 +1880,8 @@ PARTS += [
           top: calc(var(--eye-y, 30%) - 10px);
           left: calc(50% - 12px);
         }
+
+        /* ===== 零件形狀 ===== */
 
         /* 一隻大眼睛 6 × 6 格 */
         .eye-cyclops {
@@ -1894,6 +1935,8 @@ PARTS += [
           left: calc(50% + 22px);
         }
 
+        /* ===== 零件形狀 ===== */
+
         /* 星星是 5 塊排成十字：元素本身是中間那塊，上下左右 4 塊用 box-shadow 複製出來 */
         /* 每一塊 2 × 2 格（8px），所以 box-shadow 往旁邊移 8px */
         .eye-star {
@@ -1943,6 +1986,8 @@ PARTS += [
           left: calc(50% + 14px);
         }
 
+        /* ===== 零件形狀 ===== */
+
         /* 愛心是 6 塊：上排左右各一塊、中間一排三塊、最下面一塊尖尖的 */
         /* 元素本身是左上那一塊，另外 5 塊用 box-shadow 複製出來；每一塊 2 × 2 格（8px） */
         .eye-heart {
@@ -1986,6 +2031,8 @@ PARTS += [
           --lens-color: #2e221a;
           top: calc(var(--eye-y, 30%) - 6px);
         }
+
+        /* ===== 零件形狀 ===== */
 
         /* 寬度是身體的 67%，鏡片和鼻樑也用百分比，跟著身體變寬變窄 */
         .eye-shades {
@@ -2062,6 +2109,8 @@ PARTS += [
           left: calc(50% + 20px);
         }
 
+        /* ===== 零件形狀 ===== */
+
         /* 一隻眼睛 3 × 3 格，大部分時間睜開，96% 那一下壓扁就是眨眼 */
         .eye-blink {
           position: absolute;
@@ -2111,6 +2160,8 @@ PARTS += [
         .eye-follow.right {
           left: calc(50% + 16px);
         }
+
+        /* ===== 零件形狀 ===== */
 
         /* 白色的眼睛 4 × 4 格 */
         .eye-follow {
@@ -2184,6 +2235,8 @@ PARTS += [
           left: calc(50% + 6px);
         }
 
+        /* ===== 零件形狀 ===== */
+
         /* 每顆牙齒是 4 格：上面一排 3 格、下面中間 1 格尖尖的 */
         /* 元素本身是左上那一格，另外 3 格用 box-shadow 複製出來 */
         /* box-shadow 的前兩個數字是往右、往下移多少，移 4px 就是旁邊那一格 */
@@ -2207,6 +2260,8 @@ PARTS += [
           top: var(--mouth-y, 60%);
           left: calc(50% - 12px);
         }
+
+        /* ===== 零件形狀 ===== */
 
         /* 微笑是 6 格：左上一格、下面一排 4 格、右上一格，排起來就是 U 形 */
         /* 元素本身是左上那一格，另外 5 格用 box-shadow 複製出來 */
@@ -2233,6 +2288,8 @@ PARTS += [
           top: calc(var(--mouth-y, 60%) - 4px);
           left: calc(50% - 16px);
         }
+
+        /* ===== 零件形狀 ===== */
 
         /* 張開的嘴 8 × 3 格，下面再接一排左右各縮一格的，嘴巴底部一階一階收圓 */
         .mouth-big {
@@ -2273,6 +2330,8 @@ PARTS += [
           left: calc(50% - 16px);
         }
 
+        /* ===== 零件形狀 ===== */
+
         /* 一條 8 格長的嘴巴線 */
         .mouth-tongue {
           position: absolute;
@@ -2302,6 +2361,8 @@ PARTS += [
           top: calc(var(--mouth-y, 60%) - 4px);
           left: calc(50% - 12px);
         }
+
+        /* ===== 零件形狀 ===== */
 
         /* 鳥嘴三排，由上往下寬 6 格、4 格、2 格，一階一階變尖 */
         .mouth-beak {
@@ -2348,6 +2409,8 @@ PARTS += [
           left: calc(50% - 16px);
         }
 
+        /* ===== 零件形狀 ===== */
+
         /* 一條 8 格長的嘴巴線，兩顆尖牙用 ::before ::after 畫，每顆 1 格寬、2 格長 */
         .mouth-vampire {
           position: absolute;
@@ -2393,6 +2456,8 @@ PARTS += [
           left: calc(100% - 30px);
         }
 
+        /* ===== 零件形狀 ===== */
+
         /* 每邊三根鬍鬚，一根 1 格粗；上下兩根短一點，看起來有遠近 */
         .mouth-whisker {
           position: absolute;
@@ -2427,6 +2492,8 @@ PARTS += [
           left: calc(50% - 4px);
         }
 
+        /* ===== 零件形狀 ===== */
+
         /* 嘴巴裡面 2 × 2 格，外框用 box-shadow 往上下左右各複製一次，四個角空出來就是圓圓的 O */
         .mouth-o {
           position: absolute;
@@ -2455,6 +2522,8 @@ PARTS += [
           top: calc(var(--horn-y, 0%) - 50px);
           left: calc(50% + 30px);
         }
+
+        /* ===== 零件形狀 ===== */
 
         .body {
           cursor: pointer;
@@ -2522,6 +2591,8 @@ PARTS += [
           --stripe-color: rgb(46 34 26 / 15%);
         }
 
+        /* ===== 零件形狀 ===== */
+
         /* 直的條紋：每 6 格一個循環，前 4 格空白、後 2 格是條紋，邊緣是直的，跟像素圖一樣 */
         .body {
           background-image: repeating-linear-gradient(
@@ -2537,6 +2608,8 @@ PARTS += [
           --dot-color: #fbf8f1;
         }
 
+        /* ===== 零件形狀 ===== */
+
         /* 方方的像素點點：每 16px（4 × 4 格）一個循環，右上角 8px（2 × 2 格）是點點 */
         /* conic-gradient 從 12 點鐘方向順時針畫，前 25% 剛好是右上角那一塊 */
         /* 改 background-size 調點點的間距，用 4 的倍數才會對齊像素格子 */
@@ -2550,6 +2623,8 @@ PARTS += [
         .body {
           --check-color: #e8e0d0;
         }
+
+        /* ===== 零件形狀 ===== */
 
         /* 棋盤格：每 32px（8 × 8 格）一個循環，切成四塊，右上和左下塗 --check-color */
         /* conic-gradient 從 12 點鐘方向順時針畫：0~25% 是右上、25~50% 右下、50~75% 左下、75~100% 左上 */
@@ -2570,6 +2645,8 @@ PARTS += [
           --light-color: #fbf8f1;
           --dark-color: #2e221a;
         }
+
+        /* ===== 零件形狀 ===== */
 
         /* 像素風的漸層：不讓顏色慢慢變，分成 5 段一段一段變暗，中間那段透出 --fur-color */
         /* color-mix 把顏色調成半透明：45% 就是只疊上四成五的亮色 */
@@ -2594,6 +2671,8 @@ PARTS += [
           --rainbow-5: #6b8fb0;
         }
 
+        /* ===== 零件形狀 ===== */
+
         /* 由上往下五段，每段佔身體高度的 20%，邊緣是直的 */
         .body {
           background-image: linear-gradient(
@@ -2610,6 +2689,8 @@ PARTS += [
         .body {
           --zebra-color: #2e221a;
         }
+
+        /* ===== 零件形狀 ===== */
 
         /* 下面是畫條紋的程式，想改形狀再研究 */
         /* 一塊 32 × 24 的磁磚裡有兩小段 12px 寬的條紋：上面那段在左邊，下面那段往右挪 4px，排起來是鋸齒狀的直條紋 */
@@ -2631,6 +2712,8 @@ PARTS += [
           --sky-top: #1d2b53;
           --sky-bottom: #3b3f7a;
         }
+
+        /* ===== 零件形狀 ===== */
 
         /* 兩層方方的星星（一格 4px），間距不一樣、錯開放，最下面一層是上下兩段的夜空 */
         /* conic-gradient 最後 25% 是左上角，在 4px 4px 的位置轉，剛好畫出一格 4px 的方塊 */
@@ -2654,6 +2737,8 @@ PARTS += [
         .body {
           --belly-color: #fbf8f1;
         }
+
+        /* ===== 零件形狀 ===== */
 
         /* 三塊一樣顏色的長方形疊成一個階梯狀的橢圓，中心都在身體下緣往上 32px 的地方 */
         /* linear-gradient 頭尾同一個顏色就是一塊色塊，用 background-size 決定色塊多大 */
@@ -2710,6 +2795,8 @@ PARTS += [
         .wing.right {
           left: calc(100% + 2px - var(--wing-x, 0px));
         }
+
+        /* ===== 零件形狀 ===== */
 
         /* 一對葉子翅膀，每片 16 × 9 格，尖端朝外；z-index: -2 排在身體後面 */
         /* 外框用 drop-shadow 往上下左右各畫一次 4px，外框就會跟著剪出來的形狀走 */
@@ -2809,6 +2896,8 @@ PARTS += [
           left: calc(100% + 4px - var(--wing-x, 0px));
         }
 
+        /* ===== 零件形狀 ===== */
+
         /* 每片翅膀 10 × 7 格 */
         .wing-pair {
           position: absolute;
@@ -2888,6 +2977,8 @@ PARTS += [
           left: calc(100% - var(--wing-x, 0px));
         }
 
+        /* ===== 零件形狀 ===== */
+
         /* 三片羽毛由長到短往下疊，長度 13、10、7 格；上下兩片共用一條外框，疊起來就是一階一階的翅膀 */
         .wing-angel {
           position: absolute;
@@ -2945,6 +3036,8 @@ PARTS += [
         .wing-bat.right {
           left: calc(100% - 2px - var(--wing-x, 0px));
         }
+
+        /* ===== 零件形狀 ===== */
 
         /* 每片翅膀 18 × 11 格：上緣往外斜到翼尖，下緣三個尖角 */
         .wing-bat {
@@ -3092,6 +3185,8 @@ PARTS += [
           left: calc(100% - var(--wing-x, 0px));
         }
 
+        /* ===== 零件形狀 ===== */
+
         /* 上下兩片，上面大 10 × 8 格、下面小 7 × 6 格 */
         .wing-butterfly {
           position: absolute;
@@ -3162,6 +3257,8 @@ PARTS += [
           left: calc(100% + 4px - var(--wing-x, 0px));
         }
 
+        /* ===== 零件形狀 ===== */
+
         /* 前翅 19 × 2 格，後翅用 ::after 畫在下面、短一點；半透明看得到後面 */
         .wing-dragonfly,
         .wing-dragonfly::after {
@@ -3208,6 +3305,8 @@ PARTS += [
         .wing-dragon.right {
           left: calc(100% + 4px - var(--wing-x, 0px));
         }
+
+        /* ===== 零件形狀 ===== */
 
         /* 每片翅膀 25 × 20 格：上緣是骨架往外伸，下緣三個大尖角 */
         .wing-dragon {
@@ -3399,6 +3498,8 @@ PARTS += [
           left: calc(100% + 4px - var(--wing-x, 0px));
         }
 
+        /* ===== 零件形狀 ===== */
+
         /* 每片翅膀 12 × 8 格；transform-origin 設在靠身體那一側，旋轉起來才像在拍 */
         .wing-flap {
           position: absolute;
@@ -3507,6 +3608,8 @@ PARTS += [
         .wing-fly.right {
           left: calc(100% + 4px - var(--wing-x, 0px));
         }
+
+        /* ===== 零件形狀 ===== */
 
         /* 每片翅膀 12 × 8 格 */
         .wing-fly {
@@ -3638,6 +3741,8 @@ PARTS += [
           left: 100%;
         }
 
+        /* ===== 零件形狀 ===== */
+
         /* 尾巴是一條 10 × 2 格的長條，尾巴尖往上翹一格 */
         .tail {
           position: absolute;
@@ -3694,6 +3799,8 @@ PARTS += [
           left: calc(100% + 4px);
         }
 
+        /* ===== 零件形狀 ===== */
+
         /* 毛球 4 × 4 格；外框用 box-shadow 往上下左右各複製一次，四個角空出來就是圓圓的 */
         .tail-pompom {
           position: absolute;
@@ -3728,6 +3835,8 @@ PARTS += [
           left: calc(100% + 4px);
         }
 
+        /* ===== 零件形狀 ===== */
+
         /* 豬尾巴是 4 塊一上一下排成鋸齒，看起來就是捲捲的；每一塊 2 × 2 格（8px） */
         /* 元素本身是第一塊，另外 3 塊用 box-shadow 複製出來 */
         .tail-curly {
@@ -3757,6 +3866,8 @@ PARTS += [
           top: calc(var(--tail-y, 60%) - 24px);
           left: 100%;
         }
+
+        /* ===== 零件形狀 ===== */
 
         /* 尾巴 20 × 9 格，往右上翹；尾端白色是背景在 75% 的地方直接換顏色 */
         .tail-fox {
@@ -3830,6 +3941,8 @@ PARTS += [
           left: calc(100% + 4px);
         }
 
+        /* ===== 零件形狀 ===== */
+
         /* 細細的尾巴一階一階往上：元素本身是第一段，另外 3 段用 box-shadow 複製出來 */
         .tail-devil {
           position: absolute;
@@ -3873,6 +3986,8 @@ PARTS += [
           left: calc(100% + 4px);
         }
 
+        /* ===== 零件形狀 ===== */
+
         /* 魚尾巴 6 塊：接身體的一塊、中間直的三塊、上下兩塊分岔；每一塊 2 × 2 格（8px） */
         /* 元素本身是接身體那塊，另外 5 塊用 box-shadow 複製出來 */
         .tail-fish {
@@ -3903,6 +4018,8 @@ PARTS += [
           top: calc(var(--tail-y, 60%) - 30px);
           left: calc(100% + 2px);
         }
+
+        /* ===== 零件形狀 ===== */
 
         /* 閃電 16 × 10 格，從身體往右上一折一折 */
         .tail-bolt {
@@ -3983,6 +4100,8 @@ PARTS += [
           left: 100%;
         }
 
+        /* ===== 零件形狀 ===== */
+
         /* 尾巴 22 × 9 格，往外越來越細，上面三根背刺 */
         .tail-dino {
           position: absolute;
@@ -4062,6 +4181,8 @@ PARTS += [
           left: 100%;
         }
 
+        /* ===== 零件形狀 ===== */
+
         /* 尾巴 2 格高，一開始 8 格長，JS 每點一下加 4 格 */
         .tail-grow {
           position: absolute;
@@ -4107,6 +4228,8 @@ PARTS += [
           right: 16.67%;
         }
 
+        /* ===== 零件形狀 ===== */
+
         /* 一隻腳 3 × 2 格，加上 4px 的深棕外框 */
         .feet-short {
           position: absolute;
@@ -4136,6 +4259,8 @@ PARTS += [
         .feet-paw.right {
           right: 11.67%;
         }
+
+        /* ===== 零件形狀 ===== */
 
         /* 腳掌 5 × 3 格 */
         .feet-paw {
@@ -4181,6 +4306,8 @@ PARTS += [
           right: 21.67%;
         }
 
+        /* ===== 零件形狀 ===== */
+
         /* 腿 2 格寬、9 格長 */
         .feet-long {
           position: absolute;
@@ -4225,6 +4352,8 @@ PARTS += [
         .feet-duck.right {
           right: 22.5%;
         }
+
+        /* ===== 零件形狀 ===== */
 
         /* 細細的腿 1 格寬、2 格長 */
         .feet-duck {
@@ -4272,6 +4401,8 @@ PARTS += [
           right: 18.33%;
         }
 
+        /* ===== 零件形狀 ===== */
+
         /* 腿 4 格寬、5 格長 */
         .feet-hoof {
           position: absolute;
@@ -4300,6 +4431,8 @@ PARTS += [
           --tentacle-color: #e8a0a0;
           top: calc(var(--leg-y, 100%) + 4px);
         }
+
+        /* ===== 零件形狀 ===== */
 
         /* 四條觸手平均排開，整排寬度是身體的 83%，身體變寬觸手會分開一點 */
         .feet-octopus {
@@ -4353,6 +4486,8 @@ PARTS += [
         .feet-wheel-axle {
           top: calc(var(--leg-y, 100%) + 16px);
         }
+
+        /* ===== 零件形狀 ===== */
 
         /* 輪軸是身體寬度的一半，兩個輪子裝在輪軸兩端 */
         .feet-wheel-axle {
@@ -4416,6 +4551,8 @@ PARTS += [
           right: 18.33%;
         }
 
+        /* ===== 零件形狀 ===== */
+
         /* 彈簧 4 格寬、7 格長：一格線、一格空一直重複，像一圈一圈的彈簧 */
         .feet-spring {
           position: absolute;
@@ -4456,6 +4593,8 @@ PARTS += [
         .feet-walk.right {
           right: 18.33%;
         }
+
+        /* ===== 零件形狀 ===== */
 
         /* 一隻腳 3 × 4 格，加上 4px 的深棕外框 */
         .feet-walk {
@@ -4507,6 +4646,8 @@ PARTS += [
           --bow-color: #c8553d;
           top: calc(var(--neck-y, 80%) - 8px);
         }
+
+        /* ===== 零件形狀 ===== */
 
         /* 領結寬度是身體的 40%，身體變寬也跟著變寬；左右兩塊是蝴蝶結的兩邊，中間的 span 是結 */
         .accessory-bowtie {
@@ -4560,6 +4701,8 @@ PARTS += [
           top: calc(var(--neck-y, 80%) + 4px);
         }
 
+        /* ===== 零件形狀 ===== */
+
         /* 橫的一條繞在身體上，寬度是身體加一圈；條紋是 2 格綠、1 格白一直重複 */
         .accessory-scarf {
           position: absolute;
@@ -4600,6 +4743,8 @@ PARTS += [
           top: calc(var(--neck-y, 80%) - 16px);
         }
 
+        /* ===== 零件形狀 ===== */
+
         /* 虛線邊框剛好是一顆一顆方方的珠子，寬度是身體的 53%，跟著身體變寬 */
         .accessory-necklace {
           position: absolute;
@@ -4633,6 +4778,8 @@ PARTS += [
           left: calc(50% + 34px);
         }
 
+        /* ===== 零件形狀 ===== */
+
         /* 中間是花心，上下左右四片花瓣用 box-shadow 複製出來；每一塊 2 × 2 格（8px） */
         .accessory-flower {
           position: absolute;
@@ -4663,6 +4810,8 @@ PARTS += [
           top: calc(var(--neck-y, 80%) - 14px);
           left: 5%;
         }
+
+        /* ===== 零件形狀 ===== */
 
         /* 掛在胸口左邊，大小是身體寬度的 17%，用 aspect-ratio 保持方方正正 */
         .accessory-medal {
@@ -4710,6 +4859,8 @@ PARTS += [
           left: calc(-28px + var(--wing-x, 0px));
         }
 
+        /* ===== 零件形狀 ===== */
+
         /* 只畫露在身體左邊的那一截 6 × 13 格，右邊貼著身體的框 */
         .accessory-backpack {
           position: absolute;
@@ -4740,6 +4891,8 @@ PARTS += [
         .accessory-cape {
           --cape-color: #c8553d;
         }
+
+        /* ===== 零件形狀 ===== */
 
         /* 披風是一塊從肩膀往下張開的梯形，z-index: -2 排在身體後面，中間自然被身體蓋住，不用挖洞 */
         /* 圓的、蛋形的身體也不會露白，跳的時候跟著身體一起動 */
@@ -4787,6 +4940,8 @@ PARTS += [
           top: calc(var(--wing-y, 10%) - 32px);
           left: calc(100% + 14px);
         }
+
+        /* ===== 零件形狀 ===== */
 
         /* 本體是 1 格寬、14 格長的傘柄，最下面往左勾一格 */
         .accessory-umbrella {
@@ -4865,6 +5020,8 @@ PARTS += [
           top: calc(var(--wing-y, 10%) - 60px);
           left: calc(100% + 4px);
         }
+
+        /* ===== 零件形狀 ===== */
 
         /* 氣球 6 × 7 格 */
         .accessory-balloon {
@@ -4987,7 +5144,8 @@ def build_sql(parts):
 
 # 預覽頁：照前端 installPart、buildPage 的做法組出來
 
-# 跟 components/ChimeraEditor.tsx 的 starterChimera 一樣
+# 跟 lib/chimera.ts 的 starterChimera 一樣
+# 零件形狀格放透明容器和 ::before、::after；CSS 格只留毛色、尺寸和跳躍
 STARTER = {
     'html': '<div class="chimera">\n  <div class="body">\n    <!-- 零件裝在這裡 -->\n  </div>\n</div>',
     'css': code('''
@@ -5000,11 +5158,43 @@ STARTER = {
           margin: 0;
         }
 
+        /* 想換毛色、改大小，改這裡就好 */
         .body {
           --fur-color: #b4b2a9;
-          position: relative;
           width: 120px;
           height: 100px;
+        }
+
+        /* 點一下往上跳再落下，改 -30px 調跳多高、改 0.4s 調多快 */
+        .body.jump {
+          animation: jump 0.4s ease-out;
+        }
+
+        @keyframes jump {
+          50% {
+            translate: 0 -30px;
+          }
+        }
+    '''),
+    'js': code('''
+        // 點一下合成獸，牠會跳起來
+        const body = document.querySelector('.body');
+
+        body.addEventListener('click', () => {
+          body.classList.add('jump');
+        });
+
+        // 動畫播完就把 class 拿掉，下次才能再跳
+        body.addEventListener('animationend', () => {
+          body.classList.remove('jump');
+        });
+    ''') + '\n',
+    'shapes': code('''
+        /* 身體的形狀：CSS 烤漆的 .body 寫的設定會蓋過這裡 */
+        /* .body 是透明的容器，看得到的身體畫在 .body::before（底色和外框）和 .body::after（立體感） */
+        /* 兩層都是 z-index: -1；翅膀、披風是 z-index: -2，排在身體後面，跳的時候還是跟著 .body 一起動 */
+        .body {
+          position: relative;
           background: var(--fur-color);
           /* 外框留 4px 的位置，真正畫出來的外框在下面的 .body::before */
           border: 4px solid transparent;
@@ -5042,32 +5232,20 @@ STARTER = {
             inset -4px -4px 0 rgb(46 34 26 / 25%);
           pointer-events: none;
         }
-
-        /* 點一下往上跳再落下，改 -30px 調跳多高、改 0.4s 調多快 */
-        .body.jump {
-          animation: jump 0.4s ease-out;
-        }
-
-        @keyframes jump {
-          50% {
-            translate: 0 -30px;
-          }
-        }
     '''),
-    'js': code('''
-        // 點一下合成獸，牠會跳起來
-        const body = document.querySelector('.body');
-
-        body.addEventListener('click', () => {
-          body.classList.add('jump');
-        });
-
-        // 動畫播完就把 class 拿掉，下次才能再跳
-        body.addEventListener('animationend', () => {
-          body.classList.remove('jump');
-        });
-    ''') + '\n',
 }
+
+# 零件 CSS 裡的分隔線：上面是顏色和位置，裝的時候放進 CSS 烤漆；下面是形狀，放進零件形狀
+# 跟 lib/chimera.ts 的 SHAPE_MARKER 一樣
+SHAPE_MARKER = '/* ===== 零件形狀 ===== */'
+
+
+def split_css(css):
+    if SHAPE_MARKER not in css:
+        return css, ''
+    top, shape = css.split(SHAPE_MARKER, 1)
+    return top.strip(), shape.strip()
+
 
 PART_MARKER = '<!-- 零件裝在這裡 -->'
 
@@ -5082,8 +5260,11 @@ def install(chimera, p, part_id):
         block = f'<!-- {tag} {p["name"]} 開始 -->\n{p["html"]}\n<!-- {tag} 結束 -->'
         block = block.replace('\n', '\n' + spaces)
         result['html'] = f'{html[:at]}{block}\n{spaces}{html[at:]}'
-    if p['css']:
-        result['css'] += f'\n\n/* {tag} {p["name"]} 開始 */\n{p["css"]}\n/* {tag} 結束 */'
+    css, shape = split_css(p['css'])
+    if css:
+        result['css'] += f'\n\n/* {tag} {p["name"]} 開始 */\n{css}\n/* {tag} 結束 */'
+    if shape:
+        result['shapes'] = result.get('shapes', '') + f'\n\n/* {tag} {p["name"]} 開始 */\n{shape}\n/* {tag} 結束 */'
     if p['js']:
         result['js'] += f'\n// {tag} {p["name"]} 開始\n{p["js"]}\n// {tag} 結束'
     return result
@@ -5092,7 +5273,7 @@ def install(chimera, p, part_id):
 def build_page(chimera, extra_css=''):
     return (
         '<!doctype html>\n<html>\n<head>\n'
-        f'<style>body {{ margin: 0; }} {chimera["css"]}{extra_css}</style>\n'
+        f'<style>body {{ margin: 0; }} {chimera.get("shapes", "")}\n{chimera["css"]}{extra_css}</style>\n'
         f'</head>\n<body>\n{chimera["html"]}\n<script>{chimera["js"]}</script>\n</body>\n</html>'
     )
 

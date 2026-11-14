@@ -903,7 +903,7 @@ export function hasMove(code: ChimeraCode, move: Move) {
   return code.css.includes(`/* [move:${move.id}] `) || code.js.includes(`// [move:${move.id}] `)
 }
 
-// 把這招接在 CSS 和 JS 最後面，原本的程式碼不動；已經加過就原樣回傳
+// 把這招接在 CSS 和 JS 最後面，原本的程式碼不動，零件形狀也不碰；已經加過就原樣回傳
 export function addMove(code: ChimeraCode, move: Move): ChimeraCode {
   if (hasMove(code, move)) return code
   const m = markers(move)
@@ -913,6 +913,7 @@ export function addMove(code: ChimeraCode, move: Move): ChimeraCode {
     html: code.html,
     css: `${css ? `${css}\n\n` : ''}${m.cssStart}\n${move.css}\n${m.cssEnd}\n`,
     js: `${js ? `${js}\n\n` : ''}${m.jsStart}\n${move.js}\n${m.jsEnd}\n`,
+    shapes: code.shapes,
   }
 }
 

@@ -2,7 +2,14 @@ import { Router } from 'express'
 import type { RowDataPacket } from 'mysql2'
 import { pool } from './db'
 import { getUser } from './auth'
-import { DAILY_REWARD, pickChallenge, publicChallenge, taipeiDate, type ChimeraCode } from './challenges'
+import {
+  DAILY_REWARD,
+  codeForCheck,
+  pickChallenge,
+  publicChallenge,
+  taipeiDate,
+  type ChimeraCode,
+} from './challenges'
 
 // 每日任務的 API
 // 「今天」由後端用台灣時間算，題目也由後端依日期決定，前端不能自己選日期或選題
@@ -26,16 +33,17 @@ dailyRouter.get('/api/daily', async (req, res) => {
   res.json({ data: { date, ...publicChallenge(pickChallenge(date)), claimed: rows.length > 0 } })
 })
 
-// 存檔的程式碼是一段 JSON 文字，拆回三格；沒存過或格式不對回 null
+// 存檔的程式碼是一段 JSON 文字，拆回各格；沒存過或格式不對回 null
 async function savedCode(userId: number): Promise<ChimeraCode | null> {
   const [rows] = await pool.query<RowDataPacket[]>('SELECT code FROM chimeras WHERE user_id = ?', [
     userId,
   ])
   if (!rows[0]) return null
   try {
-    const { html, css, js } = JSON.parse(rows[0].code)
+    const { html, css, js, shapes } = JSON.parse(rows[0].code)
     if (typeof html !== 'string' || typeof css !== 'string' || typeof js !== 'string') return null
-    return { html, css, js }
+    // 零件形狀接在 CSS 前面一起檢查；舊存檔沒有這一格
+    return codeForCheck({ html, css, js, shapes: typeof shapes === 'string' ? shapes : '' })
   } catch {
     return null
   }

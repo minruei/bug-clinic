@@ -122,6 +122,11 @@ describe('addMove', () => {
     )
   })
 
+  it('零件形狀那一格原封不動', () => {
+    const code = { ...starterChimera, shapes: `${starterChimera.shapes}\n.wing {}` }
+    expect(addMove(code, hop).shapes).toBe(code.shapes)
+  })
+
   it('加過的招式不會重複加', () => {
     const once = addMove(starterChimera, hop)
     expect(hasMove(starterChimera, hop)).toBe(false)

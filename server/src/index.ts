@@ -8,7 +8,7 @@ import { getUser } from './auth'
 import { TIME_LIMIT, EXP_REWARD, TUTORIAL_REWARD, remainingLife, coinsFor } from './game'
 import { coinPackages, findPackage, payByPrime } from './payment'
 import { loginLimit, orderLimit, registerLimit } from './limits'
-import { getVersion, listVersions, saveChimera } from './versions'
+import { chimeraCodeJson, getVersion, listVersions, saveChimera } from './versions'
 import { listProblems } from './problems'
 import { dailyRouter } from './daily'
 
@@ -470,7 +470,7 @@ app.post('/api/tutorial/complete', async (req, res) => {
 })
 
 // 讀取自己的合成獸，沒存過回 data: null，前端就用預設的樣子
-// 資料庫裡是一段 JSON 文字，拆回 html、css、js 三格再回傳
+// 資料庫裡是一段 JSON 文字，拆回 html、css、js、shapes 再回傳；舊存檔沒有 shapes，前端會補成空字串
 app.get('/api/chimera', async (req, res) => {
   const user = getUser(req)
   if (!user) {
@@ -502,18 +502,12 @@ app.put('/api/chimera', async (req, res) => {
     return
   }
 
-  const { html, css, js } = req.body?.code ?? {}
-  if (typeof html !== 'string' || typeof css !== 'string' || typeof js !== 'string') {
-    res.status(400).json({ error: true, message: '程式碼格式不對' })
+  const parsed = chimeraCodeJson(req.body?.code)
+  if ('error' in parsed) {
+    res.status(400).json({ error: true, message: parsed.error })
     return
   }
-
-  // 三格包成一段 JSON 文字存進 code 欄位，限制長度避免塞爆資料庫
-  const code = JSON.stringify({ html, css, js })
-  if (code.length > 20000) {
-    res.status(400).json({ error: true, message: '程式碼太長了，最多 20000 字' })
-    return
-  }
+  const { code } = parsed
 
   try {
     await saveChimera(user.id, code)

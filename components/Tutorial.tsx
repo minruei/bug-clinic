@@ -9,6 +9,7 @@ const tabLabel = {
   html: 'HTML 骨架',
   css: 'CSS 烤漆',
   js: 'JS 引擎',
+  shapes: '零件形狀',
 }
 
 type TutorialProps = {

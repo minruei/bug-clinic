@@ -14,8 +14,10 @@ import {
   removePart,
   slots,
   starterChimera,
+  withShapes,
   type ChimeraCode,
   type EditorTab,
+  type PartCode,
   type PreviewEvent,
   type Slot,
 } from '@/lib/chimera'
@@ -45,7 +47,7 @@ const categoryLabel = {
 
 // 零件的起始程式碼存成 JSON 文字，拆成 html、css、js 三段
 // 舊格式只有一段文字的話，就整段放進零件分類對應的那一格
-function parsePartCode(part: Part): ChimeraCode | null {
+function parsePartCode(part: Part): PartCode | null {
   if (!part.starter_code) return null
   try {
     const parsed = JSON.parse(part.starter_code)
@@ -120,7 +122,8 @@ export default function LabPage() {
 
       // 有登入才去拿存檔，沒存過就用預設的樣子
       const saved = userRes.data ? await api('/api/chimera') : null
-      const myCode = saved?.data?.code ?? starterChimera
+      // 舊存檔沒有零件形狀那一格，補成空字串，樣子跟以前一樣
+      const myCode = saved?.data?.code ? withShapes(saved.data.code) : starterChimera
 
       // 有登入、還沒做過教程：自動進入練習模式，自己的合成獸先收起來
       if (userRes.data && !userRes.data.tutorial_done) {
@@ -404,6 +407,7 @@ export default function LabPage() {
           onPreview={practicing ? onPreview : undefined}
           canCollapse={!practicing}
           canPlay={!practicing}
+          showShapes={!practicing}
         />
       )}
 

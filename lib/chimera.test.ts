@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  SHAPE_MARKER,
   hasChimeraWrapper,
   installPart,
   SPEECH_CSS,
@@ -8,7 +9,10 @@ import {
   partPreviewPage,
   practiceChimera,
   removePart,
+  splitPartCss,
   starterChimera,
+  toJsLine,
+  withShapes,
   type ChimeraCode,
   type InstallablePart,
 } from '@/lib/chimera'
@@ -80,6 +84,7 @@ describe('installPart', () => {
       html: '<div class="chimera">\n  <div class="body"></div>\n  <!-- 零件裝在這裡 -->\n</div>',
       css: '.body {\n  width: 120px;\n}',
       js: '',
+      shapes: '',
     }
 
     const code = installPart(oldStarter, deerHorn)
@@ -104,6 +109,7 @@ describe('installPart', () => {
       html: '<div class="chimera">\n  <div class="body"></div>\n  <!-- [horn:7] 鹿角 開始 -->\n  <div class="horn-deer"></div>\n  <!-- [horn:7] 結束 -->\n  <!-- 零件裝在這裡 -->\n</div>',
       css: '.body {\n  position: relative;\n}',
       js: '',
+      shapes: '',
     }
 
     const code = installPart(oldWithHorn, colorHorn)
@@ -166,6 +172,7 @@ describe('installPart', () => {
       ),
       css: `${starterChimera.css}\n\n.horn {\n  top: 10px;\n}`,
       js: starterChimera.js,
+      shapes: starterChimera.shapes,
     }
 
     const code = installPart(oldSave, deerHorn)
@@ -229,8 +236,9 @@ describe('預設合成獸', () => {
     expect(practiceChimera.html.replace('\n  <div class="speech">……</div>', '')).toBe(
       starterChimera.html,
     )
-    expect(practiceChimera.css).toContain(SPEECH_CSS)
-    expect(practiceChimera.css.replace(`\n\n${SPEECH_CSS}`, '')).toBe(starterChimera.css)
+    // 對話框的樣子放在零件形狀，教程中不顯示那一格，CSS 烤漆跟正式版一模一樣
+    expect(practiceChimera.css).toBe(starterChimera.css)
+    expect(practiceChimera.shapes).toBe(`${starterChimera.shapes}\n\n${SPEECH_CSS}`)
     expect(practiceChimera.js).not.toContain("classList.add('jump')")
     expect(practiceChimera.js).toContain('在這裡加上一行')
   })
@@ -333,20 +341,31 @@ describe('身體是透明的容器', () => {
     return start === -1 ? '' : css.slice(start, css.indexOf('}', start))
   }
 
-  it('預設合成獸和教程怪物的 .body 不畫自己的底色和外框', () => {
+  it('預設合成獸和教程怪物的 .body 不畫自己的底色和外框，這段放在零件形狀', () => {
     for (const code of [starterChimera, practiceChimera]) {
-      const body = rule(code.css, '.body')
+      const body = rule(code.shapes, '.body')
       expect(body).toContain('border: 4px solid transparent')
       expect(body).toContain('background-clip: text')
-      // 底色還是寫在 .body 上，換毛色、花紋、教程第一步都照舊改這裡
-      expect(body).toContain('--fur-color: #b4b2a9')
       expect(body).toContain('background: var(--fur-color)')
     }
   })
 
+  it('CSS 烤漆只留毛色和尺寸，換毛色、教程第一步都照舊改這裡', () => {
+    for (const code of [starterChimera, practiceChimera]) {
+      const body = rule(code.css, '.body')
+      expect(body).toContain('--fur-color: #b4b2a9')
+      expect(body).toContain('width: 120px')
+      expect(body).toContain('height: 100px')
+      // 不寫 background：CSS 烤漆排在零件形狀後面，寫了會把 background-clip 和花紋一起蓋掉
+      expect(body).not.toContain('background')
+      expect(code.css).not.toContain('::before')
+      expect(code.css).not.toContain('::after')
+    }
+  })
+
   it('看得到的身體畫在 ::before，立體感畫在 ::after，兩層都在零件後面', () => {
-    const before = rule(starterChimera.css, '.body::before')
-    const after = rule(starterChimera.css, '.body::after')
+    const before = rule(starterChimera.shapes, '.body::before')
+    const after = rule(starterChimera.shapes, '.body::after')
     expect(before).toContain('background: inherit')
     expect(before).toContain('border: 4px solid #4a3426')
     expect(before).toContain('z-index: -1')
@@ -389,5 +408,102 @@ describe('像素模式', () => {
     const page = buildPage(practiceChimera, { pixel: true })
     expect(page).not.toMatch(/\.speech[^{]*\{[^}]*pixel-mode/)
     expect(page.match(/url\(#pixel-mode\)/g)).toHaveLength(1)
+  })
+})
+
+describe('零件形狀', () => {
+  const wing: InstallablePart = {
+    id: 12,
+    slot: 'wings',
+    name: '翅膀',
+    code: {
+      html: '<div class="wing"></div>',
+      css: `.wing {\n  --wing-color: green;\n}\n\n${SHAPE_MARKER}\n\n.wing {\n  clip-path: polygon(0 0, 4px 0);\n}`,
+      js: '',
+    },
+  }
+
+  it('零件的 CSS 用分隔線拆成兩段，沒有分隔線就整段算 CSS 烤漆', () => {
+    expect(splitPartCss(wing.code.css)).toEqual({
+      css: '.wing {\n  --wing-color: green;\n}',
+      shapes: '.wing {\n  clip-path: polygon(0 0, 4px 0);\n}',
+    })
+    expect(splitPartCss('.horn {}')).toEqual({ css: '.horn {}', shapes: '' })
+  })
+
+  it('裝上時顏色放進 CSS 烤漆、形狀放進零件形狀，兩邊用同一個標記，分隔線不會出現在玩家的程式碼裡', () => {
+    const code = installPart(starterChimera, wing)
+    expect(code.css).toContain(
+      '/* [wings:12] 翅膀 開始 */\n.wing {\n  --wing-color: green;\n}\n/* [wings:12] 結束 */',
+    )
+    expect(code.shapes).toContain(
+      '/* [wings:12] 翅膀 開始 */\n.wing {\n  clip-path: polygon(0 0, 4px 0);\n}\n/* [wings:12] 結束 */',
+    )
+    expect(code.shapes.startsWith(starterChimera.shapes)).toBe(true)
+    expect(`${code.css}${code.shapes}`).not.toContain(SHAPE_MARKER)
+    expect(installedPartId(code, 'wings')).toBe(12)
+  })
+
+  it('換零件、卸下零件時兩邊一起動，卸下後跟原本一模一樣', () => {
+    const code = installPart(starterChimera, wing)
+    const other = {
+      ...wing,
+      id: 13,
+      name: '天使翅膀',
+      code: { ...wing.code, css: `.wing-angel {}\n${SHAPE_MARKER}\n.wing-angel { width: 4px; }` },
+    }
+    const swapped = installPart(code, other)
+    expect(swapped.css).not.toContain('[wings:12]')
+    expect(swapped.shapes).not.toContain('[wings:12]')
+    expect(swapped.shapes).toContain('[wings:13]')
+    expect(removePart(code, 'wings')).toEqual(starterChimera)
+  })
+
+  it('只寫在零件形狀的零件也認得出來裝了哪一個', () => {
+    const pattern: InstallablePart = {
+      id: 40,
+      slot: 'pattern',
+      name: '點點',
+      code: { html: '', css: `${SHAPE_MARKER}\n.body { background-size: 16px; }`, js: '' },
+    }
+    const code = installPart(starterChimera, pattern)
+    expect(code.css).toBe(starterChimera.css)
+    expect(installedPartId(code, 'pattern')).toBe(40)
+  })
+
+  it('舊存檔沒有零件形狀：裝零件時形狀前面不多空行，原本的 CSS 不動', () => {
+    const old = withShapes({ html: starterChimera.html, css: '.body { width: 120px; }', js: '' })
+    expect(old.shapes).toBe('')
+    const code = installPart(old, wing)
+    expect(code.shapes.startsWith('/* [wings:12] 翅膀 開始 */')).toBe(true)
+    expect(code.css.startsWith('.body { width: 120px; }')).toBe(true)
+  })
+
+  it('組預覽頁時零件形狀排在 CSS 烤漆前面，CSS 烤漆寫的會蓋過形狀', () => {
+    const page = buildPage(starterChimera)
+    expect(page.indexOf(starterChimera.shapes)).toBeGreaterThan(-1)
+    expect(page.indexOf(starterChimera.shapes)).toBeLessThan(page.indexOf(starterChimera.css))
+  })
+
+  it('零件形狀變長，主控台的行號換算還是對的', () => {
+    const code = {
+      ...starterChimera,
+      shapes: `${starterChimera.shapes}\n\n\n.a {}\n.b {}`,
+      js: 'x\nboom()',
+    }
+    const page = buildPage(code, { catchErrors: true })
+    const line = page.slice(0, page.indexOf('boom()')).split('\n').length
+    expect(toJsLine(code, line, { catchErrors: true })).toBe(2)
+  })
+
+  it('舊存檔、舊版本沒有零件形狀，補成空字串；有的話原樣保留', () => {
+    expect(withShapes({ html: 'h', css: 'c', js: 'j' })).toEqual({
+      html: 'h',
+      css: 'c',
+      js: 'j',
+      shapes: '',
+    })
+    expect(withShapes({ html: 'h', css: 'c', js: 'j', shapes: 's' }).shapes).toBe('s')
+    expect(withShapes({ html: 'h', css: 'c', js: 'j', shapes: 3 }).shapes).toBe('')
   })
 })

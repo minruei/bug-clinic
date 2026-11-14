@@ -1387,13 +1387,13 @@ h2::before {
   border-bottom: var(--pixel) solid var(--ink);
 }
 
-/* 編輯器的分頁固定三格，有收合按鈕時最右邊多一格窄的 */
+/* 編輯器的分頁等寬：平常四格，新手教程中不顯示零件形狀是三格；有收合按鈕時最右邊多一格窄的 */
 .editor-tabs.main {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(var(--tab-count, 4), minmax(0, 1fr));
 }
 
 .editor-tabs.main.with-toggle {
-  grid-template-columns: repeat(3, minmax(0, 1fr)) 44px;
+  grid-template-columns: repeat(var(--tab-count, 4), minmax(0, 1fr)) 44px;
 }
 
 .editor-tab {
@@ -1407,7 +1407,23 @@ h2::before {
   border-right: 2px solid var(--ink);
   font: inherit;
   font-size: 14px;
+  white-space: nowrap;
   cursor: pointer;
+}
+
+/* 四個分頁加收合箭頭，窄的時候每格只剩 60～80px：字縮小、左右留白變少，「HTML 骨架」才不會折成兩行 */
+@media (max-width: 900px) {
+  .editor-tab {
+    padding: 6px 2px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 340px) {
+  .editor-tab {
+    padding: 6px 0;
+    font-size: 11px;
+  }
 }
 
 .editor-tab:last-child {

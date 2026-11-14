@@ -4,6 +4,29 @@ import { pool } from './db'
 // 每個玩家最多留幾個版本
 export const KEEP_VERSIONS = 20
 
+// 存檔的上限用位元組算：code 欄位是 TEXT，最多 65535 位元組，中文字一個佔 3 個
+// 9 個部位都裝最長的零件、再加上動作參考 20 招，大約 4 萬位元組，留給玩家自己寫的還有 2 萬
+export const MAX_CODE_BYTES = 60000
+
+// 檢查前端送來的程式碼，包成存進資料庫的 JSON 文字
+// shapes 是零件形狀，舊版前端沒送就存空字串；有送就要是字串
+export function chimeraCodeJson(raw: unknown): { code: string } | { error: string } {
+  const { html, css, js, shapes = '' } = (raw ?? {}) as Record<string, unknown>
+  if (
+    typeof html !== 'string' ||
+    typeof css !== 'string' ||
+    typeof js !== 'string' ||
+    typeof shapes !== 'string'
+  ) {
+    return { error: '程式碼格式不對' }
+  }
+  const code = JSON.stringify({ html, css, js, shapes })
+  if (Buffer.byteLength(code, 'utf8') > MAX_CODE_BYTES) {
+    return { error: '程式碼太長了，最多 60000 個英文字母那麼長（中文字一個算 3 個）' }
+  }
+  return { code }
+}
+
 // 存檔：在同一個 transaction 裡更新合成獸、加一筆版本、刪掉超過 20 筆的舊版本
 // 跟最新一筆版本一模一樣就不新增，連按存檔不會塞滿紀錄
 // 回傳這次有沒有新增版本

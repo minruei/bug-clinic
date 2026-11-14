@@ -1,16 +1,38 @@
 // 合成獸程式碼的純函式：裝零件、卸零件、組成網頁
 // 不放在 ChimeraEditor.tsx，測試和商店預覽用的時候才不會載入 CodeMirror
 
+// 四格程式碼：shapes 是「零件形狀」，放零件和身體一大段畫形狀的 CSS，CSS 烤漆只留常改的顏色和位置
+// 組預覽頁時零件形狀放在 CSS 烤漆前面，CSS 烤漆寫的設定會蓋過形狀
 export type ChimeraCode = {
   html: string
   css: string
   js: string
+  shapes: string
+}
+
+// 2026/11 以前的存檔和版本紀錄沒有 shapes：當成空字串，畫面跟以前一樣，不自動搬移
+export function withShapes(code: Omit<ChimeraCode, 'shapes'> & { shapes?: unknown }): ChimeraCode {
+  return {
+    html: code.html,
+    css: code.css,
+    js: code.js,
+    shapes: typeof code.shapes === 'string' ? code.shapes : '',
+  }
+}
+
+// 零件 CSS 裡的分隔線：上面是顏色和位置，裝的時候放進 CSS 烤漆；下面是形狀，放進零件形狀
+// 沒有這一行的零件整段放進 CSS 烤漆
+export const SHAPE_MARKER = '/* ===== 零件形狀 ===== */'
+
+export function splitPartCss(css: string): { css: string; shapes: string } {
+  const at = css.indexOf(SHAPE_MARKER)
+  if (at === -1) return { css, shapes: '' }
+  return { css: css.slice(0, at).trim(), shapes: css.slice(at + SHAPE_MARKER.length).trim() }
 }
 
 // 合成獸的身體：一個方形身體，毛色用變數，買了毛色零件就能改
 // 零件裝在 .body 裡面，身體動的時候零件會跟著一起動；零件的位置跟著身體的大小和定位變數走
-// .body 是透明的容器，看得到的身體畫在 .body::before（底色和外框）和 .body::after（立體感），
-// 兩層都是 z-index: -1；翅膀、披風是 z-index: -2，排在身體後面，跳的時候還是跟著 .body 一起動
+// 畫身體的程式放在零件形狀（BODY_SHAPES），CSS 烤漆只留毛色和尺寸（BODY_CSS）
 // 對話框的預設文字，教程第二步要玩家換成自己想說的話
 export const SPEECH_PLACEHOLDER = '……'
 
@@ -24,6 +46,7 @@ function bodyHtml(withSpeech: boolean) {
 </div>`
 }
 
+// CSS 烤漆：只留毛色、尺寸，玩家最常改的地方
 const BODY_CSS = `.chimera {
   position: relative;
   display: flex;
@@ -33,11 +56,20 @@ const BODY_CSS = `.chimera {
   margin: 0;
 }
 
+/* 想換毛色、改大小，改這裡就好 */
 .body {
   --fur-color: #b4b2a9;
-  position: relative;
   width: 120px;
   height: 100px;
+}`
+
+// 零件形狀：身體的透明容器、::before、::after
+// background 寫在這裡不寫在 CSS 烤漆：CSS 烤漆排在後面，寫 background 會把這裡的 background-clip 和花紋一起蓋掉
+const BODY_SHAPES = `/* 身體的形狀：CSS 烤漆的 .body 寫的設定會蓋過這裡 */
+/* .body 是透明的容器，看得到的身體畫在 .body::before（底色和外框）和 .body::after（立體感） */
+/* 兩層都是 z-index: -1；翅膀、披風是 z-index: -2，排在身體後面，跳的時候還是跟著 .body 一起動 */
+.body {
+  position: relative;
   background: var(--fur-color);
   /* 外框留 4px 的位置，真正畫出來的外框在下面的 .body::before */
   border: 4px solid transparent;
@@ -161,10 +193,12 @@ export const JUMP_PLACEHOLDER = '// 在這裡加上一行，讓合成獸跳起�
 
 // 新手教程用的練習合成獸：CSS 已經寫好怎麼跳，JS 留一個空格讓玩家補上「什麼時候跳」
 // 跟正式版分開，教程怎麼改都不會影響玩家自己的合成獸
+// 教程中不顯示零件形狀那一格，身體和對話框的樣子放在那裡，預覽照樣看得到
 export const practiceChimera: ChimeraCode = {
   html: bodyHtml(true),
-  css: `${BODY_CSS}\n\n${SPEECH_CSS}\n\n${JUMP_CSS}`,
+  css: `${BODY_CSS}\n\n${JUMP_CSS}`,
   js: JUMP_JS.replace(JUMP_LINE, JUMP_PLACEHOLDER),
+  shapes: `${BODY_SHAPES}\n\n${SPEECH_CSS}`,
 }
 
 // 還沒改過的合成獸（新玩家、按「還原預設」都是這隻）：點一下就會跳
@@ -172,6 +206,7 @@ export const starterChimera: ChimeraCode = {
   html: bodyHtml(false),
   css: `${BODY_CSS}\n\n${JUMP_CSS}`,
   js: JUMP_JS,
+  shapes: BODY_SHAPES,
 }
 
 // 編輯器的預覽用：放在玩家的 JS 前面，有事就用 postMessage 告訴外面的頁面
@@ -267,7 +302,7 @@ function pageBeforeJs(code: ChimeraCode, options: PageOptions) {
   return `<!doctype html>
 <html>
 <head>
-${options.pixel ? PIXEL_STYLE : ''}<style>body { margin: 0; } ${code.css}${options.hideSpeech ? '\n.speech { display: none !important; }' : ''}</style>
+${options.pixel ? PIXEL_STYLE : ''}<style>body { margin: 0; } ${code.shapes}\n${code.css}${options.hideSpeech ? '\n.speech { display: none !important; }' : ''}</style>
 </head>
 <body>
 ${code.html}
@@ -317,11 +352,14 @@ export const slots = [
 
 export type Slot = (typeof slots)[number]['key']
 
+// 零件在資料庫裡的程式碼還是三格：形狀寫在 CSS 的 SHAPE_MARKER 下面，裝上時才拆出來
+export type PartCode = Omit<ChimeraCode, 'shapes'>
+
 export type InstallablePart = {
   id: number
   slot: Slot
   name: string
-  code: ChimeraCode
+  code: PartCode
 }
 
 const PART_MARKER = '<!-- 零件裝在這裡 -->'
@@ -334,21 +372,25 @@ function slotBlocks(tab: EditorTab, slot: Slot) {
   if (tab === 'html') {
     return new RegExp(`<!-- ${tag} [^\\n]*? 開始 -->[\\s\\S]*?<!-- ${tag} 結束 -->\\n?[ \\t]*`, 'g')
   }
-  if (tab === 'css') {
+  if (tab === 'css' || tab === 'shapes') {
     return new RegExp(`\\n{0,2}/\\* ${tag} [^\\n]*? 開始 \\*/[\\s\\S]*?/\\* ${tag} 結束 \\*/`, 'g')
   }
   return new RegExp(`\\n?// ${tag} [^\\n]*? 開始[\\s\\S]*?// ${tag} 結束`, 'g')
 }
 
-// 把零件的三格程式碼各自用標記包起來，空的那格不加
+// 把零件的程式碼各自用標記包起來，空的那格不加；CSS 先拆成 CSS 烤漆和零件形狀，兩邊用同一個標記
 // HTML 先不縮排，放進去的時候再照那一行的縮排補上
 function wrapPart(part: InstallablePart): ChimeraCode {
   const tag = `[${part.slot}:${part.id}]`
-  const { html, css, js } = part.code
+  const { html, js } = part.code
+  const { css, shapes } = splitPartCss(part.code.css)
+  const wrapCss = (text: string) =>
+    text ? `/* ${tag} ${part.name} 開始 */\n${text}\n/* ${tag} 結束 */` : ''
   return {
     html: html ? `<!-- ${tag} ${part.name} 開始 -->\n${html}\n<!-- ${tag} 結束 -->` : '',
-    css: css ? `/* ${tag} ${part.name} 開始 */\n${css}\n/* ${tag} 結束 */` : '',
+    css: wrapCss(css),
     js: js ? `// ${tag} ${part.name} 開始\n${js}\n// ${tag} 結束` : '',
+    shapes: wrapCss(shapes),
   }
 }
 
@@ -396,7 +438,7 @@ function moveMarkerIntoBody(code: ChimeraCode) {
 // 裝上零件：同部位的舊段落整段拿掉，再放新的
 // HTML 原本就有同部位段落的話換在原位置，玩家自己排好的順序不會亂掉；沒有才插到「零件裝在這裡」前面
 // 11/14 以前存的舊結構先把「零件裝在這裡」搬進 .body，同部位的舊段落也不留在原位，改插到 .body 裡
-// CSS 和 JS 接在最後面
+// CSS、JS、零件形狀接在最後面
 export function installPart(original: ChimeraCode, part: InstallablePart): ChimeraCode {
   const wrapped = wrapPart(part)
   const moved = moveMarkerIntoBody(original)
@@ -428,20 +470,25 @@ export function installPart(original: ChimeraCode, part: InstallablePart): Chime
 
   const css = code.css.replace(slotBlocks('css', part.slot), '')
   const js = code.js.replace(slotBlocks('js', part.slot), '')
+  // 零件形狀是空的（舊存檔）就不在前面多留空行
+  const shapes = code.shapes.replace(slotBlocks('shapes', part.slot), '')
+  const joinShapes = shapes.trim() ? `${shapes}\n\n${wrapped.shapes}` : wrapped.shapes
 
   return {
     html,
     css: wrapped.css ? `${css}\n\n${wrapped.css}` : css,
     js: wrapped.js ? `${js}\n${wrapped.js}` : js,
+    shapes: wrapped.shapes ? joinShapes : shapes,
   }
 }
 
-// 卸下零件：這個部位的標記段落三格都拿掉
+// 卸下零件：這個部位的標記段落四格都拿掉
 export function removePart(code: ChimeraCode, slot: Slot): ChimeraCode {
   return {
     html: code.html.replace(slotBlocks('html', slot), ''),
     css: code.css.replace(slotBlocks('css', slot), ''),
     js: code.js.replace(slotBlocks('js', slot), ''),
+    shapes: code.shapes.replace(slotBlocks('shapes', slot), ''),
   }
 }
 
@@ -449,7 +496,7 @@ export function removePart(code: ChimeraCode, slot: Slot): ChimeraCode {
 // 11/14 以前裝的零件沒有標記，這裡找不到，會當成沒裝
 export function installedPartId(code: ChimeraCode, slot: Slot): number | null {
   const pattern = new RegExp(`\\[${slot}:(\\d+)\\] [^\\n]*? 開始`)
-  for (const text of [code.html, code.css, code.js]) {
+  for (const text of [code.html, code.css, code.js, code.shapes]) {
     const match = text.match(pattern)
     if (match) return Number(match[1])
   }

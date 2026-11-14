@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { api } from '@/lib/api'
-import { buildPage, type ChimeraCode } from '@/lib/chimera'
+import { buildPage, withShapes, type ChimeraCode } from '@/lib/chimera'
 import { formatSavedAt } from '@/lib/time'
 
 type Version = { id: number; createdAt: string }
@@ -38,7 +38,8 @@ export function VersionPanel({ savedCount, onRestore }: VersionPanelProps) {
       setError(res.message)
       return
     }
-    setSelected({ id, code: res.data.code })
+    // 舊版本沒有零件形狀那一格，補成空字串
+    setSelected({ id, code: withShapes(res.data.code) })
   }
 
   const selectedVersion = versions?.find((v) => v.id === selected?.id)

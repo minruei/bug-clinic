@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { challenges } from '@/server/src/challenges'
-import { practiceChimera, starterChimera, type ChimeraCode } from '@/lib/chimera'
+import { challenges, codeForCheck } from '@/server/src/challenges'
+import {
+  SHAPE_MARKER,
+  installPart,
+  practiceChimera,
+  starterChimera,
+  type ChimeraCode,
+} from '@/lib/chimera'
 import { moves } from '@/lib/moves'
 import { dailyCheckPage, dailyKeys, passesDaily, pasteExample } from '@/lib/daily'
 
@@ -49,6 +55,24 @@ describe('每日任務的前端檢查', () => {
     expect(passesDaily('red-eyes', code, { eyeColors: [] })).toBe(false)
   })
 
+  it('紅眼睛：裝了眼睛零件，只把 CSS 烤漆的 --eye-color 改成紅色就會過', () => {
+    const eyes = installPart(starterChimera, {
+      id: 20,
+      slot: 'eyes',
+      name: '眼睛',
+      code: {
+        html: '<div class="eye left"></div>\n<div class="eye right"></div>',
+        css: `.eye {\n  --eye-color: #2e221a;\n}\n\n${SHAPE_MARKER}\n\n.eye {\n  background: var(--eye-color);\n}`,
+        js: '',
+      },
+    })
+    const red = { ...eyes, css: eyes.css.replace('#2e221a', '#e53935') }
+    const measure = { eyeColors: ['rgb(229, 57, 53)', 'rgb(229, 57, 53)'] }
+    expect(passesDaily('red-eyes', red, measure)).toBe(true)
+    // 沒改顏色：寫法檢查讀到的是深棕色
+    expect(passesDaily('red-eyes', eyes, measure)).toBe(false)
+  })
+
   it('圓滾滾：四個角都要夠圓', () => {
     const code = withCss('.body { border-radius: 50%; }')
     expect(passesDaily('round-body', code, { radius: ['50%', '50%', '50%', '50%'] })).toBe(true)
@@ -57,14 +81,15 @@ describe('每日任務的前端檢查', () => {
 
   it('預設合成獸和教程怪物不會直接通過任何一題（身體的立體感不算「影子」）', () => {
     for (const c of challenges) {
-      expect(c.check(starterChimera), c.key).toBe(false)
-      expect(c.check(practiceChimera), c.key).toBe(false)
+      // 零件形狀接在 CSS 前面一起檢查，跟領獎時一樣
+      expect(c.check(codeForCheck(starterChimera)), c.key).toBe(false)
+      expect(c.check(codeForCheck(practiceChimera)), c.key).toBe(false)
     }
   })
 
   it('每一題照第 3 層提示貼到預設合成獸上，寫法檢查就會過（不用先買零件）', () => {
     for (const c of challenges) {
-      expect(c.check(pasteExample(starterChimera, c.example)), c.key).toBe(true)
+      expect(c.check(codeForCheck(pasteExample(starterChimera, c.example))), c.key).toBe(true)
     }
   })
 

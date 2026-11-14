@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest'
 import {
   DAILY_REWARD,
   challenges,
+  codeForCheck,
   findColor,
   isBluish,
   isReddish,
@@ -249,6 +250,11 @@ const samples: Record<string, { pass: Sample[]; fail: Sample[] }> = {
       ['零件的 class 和 background-color', withCss('.eye-round { background-color: red; }')],
       ['動作參考的 [class^="eye"] 寫法', withCss('.body [class^="eye"] { background: rgb(200, 30, 30); }')],
       ['多餘空白、大寫屬性和顏色', withCss('  .eye-star   {\n\n  BACKGROUND :   #FF0000  !important ;\n}')],
+      // 眼睛零件裝上去之後：零件形狀寫 background: var(--eye-color)，CSS 烤漆只改 --eye-color
+      ['眼睛零件只改 --eye-color', withCss('.eye { background: var(--eye-color); }\n.eye { --eye-color: #2e221a; }\n.eye { --eye-color: #e53935; }')],
+      ['--eye-color 寫在身體上（變數會往下繼承）', withCss('.eye-round { background: var(--eye-color); }\n.body { --eye-color: crimson; }')],
+      ['var() 的備用值是紅色', withCss('.eye { background: var(--eye-color, red); }')],
+      ['變數裡面又用變數', withCss(':root { --red: #c62828; }\n.eye { --eye-color: var(--red); background: var(--eye-color); }')],
     ],
     fail: [
       ['寫在註解裡', withCss('/* .eye { background: red; } */')],
@@ -256,6 +262,10 @@ const samples: Record<string, { pass: Sample[]; fail: Sample[] }> = {
       ['class 大小寫不同（.Eye 選不到眼睛）', withCss('.Eye { background: red; }')],
       ['改的是身體不是眼睛', withCss('.body { background: red; }')],
       ['後面又改回黑色', withCss('.eye { background: red; }\n.eye { background: #000; }')],
+      ['眼睛零件沒改顏色（--eye-color 還是深棕色）', withCss('.eye { background: var(--eye-color); }\n.eye { --eye-color: #2e221a; }')],
+      ['--eye-color 寫在註解裡', withCss('.eye { background: var(--eye-color); }\n/* .eye { --eye-color: red; } */')],
+      ['變數沒有定義也沒有備用值', withCss('.eye { background: var(--eye-color); }')],
+      ['變數繞圈圈', withCss('.eye { --a: var(--b); --b: var(--a); background: var(--a); }')],
     ],
   },
   'round-body': {
@@ -416,4 +426,30 @@ describe('過關檢查', () => {
       }
     })
   }
+})
+
+describe('codeForCheck', () => {
+  it('零件形狀接在 CSS 前面，CSS 烤漆寫的會蓋過零件形狀', () => {
+    const code = codeForCheck({ ...base, css: '.eye { --eye-color: red; }', shapes: '.eye { background: var(--eye-color); }' })
+    expect(code.css).toBe('.eye { background: var(--eye-color); }\n.eye { --eye-color: red; }')
+    expect(challenge('red-eyes').check(code)).toBe(true)
+  })
+
+  it('舊存檔沒有零件形狀，CSS 原樣不變', () => {
+    expect(codeForCheck(base)).toEqual(base)
+    expect(codeForCheck({ ...base, shapes: '' })).toEqual(base)
+  })
+
+  it('零件形狀裡畫身體的程式（透明容器、::before、::after）不會讓預設合成獸過關', () => {
+    const shapes = `.body {
+  position: relative;
+  background: var(--fur-color);
+  border: 4px solid transparent;
+  background-clip: text;
+}
+.body::before { content: ''; position: absolute; inset: -4px; border-radius: inherit; }
+.body::after { content: ''; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 4px 4px 0 #fff; }`
+    const code = codeForCheck({ ...base, shapes })
+    for (const c of challenges) expect(c.check(code), c.key).toBe(false)
+  })
 })

@@ -15,6 +15,17 @@ export type ChimeraCode = {
   js: string
 }
 
+// 存檔的程式碼多一格零件形狀（零件和身體一大段畫形狀的 CSS），2026/11 以前的存檔沒有
+// 檢查時把零件形狀接在 CSS 前面，跟預覽頁的順序一樣：玩家在 CSS 烤漆寫的會蓋過零件形狀，看到什麼就檢查什麼
+// 前端（lib/daily.ts）和後端領獎（daily.ts）都用這個，兩邊才會一致
+export function codeForCheck(code: ChimeraCode & { shapes?: string }): ChimeraCode {
+  return {
+    html: code.html,
+    css: code.shapes ? `${code.shapes}\n${code.css}` : code.css,
+    js: code.js,
+  }
+}
+
 // 難度：只改一格 CSS 是簡單，要動到 HTML 或兩格是普通，JS 題是挑戰
 export type DailyLevel = '簡單' | '普通' | '挑戰'
 
@@ -217,6 +228,44 @@ function lastValue(css: string, match: (selector: string) => boolean, props: str
     }
   }
   return found
+}
+
+// 選到眼睛的祖先：CSS 變數會往下繼承，寫在 .body、.chimera 或 :root 的 --eye-color 眼睛也拿得到
+const isEyeAncestor = (selector: string) =>
+  [':root', 'html', 'body', '.chimera', '.body'].includes(lastCompound(selector))
+
+// 把值裡面的 var(--名字) 換成那個變數的值，看得懂零件常見的寫法：.eye { background: var(--eye-color); }
+// 先找同一個元素上的變數，沒有再找祖先的；都沒有就用 var() 裡逗號後面的備用值
+// 變數裡面又用變數的話最多往下找 5 層，避免 --a: var(--b); --b: var(--a); 這種繞圈圈
+function resolveVars(
+  css: string,
+  value: string,
+  match: (selector: string) => boolean,
+  ancestor: (selector: string) => boolean,
+  depth = 0,
+): string {
+  const at = value.indexOf('var(')
+  if (at === -1 || depth > 5) return value
+  const close = matchParen(value, at + 3)
+  if (close === -1) return value
+  const inner = value.slice(at + 4, close)
+  const comma = inner.indexOf(',')
+  const name = (comma === -1 ? inner : inner.slice(0, comma)).trim()
+  const fallback = comma === -1 ? null : inner.slice(comma + 1).trim()
+  const found = lastValue(css, match, [name]) ?? lastValue(css, ancestor, [name]) ?? fallback
+  if (found === null) return value
+  const replaced = value.slice(0, at) + found + value.slice(close + 1)
+  return resolveVars(css, replaced, match, ancestor, depth + 1)
+}
+
+// 從 open 那個左括號開始，找到配對的右括號
+function matchParen(text: string, open: number) {
+  let depth = 0
+  for (let i = open; i < text.length; i++) {
+    if (text[i] === '(') depth++
+    if (text[i] === ')' && --depth === 0) return i
+  }
+  return -1
 }
 
 type Hsl = { h: number; s: number; l: number }
@@ -439,7 +488,7 @@ export const challenges: Challenge[] = [
     title: '紅眼睛',
     description: '把合成獸的眼睛變成紅色。',
     level: '普通',
-    hint: '眼睛要兩格一起改：HTML 放兩個 class 是 eye 的元素，CSS 的 .eye 把 background 設成紅色系，例如 #e53935。',
+    hint: '已經裝了眼睛零件的話，把 CSS 烤漆裡的 --eye-color 改成紅色系就好，例如 #e53935。還沒有眼睛的話要兩格一起改：HTML 放兩個 class 是 eye 的元素，CSS 的 .eye 把 background 設成紅色系。',
     reference: '零件商店的「眼睛」分頁，點任何一個眼睛零件的「看程式碼」，就看得到眼睛的 HTML 和 CSS 怎麼寫，不用買。',
     example: {
       html: `<div class="eye left"></div>
@@ -460,8 +509,10 @@ export const challenges: Challenge[] = [
   right: 25%;
 }`,
     },
+    // 眼睛零件的顏色寫在變數：.eye { background: var(--eye-color); }，只改 --eye-color 也算
     check: ({ css }) => {
-      const value = lastValue(css, isEye, ['background', 'background-color'])
+      const raw = lastValue(css, isEye, ['background', 'background-color'])
+      const value = raw ? resolveVars(css, raw, isEye, isEyeAncestor) : null
       const color = value ? findColor(value) : null
       return !!color && isReddish(color)
     },
