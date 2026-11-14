@@ -9,6 +9,8 @@ import { TIME_LIMIT, EXP_REWARD, TUTORIAL_REWARD, remainingLife, coinsFor } from
 import { coinPackages, findPackage, payByPrime } from './payment'
 import { loginLimit, orderLimit, registerLimit } from './limits'
 import { getVersion, listVersions, saveChimera } from './versions'
+import { listProblems } from './problems'
+import { dailyRouter } from './daily'
 
 // 找出這個使用者、還沒結束的看診，順便拿到題目的答案和經過秒數
 // 不是本人的或已結束的都找不到，避免偷用別人的紀錄或重複領獎勵
@@ -40,27 +42,16 @@ app.use(express.json())
 // 只允許自己的前端呼叫 API，FRONTEND_URL 可以用逗號放多個網址（本機和線上）
 app.use(cors({ origin: process.env.FRONTEND_URL?.split(',') }))
 
+// 每日任務的路由寫在 daily.ts
+app.use(dailyRouter)
+
 app.get('/', (req, res) => {
   res.send('Bug Clinic API 運作中')
 })
 
 // 取得所有題目和選項
-// 不回傳 bug_line、explanation、is_correct，答案只留在後端
 app.get('/api/problems', async (req, res) => {
-  const [problems] = await pool.query<RowDataPacket[]>(
-    'SELECT id, pet_name, emoji, topic, error_message, symptom_zh, code FROM problems',
-  )
-  const [options] = await pool.query<RowDataPacket[]>(
-    'SELECT id, problem_id, option_text FROM problem_options ORDER BY problem_id, sort_order',
-  )
-
-  // 把選項放進各自的題目底下
-  const result = problems.map((p) => ({
-    ...p,
-    options: options.filter((o) => o.problem_id === p.id),
-  }))
-
-  res.json({ data: result })
+  res.json({ data: await listProblems() })
 })
 
 // 註冊：信箱重複回 400，密碼雜湊後才存進資料庫
