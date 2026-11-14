@@ -238,14 +238,50 @@ PARTS += [
     part('horn', '小角', 'html', 10, html='''
         <div class="horn"></div>
     ''', css='''
+        /* 想換顏色、移位置，改這裡就好 */
+        .horn {
+          --horn-color: #fbf8f1;
+          top: calc(var(--horn-y, 0%) - 16px);
+          left: calc(50% - 14px);
+        }
+
+        /* 角分三層，由下往上寬 5 格、3 格、1 格，疊起來就是一階一階的尖角 */
+        /* 一格是 4px，外框也是一格；上面兩層沒有下框，往下蓋住下一層的上框，三層才會連在一起 */
         .horn {
           position: absolute;
           z-index: 1;
-          top: calc(var(--horn-y, 0%) - 24px);
-          left: calc(50% - 10px);
-          border-left: 10px solid transparent;
-          border-right: 10px solid transparent;
-          border-bottom: 24px solid #f3ead8;
+          width: 20px;
+          height: 8px;
+          background: var(--horn-color);
+          border: 4px solid #4a3426;
+          box-shadow: inset -4px 0 0 rgb(46 34 26 / 20%);
+        }
+
+        /* 中間那層 */
+        .horn::before {
+          content: '';
+          position: absolute;
+          top: -12px;
+          left: 0;
+          width: 12px;
+          height: 12px;
+          background: var(--horn-color);
+          border: 4px solid #4a3426;
+          border-bottom: 0;
+          box-shadow: inset -4px 0 0 rgb(46 34 26 / 20%);
+        }
+
+        /* 最上面的尖端 */
+        .horn::after {
+          content: '';
+          position: absolute;
+          top: -20px;
+          left: 4px;
+          width: 4px;
+          height: 8px;
+          background: var(--horn-color);
+          border: 4px solid #4a3426;
+          border-bottom: 0;
         }
     '''),
     part('horn', '雙角', 'html', 15, html='''
@@ -495,12 +531,10 @@ PARTS += [
         <div class="eye left"></div>
         <div class="eye right"></div>
     ''', css='''
+        /* 想換顏色、移位置，改這裡就好 */
         .eye {
-          position: absolute;
+          --eye-color: #2e221a;
           top: var(--eye-y, 30%);
-          width: 14px;
-          height: 14px;
-          background: #2b1d14;
         }
 
         .eye.left {
@@ -508,7 +542,26 @@ PARTS += [
         }
 
         .eye.right {
-          left: calc(50% + 18px);
+          left: calc(50% + 20px);
+        }
+
+        /* 一隻眼睛 3 × 3 格 */
+        .eye {
+          position: absolute;
+          width: 12px;
+          height: 12px;
+          background: var(--eye-color);
+        }
+
+        /* 右上角一格白色反光，眼睛看起來亮亮的 */
+        .eye::after {
+          content: '';
+          position: absolute;
+          top: 0;
+          right: 0;
+          width: 4px;
+          height: 4px;
+          background: #fbf8f1;
         }
     '''),
     part('eyes', '圓圓大眼', 'html', 15, html='''
@@ -773,12 +826,10 @@ PARTS += [
         <div class="tooth left"></div>
         <div class="tooth right"></div>
     ''', css='''
+        /* 想換顏色、移位置，改這裡就好 */
         .tooth {
-          position: absolute;
+          --tooth-color: #fbf8f1;
           top: calc(var(--mouth-y, 60%) + 6px);
-          border-left: 6px solid transparent;
-          border-right: 6px solid transparent;
-          border-top: 12px solid #ffffff;
         }
 
         .tooth.left {
@@ -787,6 +838,20 @@ PARTS += [
 
         .tooth.right {
           left: calc(50% + 6px);
+        }
+
+        /* 每顆牙齒是 4 格：上面一排 3 格、下面中間 1 格尖尖的 */
+        /* 元素本身是左上那一格，另外 3 格用 box-shadow 複製出來 */
+        /* box-shadow 的前兩個數字是往右、往下移多少，移 4px 就是旁邊那一格 */
+        .tooth {
+          position: absolute;
+          width: 4px;
+          height: 4px;
+          background: var(--tooth-color);
+          box-shadow:
+            4px 0 0 var(--tooth-color),
+            8px 0 0 var(--tooth-color),
+            4px 4px 0 var(--tooth-color);
         }
     '''),
     part('mouth', '微笑', 'css', 10, html='''
@@ -1013,13 +1078,18 @@ PARTS += [
 # 花紋：只改 .body 的 background-image，底色還是玩家選的 --fur-color
 PARTS += [
     part('pattern', '毛色', 'css', 20, css='''
-        /* 斑紋：改 --fur-color 換底色，改 rgba 的透明度調斑紋深淺 */
+        /* 想換顏色，改這裡就好：--fur-color 是底色，最後的 15% 是條紋的深淺 */
         .body {
           --fur-color: #e8a33d;
+          --stripe-color: rgb(46 34 26 / 15%);
+        }
+
+        /* 直的條紋：每 6 格一個循環，前 4 格空白、後 2 格是條紋，邊緣是直的，跟像素圖一樣 */
+        .body {
           background-image: repeating-linear-gradient(
-            45deg,
-            transparent 0 10px,
-            rgba(0, 0, 0, 0.15) 10px 20px
+            90deg,
+            transparent 0 16px,
+            var(--stripe-color) 16px 24px
           );
         }
     '''),
@@ -1113,16 +1183,63 @@ PARTS += [
     part('wings', '翅膀', 'css', 30, html='''
         <div class="wing"></div>
     ''', css='''
+        /* 想換顏色、移位置，改這裡就好 */
         .wing {
-          --wing-color: #85b7eb;
+          --wing-color: #6b8fb0;
+          top: calc(var(--wing-y, 10%) + 4px);
+          left: calc(-66px + var(--wing-x, 0px));
+        }
+
+        /* 翅膀 16 × 10 格；外框用 drop-shadow 往上下左右各畫一次 4px，外框就會跟著剪出來的形狀走 */
+        .wing {
           position: absolute;
-          top: var(--wing-y, 10%);
-          left: calc(-70px + var(--wing-x, 0px));
           width: 64px;
           height: 40px;
+          filter:
+            drop-shadow(4px 0 0 #4a3426)
+            drop-shadow(-4px 0 0 #4a3426)
+            drop-shadow(0 4px 0 #4a3426)
+            drop-shadow(0 -4px 0 #4a3426);
+        }
+
+        .wing::before {
+          content: '';
+          position: absolute;
+          inset: 0;
           background: var(--wing-color);
-          border: 4px solid #4a3426;
-          border-radius: 40px 4px 40px 4px;
+          box-shadow:
+            inset 4px 4px 0 rgb(255 255 255 / 35%),
+            inset -4px -4px 0 rgb(46 34 26 / 25%);
+          clip-path: var(--wing-shape);
+        }
+
+        /* 下面是剪出形狀的程式，想改形狀再研究 */
+        /* 從左上開始順時針走一圈，每一行是一個轉角：左上和右下一階一階剪成圓弧，右上和左下保持直角 */
+        .wing {
+          --wing-shape: polygon(
+            24px 0,
+            64px 0,
+            64px 24px,
+            60px 24px,
+            60px 28px,
+            56px 28px,
+            56px 32px,
+            48px 32px,
+            48px 36px,
+            40px 36px,
+            40px 40px,
+            0 40px,
+            0 20px,
+            4px 20px,
+            4px 16px,
+            8px 16px,
+            8px 12px,
+            12px 12px,
+            12px 8px,
+            16px 8px,
+            16px 4px,
+            24px 4px
+          );
         }
     '''),
     part('wings', '一對小翅膀', 'html', 30, html='''
@@ -1479,15 +1596,36 @@ PARTS += [
     part('tail', '會擺動的尾巴', 'js', 60, html='''
         <div class="tail"></div>
     ''', css='''
+        /* 想換顏色、移位置，改這裡就好 */
+        .tail {
+          --tail-color: #9a6440;
+          top: var(--tail-y, 60%);
+          left: 100%;
+        }
+
+        /* 尾巴是一條 10 × 2 格的長條，尾巴尖往上翹一格 */
         .tail {
           position: absolute;
-          top: var(--tail-y, 60%);
-          left: calc(100% + 4px);
-          width: 50px;
-          height: 12px;
-          background: #4a3426;
+          width: 40px;
+          height: 8px;
+          background: var(--tail-color);
+          border: 4px solid #4a3426;
+          box-shadow: inset 0 4px 0 rgb(255 255 255 / 35%);
           transform-origin: left center;
           cursor: pointer;
+        }
+
+        /* 尾巴尖：沒有下框，往下蓋住長條的上框，兩塊才會連在一起 */
+        .tail::after {
+          content: '';
+          position: absolute;
+          top: -12px;
+          right: -4px;
+          width: 8px;
+          height: 8px;
+          background: var(--tail-color);
+          border: 4px solid #4a3426;
+          border-bottom: 0;
         }
 
         .tail.wag {
@@ -2351,6 +2489,19 @@ STARTER = {
           height: 100px;
           background: var(--fur-color);
           border: 4px solid #4a3426;
+        }
+
+        /* 立體感：左上亮一格、右下暗一格，畫在 .body::before，換毛色也一樣有效 */
+        /* 不畫在 .body 的 box-shadow，留給玩家自己加影子；border-radius: inherit 讓身體改成圓的時候也跟著圓 */
+        .body::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          border-radius: inherit;
+          box-shadow:
+            inset 4px 4px 0 rgb(251 248 241 / 45%),
+            inset -4px -4px 0 rgb(46 34 26 / 25%);
+          pointer-events: none;
         }
 
         /* 點一下往上跳再落下，改 -30px 調跳多高、改 0.4s 調多快 */

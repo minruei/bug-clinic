@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { challenges } from '@/server/src/challenges'
-import { starterChimera, type ChimeraCode } from '@/lib/chimera'
+import { practiceChimera, starterChimera, type ChimeraCode } from '@/lib/chimera'
 import { moves } from '@/lib/moves'
 import { dailyCheckPage, dailyKeys, passesDaily } from '@/lib/daily'
 
@@ -53,6 +53,13 @@ describe('每日任務的前端檢查', () => {
     const code = withCss('.body { border-radius: 50%; }')
     expect(passesDaily('round-body', code, { radius: ['50%', '50%', '50%', '50%'] })).toBe(true)
     expect(passesDaily('round-body', code, { radius: ['50%', '50%', '10px', '50%'] })).toBe(false)
+  })
+
+  it('預設合成獸和教程怪物不會直接通過任何一題（身體的立體感不算「影子」）', () => {
+    for (const c of challenges) {
+      expect(c.check(starterChimera), c.key).toBe(false)
+      expect(c.check(practiceChimera), c.key).toBe(false)
+    }
   })
 
   it('不認得的題目一律不過', () => {

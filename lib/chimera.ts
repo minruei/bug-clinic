@@ -38,6 +38,19 @@ const BODY_CSS = `.chimera {
   height: 100px;
   background: var(--fur-color);
   border: 4px solid #4a3426;
+}
+
+/* 立體感：左上亮一格、右下暗一格，畫在 .body::before，換毛色也一樣有效 */
+/* 不畫在 .body 的 box-shadow，留給玩家自己加影子；border-radius: inherit 讓身體改成圓的時候也跟著圓 */
+.body::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow:
+    inset 4px 4px 0 rgb(251 248 241 / 45%),
+    inset -4px -4px 0 rgb(46 34 26 / 25%);
+  pointer-events: none;
 }`
 
 // 對話框的樣式：教程怪物和動作參考會說話的招式共用
