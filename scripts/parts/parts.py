@@ -288,36 +288,82 @@ PARTS += [
         <div class="horn-twin left"></div>
         <div class="horn-twin right"></div>
     ''', css='''
+        /* 想換顏色、移位置，改這裡就好 */
         .horn-twin {
-          position: absolute;
-          z-index: 1;
-          top: calc(var(--horn-y, 0%) - 22px);
-          border-left: 9px solid transparent;
-          border-right: 9px solid transparent;
-          border-bottom: 22px solid #f3ead8;
+          --horn-color: #fbf8f1;
+          top: calc(var(--horn-y, 0%) - 16px);
         }
 
         .horn-twin.left {
-          left: calc(50% - 42px);
+          left: calc(50% - 40px);
         }
 
         .horn-twin.right {
-          left: calc(50% + 24px);
+          left: calc(50% + 20px);
+        }
+
+        /* 每支角兩層：下層 3 × 2 格，上層 1 格寬的尖端 */
+        .horn-twin {
+          position: absolute;
+          z-index: 1;
+          width: 12px;
+          height: 8px;
+          background: var(--horn-color);
+          border: 4px solid #4a3426;
+          box-shadow: inset -4px 0 0 rgb(46 34 26 / 20%);
+        }
+
+        /* 尖端：沒有下框，往下蓋住下層的上框，兩層才會連在一起 */
+        .horn-twin::before {
+          content: '';
+          position: absolute;
+          top: -12px;
+          left: 0;
+          width: 4px;
+          height: 8px;
+          background: var(--horn-color);
+          border: 4px solid #4a3426;
+          border-bottom: 0;
         }
     '''),
     part('horn', '獨角獸角', 'css', 20, html='''
         <div class="horn-unicorn"></div>
     ''', css='''
-        /* 用 clip-path 切成細長三角形，斜條紋是 repeating-linear-gradient */
+        /* 想換顏色、移位置，改這裡就好 */
+        .horn-unicorn {
+          --horn-color: #fbf8f1;
+          --stripe-color: #e8a0a0;
+          top: calc(var(--horn-y, 0%) - 20px);
+          left: calc(50% - 10px);
+        }
+
+        /* 下層 3 × 3 格，上面接一根 1 格寬、4 格高的尖端 */
+        /* 條紋是一格白、一格粉紅一直重複，邊緣是直的，跟像素圖一樣 */
+        .horn-unicorn,
+        .horn-unicorn::before {
+          background: repeating-linear-gradient(
+            var(--horn-color) 0 4px,
+            var(--stripe-color) 4px 8px
+          );
+          border: 4px solid #4a3426;
+        }
+
         .horn-unicorn {
           position: absolute;
           z-index: 1;
-          top: calc(var(--horn-y, 0%) - 50px);
-          left: calc(50% - 8px);
-          width: 16px;
-          height: 50px;
-          background: repeating-linear-gradient(160deg, #f3ead8 0 6px, #f2b8c6 6px 10px);
-          clip-path: polygon(50% 0, 100% 100%, 0 100%);
+          width: 12px;
+          height: 12px;
+        }
+
+        /* 尖端：沒有下框，往下蓋住下層的上框 */
+        .horn-unicorn::before {
+          content: '';
+          position: absolute;
+          top: -20px;
+          left: 0;
+          width: 4px;
+          height: 16px;
+          border-bottom: 0;
         }
     '''),
     part('horn', '鹿角', 'html', 25, html='''
@@ -328,47 +374,59 @@ PARTS += [
           <span class="horn-deer-branch"></span>
         </div>
     ''', css='''
-        /* 一根直的主幹，加一根橫的分岔，分岔尾端再往上長一小段 */
+        /* 想換顏色、移位置，改這裡就好 */
         .horn-deer {
-          position: absolute;
-          z-index: 1;
-          top: calc(var(--horn-y, 0%) - 42px);
-          width: 6px;
-          height: 40px;
-          background: #8a5a3b;
+          --antler-color: #9a6440;
+          top: calc(var(--horn-y, 0%) - 36px);
         }
 
         .horn-deer.left {
-          left: calc(50% - 34px);
+          left: calc(50% - 32px);
         }
 
         .horn-deer.right {
-          left: calc(50% + 28px);
+          left: calc(50% + 24px);
+        }
+
+        /* 一根 2 格寬的主幹，旁邊伸出一根分岔，分岔尾端再往上長一段，全部都是方塊 */
+        /* 外框用 drop-shadow 往上下左右各畫一次 4px，會沿著整支鹿角的形狀走 */
+        .horn-deer {
+          position: absolute;
+          z-index: 1;
+          width: 8px;
+          height: 36px;
+          background: var(--antler-color);
+          filter:
+            drop-shadow(4px 0 0 #4a3426)
+            drop-shadow(-4px 0 0 #4a3426)
+            drop-shadow(0 4px 0 #4a3426)
+            drop-shadow(0 -4px 0 #4a3426);
         }
 
         .horn-deer-branch {
           position: absolute;
           top: 12px;
-          width: 16px;
-          height: 6px;
-          background: #8a5a3b;
+          width: 12px;
+          height: 8px;
+          background: var(--antler-color);
         }
 
+        /* 分岔往外長：左邊的往左、右邊的往右 */
         .horn-deer.left .horn-deer-branch {
-          left: -16px;
+          left: -12px;
         }
 
         .horn-deer.right .horn-deer-branch {
-          left: 6px;
+          left: 8px;
         }
 
         .horn-deer-branch::after {
           content: '';
           position: absolute;
           top: -12px;
-          width: 6px;
+          width: 8px;
           height: 12px;
-          background: #8a5a3b;
+          background: var(--antler-color);
         }
 
         .horn-deer.left .horn-deer-branch::after {
@@ -383,38 +441,67 @@ PARTS += [
         <div class="horn-ox left"></div>
         <div class="horn-ox right"></div>
     ''', css='''
-        /* 圓圈只畫兩邊的邊框，就是一段彎月形 */
+        /* 想換顏色、移位置，改這裡就好 */
         .horn-ox {
-          position: absolute;
-          z-index: 1;
-          top: calc(var(--horn-y, 0%) - 40px);
-          width: 24px;
-          height: 24px;
-          border: 8px solid transparent;
-          border-bottom-color: #f3ead8;
-          border-radius: 50%;
+          --horn-color: #fbf8f1;
+          top: calc(var(--horn-y, 0%) - 16px);
         }
 
         .horn-ox.left {
-          left: calc(50% - 74px);
-          border-left-color: #f3ead8;
+          left: calc(50% - 72px);
         }
 
         .horn-ox.right {
-          left: calc(50% + 34px);
-          border-right-color: #f3ead8;
+          left: calc(50% + 40px);
+        }
+
+        /* 一條往外長的橫條，末端往上翹兩格，看起來就是彎彎的牛角 */
+        .horn-ox {
+          position: absolute;
+          z-index: 1;
+          width: 24px;
+          height: 8px;
+          background: var(--horn-color);
+          border: 4px solid #4a3426;
+          box-shadow: inset 0 -4px 0 rgb(46 34 26 / 20%);
+        }
+
+        /* 往上翹的那段：沒有下框，往下蓋住橫條的上框，兩塊才會連在一起 */
+        .horn-ox::before {
+          content: '';
+          position: absolute;
+          top: -16px;
+          width: 8px;
+          height: 12px;
+          background: var(--horn-color);
+          border: 4px solid #4a3426;
+          border-bottom: 0;
+        }
+
+        .horn-ox.left::before {
+          left: -4px;
+        }
+
+        .horn-ox.right::before {
+          right: -4px;
         }
     '''),
     part('horn', '天線', 'html', 15, html='''
         <div class="horn-antenna"></div>
     ''', css='''
+        /* 想換顏色、移位置，改這裡就好 */
+        .horn-antenna {
+          --ball-color: #e8a33d;
+          top: calc(var(--horn-y, 0%) - 28px);
+          left: calc(50% - 2px);
+        }
+
+        /* 一根 1 格寬的細桿，頂端一顆 3 × 3 格的方球 */
         .horn-antenna {
           position: absolute;
           z-index: 1;
-          top: calc(var(--horn-y, 0%) - 34px);
-          left: calc(50% - 2px);
           width: 4px;
-          height: 30px;
+          height: 28px;
           background: #4a3426;
         }
 
@@ -423,95 +510,169 @@ PARTS += [
           position: absolute;
           top: -16px;
           left: -8px;
-          width: 14px;
-          height: 14px;
-          background: #e8a33d;
-          border: 3px solid #4a3426;
-          border-radius: 50%;
+          width: 12px;
+          height: 12px;
+          background: var(--ball-color);
+          border: 4px solid #4a3426;
+          box-shadow:
+            inset 4px 4px 0 rgb(255 255 255 / 45%),
+            inset -4px -4px 0 rgb(46 34 26 / 25%);
         }
     '''),
     part('horn', '貓耳', 'html', 20, html='''
         <div class="horn-cat left"></div>
         <div class="horn-cat right"></div>
     ''', css='''
-        /* 外面深棕色大三角，::after 疊一個粉紅小三角 */
+        /* 想換顏色、移位置，改這裡就好 */
         .horn-cat {
-          position: absolute;
-          z-index: 1;
-          top: calc(var(--horn-y, 0%) - 30px);
-          border-left: 18px solid transparent;
-          border-right: 18px solid transparent;
-          border-bottom: 28px solid #4a3426;
+          --ear-color: #9a6440;
+          --ear-inner: #e8a0a0;
+          top: calc(var(--horn-y, 0%) - 16px);
         }
 
         .horn-cat.left {
-          left: calc(50% - 54px);
+          left: calc(50% - 50px);
         }
 
         .horn-cat.right {
-          left: calc(50% + 18px);
+          left: calc(50% + 22px);
+        }
+
+        /* 耳朵三層，由下往上寬 5 格、3 格、1 格；中間那層是粉紅色的耳朵內側 */
+        .horn-cat {
+          position: absolute;
+          z-index: 1;
+          width: 20px;
+          height: 8px;
+          background: var(--ear-color);
+          border: 4px solid #4a3426;
+        }
+
+        /* 上面兩層沒有下框，往下蓋住下一層的上框，三層才會連在一起 */
+        .horn-cat::before {
+          content: '';
+          position: absolute;
+          top: -12px;
+          left: 0;
+          width: 12px;
+          height: 12px;
+          background: var(--ear-inner);
+          border: 4px solid #4a3426;
+          border-bottom: 0;
         }
 
         .horn-cat::after {
           content: '';
           position: absolute;
-          top: 9px;
-          left: -10px;
-          border-left: 10px solid transparent;
-          border-right: 10px solid transparent;
-          border-bottom: 16px solid #f2b8c6;
+          top: -20px;
+          left: 4px;
+          width: 4px;
+          height: 8px;
+          background: var(--ear-color);
+          border: 4px solid #4a3426;
+          border-bottom: 0;
         }
     '''),
     part('horn', '兔耳', 'html', 20, html='''
         <div class="horn-bunny left"></div>
         <div class="horn-bunny right"></div>
     ''', css='''
+        /* 想換顏色、移位置，改這裡就好 */
         .horn-bunny {
-          position: absolute;
-          z-index: 1;
-          top: calc(var(--horn-y, 0%) - 66px);
-          width: 22px;
-          height: 60px;
-          background: #f3ead8;
-          border: 4px solid #4a3426;
-          border-radius: 50%;
+          --ear-color: #fbf8f1;
+          --ear-inner: #e8a0a0;
+          top: calc(var(--horn-y, 0%) - 48px);
         }
 
         .horn-bunny.left {
-          left: calc(50% - 42px);
-          transform: rotate(-10deg);
+          left: calc(50% - 34px);
         }
 
         .horn-bunny.right {
-          left: calc(50% + 12px);
-          transform: rotate(10deg);
+          left: calc(50% + 14px);
         }
 
+        /* 一隻耳朵 3 格寬、10 格高，頂端多一格收尖 */
+        .horn-bunny {
+          position: absolute;
+          z-index: 1;
+          width: 12px;
+          height: 40px;
+          background: var(--ear-color);
+          border: 4px solid #4a3426;
+        }
+
+        /* 頂端：沒有下框，往下蓋住耳朵的上框 */
+        .horn-bunny::before {
+          content: '';
+          position: absolute;
+          top: -12px;
+          left: 0;
+          width: 4px;
+          height: 8px;
+          background: var(--ear-color);
+          border: 4px solid #4a3426;
+          border-bottom: 0;
+        }
+
+        /* 中間一條粉紅色的耳朵內側，1 格寬 */
         .horn-bunny::after {
           content: '';
           position: absolute;
-          top: 10px;
-          left: 7px;
-          width: 8px;
-          height: 38px;
-          background: #f2b8c6;
-          border-radius: 50%;
+          top: 4px;
+          left: 4px;
+          width: 4px;
+          height: 32px;
+          background: var(--ear-inner);
         }
     '''),
     part('horn', '會變色的角', 'js', 50, html='''
         <div class="horn-color"></div>
     ''', css='''
+        /* 想換顏色、移位置，改這裡就好；點角的時候 JS 會改 --horn-color */
         .horn-color {
-          --horn-color: #f3ead8;
+          --horn-color: #fbf8f1;
+          top: calc(var(--horn-y, 0%) - 16px);
+          left: calc(50% - 14px);
+        }
+
+        /* 角分三層，由下往上寬 5 格、3 格、1 格；三層都用 --horn-color，換色時一起變 */
+        .horn-color,
+        .horn-color::before,
+        .horn-color::after {
+          background: var(--horn-color);
+          border: 4px solid #4a3426;
+          transition: background-color 0.3s;
+        }
+
+        .horn-color {
           position: absolute;
           z-index: 1;
-          top: calc(var(--horn-y, 0%) - 32px);
-          left: calc(50% - 14px);
-          border-left: 14px solid transparent;
-          border-right: 14px solid transparent;
-          border-bottom: 32px solid var(--horn-color);
+          width: 20px;
+          height: 8px;
+          box-shadow: inset -4px 0 0 rgb(46 34 26 / 20%);
           cursor: pointer;
-          transition: border-color 0.3s;
+        }
+
+        /* 上面兩層沒有下框，往下蓋住下一層的上框，三層才會連在一起 */
+        .horn-color::before {
+          content: '';
+          position: absolute;
+          top: -12px;
+          left: 0;
+          width: 12px;
+          height: 12px;
+          border-bottom: 0;
+        }
+
+        .horn-color::after {
+          content: '';
+          position: absolute;
+          top: -20px;
+          left: 4px;
+          width: 4px;
+          height: 8px;
+          border-bottom: 0;
         }
     ''', js='''
         // 點角換一個隨機顏色
@@ -568,113 +729,188 @@ PARTS += [
         <div class="eye-round left"><span class="eye-round-pupil"></span></div>
         <div class="eye-round right"><span class="eye-round-pupil"></span></div>
     ''', css='''
+        /* 想換顏色、移位置，改這裡就好 */
         .eye-round {
-          position: absolute;
-          top: calc(var(--eye-y, 30%) - 7px);
-          width: 22px;
-          height: 22px;
-          background: #ffffff;
-          border: 3px solid #4a3426;
-          border-radius: 50%;
+          --eye-white: #fbf8f1;
+          --pupil-color: #2e221a;
+          top: calc(var(--eye-y, 30%) - 4px);
         }
 
         .eye-round.left {
-          left: calc(50% - 38px);
+          left: calc(50% - 32px);
         }
 
         .eye-round.right {
-          left: calc(50% + 10px);
+          left: calc(50% + 16px);
         }
 
+        /* 白色的眼睛 4 × 4 格 */
+        .eye-round {
+          position: absolute;
+          width: 16px;
+          height: 16px;
+          background: var(--eye-white);
+          /* 外框用 box-shadow 往上下左右各複製一次深棕色，四個角會空出來，看起來就是像素風的圓 */
+          box-shadow:
+            0 -4px 0 #4a3426,
+            0 4px 0 #4a3426,
+            -4px 0 0 #4a3426,
+            4px 0 0 #4a3426;
+        }
+
+        /* 眼珠 2 × 2 格，右上角一格白色反光 */
         .eye-round-pupil {
           position: absolute;
-          top: 7px;
-          left: 7px;
-          width: 10px;
-          height: 10px;
-          background: #2b1d14;
-          border-radius: 50%;
+          top: 4px;
+          left: 4px;
+          width: 8px;
+          height: 8px;
+          background: var(--pupil-color);
+        }
+
+        .eye-round-pupil::after {
+          content: '';
+          position: absolute;
+          top: 0;
+          right: 0;
+          width: 4px;
+          height: 4px;
+          background: #fbf8f1;
         }
     '''),
     part('eyes', '瞇瞇眼', 'css', 15, html='''
         <div class="eye-squint left"></div>
         <div class="eye-squint right"></div>
     ''', css='''
-        /* 圓角框拿掉下邊，剩一個彎弧 */
+        /* 想換顏色、移位置，改這裡就好 */
         .eye-squint {
-          position: absolute;
+          --eye-color: #2e221a;
           top: calc(var(--eye-y, 30%) + 2px);
-          width: 16px;
-          height: 8px;
-          border: 4px solid #2b1d14;
-          border-bottom: none;
-          border-radius: 12px 12px 0 0;
         }
 
         .eye-squint.left {
-          left: calc(50% - 34px);
+          left: calc(50% - 26px);
         }
 
         .eye-squint.right {
-          left: calc(50% + 10px);
+          left: calc(50% + 18px);
+        }
+
+        /* 瞇起來的眼睛是 4 格排成一個彎彎的倒 V：上面兩格、下面左右各一格 */
+        /* 元素本身是上排左邊那一格，另外 3 格用 box-shadow 複製出來 */
+        .eye-squint {
+          position: absolute;
+          width: 4px;
+          height: 4px;
+          background: var(--eye-color);
+          box-shadow:
+            4px 0 0 var(--eye-color),
+            -4px 4px 0 var(--eye-color),
+            8px 4px 0 var(--eye-color);
         }
     '''),
     part('eyes', '獨眼', 'html', 20, html='''
         <div class="eye-cyclops"><span class="eye-cyclops-pupil"></span></div>
     ''', css='''
+        /* 想換顏色、移位置，改這裡就好 */
         .eye-cyclops {
-          position: absolute;
-          top: calc(var(--eye-y, 30%) - 14px);
-          left: calc(50% - 18px);
-          width: 28px;
-          height: 28px;
-          background: #ffffff;
-          border: 4px solid #4a3426;
-          border-radius: 50%;
+          --eye-white: #fbf8f1;
+          --pupil-color: #2e221a;
+          top: calc(var(--eye-y, 30%) - 10px);
+          left: calc(50% - 12px);
         }
 
+        /* 一隻大眼睛 6 × 6 格 */
+        .eye-cyclops {
+          position: absolute;
+          width: 24px;
+          height: 24px;
+          background: var(--eye-white);
+          /* 外框用 box-shadow 往上下左右各複製一次深棕色，四個角會空出來，看起來就是像素風的圓 */
+          box-shadow:
+            0 -4px 0 #4a3426,
+            0 4px 0 #4a3426,
+            -4px 0 0 #4a3426,
+            4px 0 0 #4a3426;
+        }
+
+        /* 眼珠 3 × 3 格，右上角一格白色反光 */
         .eye-cyclops-pupil {
           position: absolute;
-          top: 7px;
-          left: 7px;
-          width: 14px;
-          height: 14px;
-          background: #2b1d14;
-          border-radius: 50%;
+          top: 6px;
+          left: 6px;
+          width: 12px;
+          height: 12px;
+          background: var(--pupil-color);
+        }
+
+        .eye-cyclops-pupil::after {
+          content: '';
+          position: absolute;
+          top: 0;
+          right: 0;
+          width: 4px;
+          height: 4px;
+          background: #fbf8f1;
         }
     '''),
     part('eyes', '星星眼', 'html', 20, html='''
-        <div class="eye-star left">★</div>
-        <div class="eye-star right">★</div>
+        <div class="eye-star left"></div>
+        <div class="eye-star right"></div>
     ''', css='''
+        /* 想換顏色、移位置，改這裡就好 */
         .eye-star {
-          position: absolute;
-          top: calc(var(--eye-y, 30%) - 10px);
-          font-size: 24px;
-          line-height: 1;
-          color: #f5c542;
-          -webkit-text-stroke: 1.5px #4a3426;
+          --star-color: #f2d16b;
+          top: calc(var(--eye-y, 30%) - 2px);
         }
 
         .eye-star.left {
-          left: calc(50% - 38px);
+          left: calc(50% - 30px);
         }
 
         .eye-star.right {
-          left: calc(50% + 14px);
+          left: calc(50% + 22px);
+        }
+
+        /* 星星是 5 塊排成十字：元素本身是中間那塊，上下左右 4 塊用 box-shadow 複製出來 */
+        /* 每一塊 2 × 2 格（8px），所以 box-shadow 往旁邊移 8px */
+        .eye-star {
+          position: absolute;
+          width: 8px;
+          height: 8px;
+          background: var(--star-color);
+          box-shadow:
+            0 -8px 0 var(--star-color),
+            0 8px 0 var(--star-color),
+            -8px 0 0 var(--star-color),
+            8px 0 0 var(--star-color);
+          /* 外框用 drop-shadow 往上下左右各畫一次 4px，會沿著形狀走 */
+          filter:
+            drop-shadow(4px 0 0 #4a3426)
+            drop-shadow(-4px 0 0 #4a3426)
+            drop-shadow(0 4px 0 #4a3426)
+            drop-shadow(0 -4px 0 #4a3426);
+        }
+
+        /* 中間一格白色反光 */
+        .eye-star::after {
+          content: '';
+          position: absolute;
+          top: 0;
+          right: 0;
+          width: 4px;
+          height: 4px;
+          background: #fbf8f1;
         }
     '''),
     part('eyes', '愛心眼', 'html', 20, html='''
-        <div class="eye-heart left">♥</div>
-        <div class="eye-heart right">♥</div>
+        <div class="eye-heart left"></div>
+        <div class="eye-heart right"></div>
     ''', css='''
+        /* 想換顏色、移位置，改這裡就好 */
         .eye-heart {
-          position: absolute;
-          top: calc(var(--eye-y, 30%) - 10px);
-          font-size: 24px;
-          line-height: 1;
-          color: #e0526b;
-          -webkit-text-stroke: 1.5px #4a3426;
+          --heart-color: #c8553d;
+          top: calc(var(--eye-y, 30%) - 6px);
         }
 
         .eye-heart.left {
@@ -684,6 +920,38 @@ PARTS += [
         .eye-heart.right {
           left: calc(50% + 14px);
         }
+
+        /* 愛心是 6 塊：上排左右各一塊、中間一排三塊、最下面一塊尖尖的 */
+        /* 元素本身是左上那一塊，另外 5 塊用 box-shadow 複製出來；每一塊 2 × 2 格（8px） */
+        .eye-heart {
+          position: absolute;
+          width: 8px;
+          height: 8px;
+          background: var(--heart-color);
+          box-shadow:
+            16px 0 0 var(--heart-color),
+            0 8px 0 var(--heart-color),
+            8px 8px 0 var(--heart-color),
+            16px 8px 0 var(--heart-color),
+            8px 16px 0 var(--heart-color);
+          /* 外框用 drop-shadow 往上下左右各畫一次 4px，會沿著形狀走 */
+          filter:
+            drop-shadow(4px 0 0 #4a3426)
+            drop-shadow(-4px 0 0 #4a3426)
+            drop-shadow(0 4px 0 #4a3426)
+            drop-shadow(0 -4px 0 #4a3426);
+        }
+
+        /* 左上那塊放一格白色反光 */
+        .eye-heart::after {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 4px;
+          height: 4px;
+          background: #fbf8f1;
+        }
     '''),
     part('eyes', '墨鏡', 'html', 25, html='''
         <div class="eye-shades">
@@ -691,10 +959,15 @@ PARTS += [
           <span class="eye-shades-lens right"></span>
         </div>
     ''', css='''
+        /* 想換顏色、移位置，改這裡就好 */
+        .eye-shades {
+          --lens-color: #2e221a;
+          top: calc(var(--eye-y, 30%) - 6px);
+        }
+
         /* 寬度是身體的 67%，鏡片和鼻樑也用百分比，跟著身體變寬變窄 */
         .eye-shades {
           position: absolute;
-          top: calc(var(--eye-y, 30%) - 6px);
           left: 16.5%;
           width: 67%;
           height: 20px;
@@ -708,16 +981,16 @@ PARTS += [
           left: 32%;
           width: 36%;
           height: 4px;
-          background: #2b1d14;
+          background: var(--lens-color);
         }
 
+        /* 鏡片 3 格高，下面再接一排左右各縮一格的，鏡片底部就一階一階收窄 */
         .eye-shades-lens {
           position: absolute;
           top: 0;
           width: 38%;
-          height: 20px;
-          background: #2b1d14;
-          border-radius: 2px 2px 14px 14px;
+          height: 12px;
+          background: var(--lens-color);
         }
 
         .eye-shades-lens.left {
@@ -728,29 +1001,35 @@ PARTS += [
           right: 0;
         }
 
-        /* 鏡片上的反光 */
+        .eye-shades-lens::before {
+          content: '';
+          position: absolute;
+          top: 12px;
+          left: 4px;
+          right: 4px;
+          height: 4px;
+          background: var(--lens-color);
+        }
+
+        /* 鏡片上一格白色反光 */
         .eye-shades-lens::after {
           content: '';
           position: absolute;
           top: 4px;
-          left: 5px;
-          width: 8px;
-          height: 3px;
-          background: #ffffff;
+          left: 4px;
+          width: 4px;
+          height: 4px;
+          background: #fbf8f1;
         }
     '''),
     part('eyes', '會眨眼', 'css', 30, html='''
         <div class="eye-blink left"></div>
         <div class="eye-blink right"></div>
     ''', css='''
-        /* 大部分時間睜開，96% 那一下壓扁就是眨眼 */
+        /* 想換顏色、移位置，改這裡就好 */
         .eye-blink {
-          position: absolute;
+          --eye-color: #2e221a;
           top: var(--eye-y, 30%);
-          width: 14px;
-          height: 14px;
-          background: #2b1d14;
-          animation: eye-blink 3s infinite;
         }
 
         .eye-blink.left {
@@ -758,7 +1037,27 @@ PARTS += [
         }
 
         .eye-blink.right {
-          left: calc(50% + 18px);
+          left: calc(50% + 20px);
+        }
+
+        /* 一隻眼睛 3 × 3 格，大部分時間睜開，96% 那一下壓扁就是眨眼 */
+        .eye-blink {
+          position: absolute;
+          width: 12px;
+          height: 12px;
+          background: var(--eye-color);
+          animation: eye-blink 3s infinite;
+        }
+
+        /* 右上角一格白色反光 */
+        .eye-blink::after {
+          content: '';
+          position: absolute;
+          top: 0;
+          right: 0;
+          width: 4px;
+          height: 4px;
+          background: #fbf8f1;
         }
 
         @keyframes eye-blink {
@@ -776,35 +1075,56 @@ PARTS += [
         <div class="eye-follow left"><span class="eye-follow-pupil"></span></div>
         <div class="eye-follow right"><span class="eye-follow-pupil"></span></div>
     ''', css='''
+        /* 想換顏色、移位置，改這裡就好 */
         .eye-follow {
-          position: absolute;
-          top: calc(var(--eye-y, 30%) - 8px);
-          width: 24px;
-          height: 24px;
-          background: #ffffff;
-          border: 3px solid #4a3426;
-          border-radius: 50%;
+          --eye-white: #fbf8f1;
+          --pupil-color: #2e221a;
+          top: calc(var(--eye-y, 30%) - 4px);
         }
 
         .eye-follow.left {
-          left: calc(50% - 38px);
+          left: calc(50% - 32px);
         }
 
         .eye-follow.right {
-          left: calc(50% + 8px);
+          left: calc(50% + 16px);
         }
 
+        /* 白色的眼睛 4 × 4 格 */
+        .eye-follow {
+          position: absolute;
+          width: 16px;
+          height: 16px;
+          background: var(--eye-white);
+          /* 外框用 box-shadow 往上下左右各複製一次深棕色，四個角會空出來，看起來就是像素風的圓 */
+          box-shadow:
+            0 -4px 0 #4a3426,
+            0 4px 0 #4a3426,
+            -4px 0 0 #4a3426,
+            4px 0 0 #4a3426;
+        }
+
+        /* 眼珠 2 × 2 格，放在正中間；JS 會讓它往滑鼠的方向移一格 */
         .eye-follow-pupil {
           position: absolute;
-          top: 7px;
-          left: 7px;
-          width: 10px;
-          height: 10px;
-          background: #2b1d14;
-          border-radius: 50%;
+          top: 4px;
+          left: 4px;
+          width: 8px;
+          height: 8px;
+          background: var(--pupil-color);
+        }
+
+        .eye-follow-pupil::after {
+          content: '';
+          position: absolute;
+          top: 0;
+          right: 0;
+          width: 4px;
+          height: 4px;
+          background: #fbf8f1;
         }
     ''', js='''
-        // 算出滑鼠在眼睛的哪個方向，眼珠往那邊移 6px
+        // 算出滑鼠在眼睛的哪個方向，眼珠往那邊移一格（4px），一格一格動才有像素的感覺
         const followEyes = document.querySelectorAll('.eye-follow')
         document.addEventListener('mousemove', (e) => {
           followEyes.forEach((eye) => {
@@ -813,8 +1133,10 @@ PARTS += [
               e.clientY - (rect.top + rect.height / 2),
               e.clientX - (rect.left + rect.width / 2),
             )
+            const x = Math.round(Math.cos(angle)) * 4
+            const y = Math.round(Math.sin(angle)) * 4
             const pupil = eye.querySelector('.eye-follow-pupil')
-            pupil.style.transform = `translate(${Math.cos(angle) * 6}px, ${Math.sin(angle) * 6}px)`
+            pupil.style.transform = `translate(${x}px, ${y}px)`
           })
         })
     '''),
@@ -857,90 +1179,159 @@ PARTS += [
     part('mouth', '微笑', 'css', 10, html='''
         <div class="mouth-smile"></div>
     ''', css='''
-        /* 框拿掉上邊、下面兩角變圓，就是微笑的弧 */
+        /* 想換顏色、移位置，改這裡就好 */
+        .mouth-smile {
+          --mouth-color: #2e221a;
+          top: var(--mouth-y, 60%);
+          left: calc(50% - 12px);
+        }
+
+        /* 微笑是 6 格：左上一格、下面一排 4 格、右上一格，排起來就是 U 形 */
+        /* 元素本身是左上那一格，另外 5 格用 box-shadow 複製出來 */
         .mouth-smile {
           position: absolute;
-          top: var(--mouth-y, 60%);
-          left: calc(50% - 19px);
-          width: 30px;
-          height: 12px;
-          border: 4px solid #2b1d14;
-          border-top: none;
-          border-radius: 0 0 20px 20px;
+          width: 4px;
+          height: 4px;
+          background: var(--mouth-color);
+          box-shadow:
+            4px 4px 0 var(--mouth-color),
+            8px 4px 0 var(--mouth-color),
+            12px 4px 0 var(--mouth-color),
+            16px 4px 0 var(--mouth-color),
+            20px 0 0 var(--mouth-color);
         }
     '''),
     part('mouth', '大嘴巴', 'html', 15, html='''
         <div class="mouth-big"><span class="mouth-big-tongue"></span></div>
     ''', css='''
+        /* 想換顏色、移位置，改這裡就好 */
         .mouth-big {
-          position: absolute;
+          --mouth-color: #2e221a;
+          --tongue-color: #e8a0a0;
           top: calc(var(--mouth-y, 60%) - 4px);
-          left: calc(50% - 25px);
-          width: 44px;
-          height: 22px;
-          background: #4a1f1a;
-          border: 3px solid #2b1d14;
-          border-radius: 0 0 24px 24px;
-          overflow: hidden;
+          left: calc(50% - 16px);
         }
 
+        /* 張開的嘴 8 × 3 格，下面再接一排左右各縮一格的，嘴巴底部一階一階收圓 */
+        .mouth-big {
+          position: absolute;
+          width: 32px;
+          height: 12px;
+          background: var(--mouth-color);
+        }
+
+        .mouth-big::before {
+          content: '';
+          position: absolute;
+          top: 12px;
+          left: 4px;
+          right: 4px;
+          height: 4px;
+          background: var(--mouth-color);
+        }
+
+        /* 舌頭 4 × 2 格，放在嘴巴下半部 */
         .mouth-big-tongue {
           position: absolute;
-          bottom: -6px;
-          left: 11px;
-          width: 22px;
-          height: 14px;
-          background: #e0526b;
-          border-radius: 50%;
+          top: 8px;
+          left: 8px;
+          width: 16px;
+          height: 8px;
+          background: var(--tongue-color);
         }
     '''),
     part('mouth', '吐舌頭', 'html', 15, html='''
         <div class="mouth-tongue"><span class="mouth-tongue-tip"></span></div>
     ''', css='''
+        /* 想換顏色、移位置，改這裡就好 */
         .mouth-tongue {
-          position: absolute;
+          --mouth-color: #2e221a;
+          --tongue-color: #e8a0a0;
           top: calc(var(--mouth-y, 60%) + 4px);
           left: calc(50% - 16px);
-          width: 32px;
-          height: 4px;
-          background: #2b1d14;
         }
 
+        /* 一條 8 格長的嘴巴線 */
+        .mouth-tongue {
+          position: absolute;
+          width: 32px;
+          height: 4px;
+          background: var(--mouth-color);
+        }
+
+        /* 舌頭從嘴巴中間吐出來：2 × 2 格，外框沒有上邊，跟嘴巴線連在一起 */
         .mouth-tongue-tip {
           position: absolute;
           top: 4px;
-          left: 12px;
-          width: 12px;
-          height: 14px;
-          background: #e0526b;
-          border: 3px solid #4a3426;
-          border-top: none;
-          border-radius: 0 0 10px 10px;
+          left: 8px;
+          width: 8px;
+          height: 8px;
+          background: var(--tongue-color);
+          border: 4px solid #4a3426;
+          border-top: 0;
         }
     '''),
     part('mouth', '鳥嘴', 'css', 15, html='''
         <div class="mouth-beak"></div>
     ''', css='''
+        /* 想換顏色、移位置，改這裡就好 */
+        .mouth-beak {
+          --beak-color: #e8a33d;
+          top: calc(var(--mouth-y, 60%) - 4px);
+          left: calc(50% - 12px);
+        }
+
+        /* 鳥嘴三排，由上往下寬 6 格、4 格、2 格，一階一階變尖 */
         .mouth-beak {
           position: absolute;
-          top: calc(var(--mouth-y, 60%) - 4px);
-          left: calc(50% - 18px);
-          border-left: 18px solid transparent;
-          border-right: 18px solid transparent;
-          border-top: 26px solid #e8a33d;
+          width: 24px;
+          height: 4px;
+          background: var(--beak-color);
+          /* 外框用 drop-shadow 往上下左右各畫一次 4px，會沿著形狀走 */
+          filter:
+            drop-shadow(4px 0 0 #4a3426)
+            drop-shadow(-4px 0 0 #4a3426)
+            drop-shadow(0 4px 0 #4a3426)
+            drop-shadow(0 -4px 0 #4a3426);
+        }
+
+        .mouth-beak::before,
+        .mouth-beak::after {
+          content: '';
+          position: absolute;
+          height: 4px;
+          background: var(--beak-color);
+        }
+
+        .mouth-beak::before {
+          top: 4px;
+          left: 4px;
+          width: 16px;
+        }
+
+        .mouth-beak::after {
+          top: 8px;
+          left: 8px;
+          width: 8px;
         }
     '''),
     part('mouth', '吸血鬼牙', 'html', 20, html='''
         <div class="mouth-vampire"></div>
     ''', css='''
-        /* 一條嘴巴線，兩顆尖牙用 ::before ::after 畫 */
+        /* 想換顏色、移位置，改這裡就好 */
+        .mouth-vampire {
+          --mouth-color: #2e221a;
+          --fang-color: #fbf8f1;
+          top: calc(var(--mouth-y, 60%) + 2px);
+          left: calc(50% - 16px);
+        }
+
+        /* 一條 8 格長的嘴巴線，兩顆尖牙用 ::before ::after 畫，每顆 1 格寬、2 格長 */
         .mouth-vampire {
           position: absolute;
-          top: calc(var(--mouth-y, 60%) + 2px);
-          left: calc(50% - 18px);
-          width: 36px;
+          width: 32px;
           height: 4px;
-          background: #2b1d14;
+          background: var(--mouth-color);
         }
 
         .mouth-vampire::before,
@@ -948,9 +1339,9 @@ PARTS += [
           content: '';
           position: absolute;
           top: 4px;
-          border-left: 5px solid transparent;
-          border-right: 5px solid transparent;
-          border-top: 18px solid #ffffff;
+          width: 4px;
+          height: 8px;
+          background: var(--fang-color);
         }
 
         .mouth-vampire::before {
@@ -965,10 +1356,10 @@ PARTS += [
         <div class="mouth-whisker left"><span></span><span></span><span></span></div>
         <div class="mouth-whisker right"><span></span><span></span><span></span></div>
     ''', css='''
+        /* 想換顏色、移位置，改這裡就好 */
         .mouth-whisker {
-          position: absolute;
+          --whisker-color: #2e221a;
           top: calc(var(--mouth-y, 60%) - 8px);
-          width: 40px;
         }
 
         /* 從身體左右邊緣往內 30px 長出來，露在外面 10px，身體變寬變窄都一樣 */
@@ -980,72 +1371,97 @@ PARTS += [
           left: calc(100% - 30px);
         }
 
+        /* 每邊三根鬍鬚，一根 1 格粗；上下兩根短一點，看起來有遠近 */
+        .mouth-whisker {
+          position: absolute;
+          width: 40px;
+        }
+
         .mouth-whisker span {
           display: block;
-          height: 2px;
-          margin: 6px 0;
-          background: #2b1d14;
+          width: 100%;
+          height: 4px;
+          margin-bottom: 4px;
+          background: var(--whisker-color);
         }
 
-        .mouth-whisker.left span:first-child,
-        .mouth-whisker.right span:last-child {
-          transform: rotate(10deg);
+        .mouth-whisker span:first-child,
+        .mouth-whisker span:last-child {
+          width: 75%;
         }
 
-        .mouth-whisker.left span:last-child,
-        .mouth-whisker.right span:first-child {
-          transform: rotate(-10deg);
+        /* 右邊那組靠右對齊，短的鬍鬚才會在外側 */
+        .mouth-whisker.right span {
+          margin-left: auto;
         }
     '''),
     part('mouth', 'O 型嘴', 'css', 10, html='''
         <div class="mouth-o"></div>
     ''', css='''
+        /* 想換顏色、移位置，改這裡就好 */
+        .mouth-o {
+          --mouth-inside: #c8553d;
+          top: calc(var(--mouth-y, 60%) + 4px);
+          left: calc(50% - 4px);
+        }
+
+        /* 嘴巴裡面 2 × 2 格，外框用 box-shadow 往上下左右各複製一次，四個角空出來就是圓圓的 O */
         .mouth-o {
           position: absolute;
-          top: var(--mouth-y, 60%);
-          left: calc(50% - 11px);
-          width: 14px;
-          height: 14px;
-          border: 4px solid #2b1d14;
-          border-radius: 50%;
+          width: 8px;
+          height: 8px;
+          background: var(--mouth-inside);
+          box-shadow:
+            0 -4px 0 #2e221a,
+            0 4px 0 #2e221a,
+            -4px 0 0 #2e221a,
+            4px 0 0 #2e221a;
         }
     '''),
     part('mouth', '會說話的嘴', 'js', 60, html='''
         <div class="mouth-talk"></div>
         <div class="mouth-bubble"></div>
     ''', css='''
+        /* 想換顏色、移位置，改這裡就好 */
+        .mouth-talk {
+          --mouth-color: #2e221a;
+          top: calc(var(--mouth-y, 60%) + 4px);
+          left: calc(50% - 12px);
+        }
+
+        .mouth-bubble {
+          top: calc(var(--horn-y, 0%) - 50px);
+          left: calc(50% + 30px);
+        }
+
         .body {
           cursor: pointer;
         }
 
+        /* 嘴巴 6 格長、1 格高；說話的時候在 1 格和 3 格之間一格一格跳 */
         .mouth-talk {
           position: absolute;
-          top: calc(var(--mouth-y, 60%) + 4px);
-          left: calc(50% - 12px);
           width: 24px;
-          height: 6px;
-          background: #2b1d14;
-          border-radius: 0 0 12px 12px;
+          height: 4px;
+          background: var(--mouth-color);
         }
 
         .mouth-talk.talking {
-          animation: mouth-talk 0.15s infinite alternate;
+          animation: mouth-talk 0.3s steps(2) infinite alternate;
         }
 
         @keyframes mouth-talk {
           to {
-            height: 14px;
+            height: 12px;
           }
         }
 
+        /* 說話泡泡：直角、4px 外框，跟像素圖一樣 */
         .mouth-bubble {
           position: absolute;
-          top: calc(var(--horn-y, 0%) - 50px);
-          left: calc(50% + 30px);
-          padding: 6px 10px;
-          background: #ffffff;
-          border: 3px solid #4a3426;
-          border-radius: 10px;
+          padding: 4px 8px;
+          background: #fbf8f1;
+          border: 4px solid #4a3426;
           font-size: 14px;
           white-space: nowrap;
           opacity: 0;
@@ -1246,93 +1662,145 @@ PARTS += [
         <div class="wing-pair left"></div>
         <div class="wing-pair right"></div>
     ''', css='''
+        /* 想換顏色、移位置，改這裡就好 */
         .wing-pair {
-          position: absolute;
-          top: calc(var(--wing-y, 10%) + 2px);
-          width: 40px;
-          height: 28px;
-          background: #85b7eb;
-          border: 4px solid #4a3426;
+          --wing-color: #6b8fb0;
+          top: calc(var(--wing-y, 10%) + 6px);
         }
 
         .wing-pair.left {
-          left: calc(-48px + var(--wing-x, 0px));
-          border-radius: 30px 4px 30px 4px;
+          left: calc(-44px + var(--wing-x, 0px));
         }
 
         .wing-pair.right {
-          left: calc(100% - var(--wing-x, 0px));
-          border-radius: 4px 30px 4px 30px;
+          left: calc(100% + 4px - var(--wing-x, 0px));
+        }
+
+        /* 每片翅膀 10 × 7 格 */
+        .wing-pair {
+          position: absolute;
+          width: 40px;
+          height: 28px;
+          /* 外框用 drop-shadow 往上下左右各畫一次 4px，外框就會跟著剪出來的形狀走 */
+          filter:
+            drop-shadow(4px 0 0 #4a3426)
+            drop-shadow(-4px 0 0 #4a3426)
+            drop-shadow(0 4px 0 #4a3426)
+            drop-shadow(0 -4px 0 #4a3426);
+        }
+
+        .wing-pair::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: var(--wing-color);
+          box-shadow:
+            inset 4px 4px 0 rgb(255 255 255 / 35%),
+            inset -4px -4px 0 rgb(46 34 26 / 25%);
+          clip-path: var(--wing-shape);
+        }
+
+        /* 下面是剪出形狀的程式，想改形狀再研究 */
+        /* 從左上開始順時針走一圈，每一行是一個轉角；右邊那片是左邊左右翻過來 */
+        .wing-pair.left {
+          --wing-shape: polygon(
+            12px 0,
+            40px 0,
+            40px 20px,
+            36px 20px,
+            36px 24px,
+            24px 24px,
+            24px 28px,
+            0 28px,
+            0 8px,
+            4px 8px,
+            4px 4px,
+            12px 4px
+          );
+        }
+
+        .wing-pair.right {
+          --wing-shape: polygon(
+            0 0,
+            28px 0,
+            28px 4px,
+            36px 4px,
+            36px 8px,
+            40px 8px,
+            40px 28px,
+            16px 28px,
+            16px 24px,
+            4px 24px,
+            4px 20px,
+            0 20px
+          );
         }
     '''),
     part('wings', '天使翅膀', 'html', 35, html='''
         <div class="wing-angel left"><span></span><span></span><span></span></div>
         <div class="wing-angel right"><span></span><span></span><span></span></div>
     ''', css='''
-        /* 三片白色羽毛由長到短往下疊 */
+        /* 想換顏色、移位置，改這裡就好 */
         .wing-angel {
-          position: absolute;
-          top: calc(var(--wing-y, 10%) - 10px);
-          width: 62px;
-          height: 60px;
+          --feather-color: #fbf8f1;
+          top: calc(var(--wing-y, 10%) - 8px);
         }
 
         .wing-angel.left {
-          left: calc(-62px + var(--wing-x, 0px));
+          left: calc(-60px + var(--wing-x, 0px));
         }
 
         .wing-angel.right {
           left: calc(100% - var(--wing-x, 0px));
-          transform: scaleX(-1);
+        }
+
+        /* 三片羽毛由長到短往下疊，長度 13、10、7 格；上下兩片共用一條外框，疊起來就是一階一階的翅膀 */
+        .wing-angel {
+          position: absolute;
+          width: 60px;
+          height: 40px;
         }
 
         .wing-angel span {
           position: absolute;
-          right: 0;
-          height: 14px;
-          background: #ffffff;
-          border: 3px solid #4a3426;
-          border-radius: 14px 4px 4px 14px;
+          height: 8px;
+          background: var(--feather-color);
+          border: 4px solid #4a3426;
+          box-shadow: inset 0 -4px 0 rgb(46 34 26 / 15%);
         }
 
         .wing-angel span:nth-child(1) {
           top: 0;
-          width: 54px;
+          width: 52px;
         }
 
         .wing-angel span:nth-child(2) {
-          top: 17px;
-          width: 44px;
+          top: 12px;
+          width: 40px;
         }
 
         .wing-angel span:nth-child(3) {
-          top: 34px;
-          width: 32px;
+          top: 24px;
+          width: 28px;
+        }
+
+        /* 羽毛貼著身體那一側對齊：左邊的翅膀靠右、右邊的翅膀靠左 */
+        .wing-angel.left span {
+          right: 0;
+        }
+
+        .wing-angel.right span {
+          left: 0;
         }
     '''),
     part('wings', '蝙蝠翅膀', 'css', 35, html='''
         <div class="wing-bat left"></div>
         <div class="wing-bat right"></div>
     ''', css='''
-        /* clip-path 的點從身體那側開始，繞一圈切出下緣的鋸齒 */
+        /* 想換顏色、移位置，改這裡就好 */
         .wing-bat {
-          position: absolute;
+          --wing-color: #6f6a64;
           top: calc(var(--wing-y, 10%) - 4px);
-          width: 72px;
-          height: 46px;
-          background: #3b2a3f;
-          clip-path: polygon(
-            100% 20%,
-            35% 0,
-            0 30%,
-            12% 100%,
-            26% 72%,
-            42% 100%,
-            56% 72%,
-            72% 100%,
-            86% 72%,
-            100% 82%
-          );
         }
 
         .wing-bat.left {
@@ -1341,7 +1809,126 @@ PARTS += [
 
         .wing-bat.right {
           left: calc(100% - 2px - var(--wing-x, 0px));
-          transform: scaleX(-1);
+        }
+
+        /* 每片翅膀 18 × 11 格：上緣往外斜到翼尖，下緣三個尖角 */
+        .wing-bat {
+          position: absolute;
+          width: 72px;
+          height: 44px;
+          /* 外框用 drop-shadow 往上下左右各畫一次 4px，外框就會跟著剪出來的形狀走 */
+          filter:
+            drop-shadow(4px 0 0 #4a3426)
+            drop-shadow(-4px 0 0 #4a3426)
+            drop-shadow(0 4px 0 #4a3426)
+            drop-shadow(0 -4px 0 #4a3426);
+        }
+
+        .wing-bat::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: var(--wing-color);
+          box-shadow:
+            inset 4px 4px 0 rgb(255 255 255 / 35%),
+            inset -4px -4px 0 rgb(46 34 26 / 25%);
+          clip-path: var(--wing-shape);
+        }
+
+        /* 下面是剪出形狀的程式，想改形狀再研究 */
+        /* 從左上開始順時針走一圈，每一行是一個轉角；右邊那片是左邊左右翻過來 */
+        .wing-bat.left {
+          --wing-shape: polygon(
+            0 0,
+            8px 0,
+            8px 4px,
+            16px 4px,
+            16px 8px,
+            28px 8px,
+            28px 12px,
+            40px 12px,
+            40px 16px,
+            64px 16px,
+            64px 12px,
+            72px 12px,
+            72px 44px,
+            56px 44px,
+            56px 40px,
+            52px 40px,
+            52px 36px,
+            48px 36px,
+            48px 32px,
+            44px 32px,
+            44px 36px,
+            40px 36px,
+            40px 40px,
+            36px 40px,
+            36px 44px,
+            32px 44px,
+            32px 40px,
+            28px 40px,
+            28px 36px,
+            24px 36px,
+            24px 32px,
+            20px 32px,
+            20px 36px,
+            16px 36px,
+            16px 40px,
+            12px 40px,
+            12px 44px,
+            8px 44px,
+            8px 36px,
+            4px 36px,
+            4px 28px,
+            0 28px
+          );
+        }
+
+        .wing-bat.right {
+          --wing-shape: polygon(
+            64px 0,
+            72px 0,
+            72px 28px,
+            68px 28px,
+            68px 36px,
+            64px 36px,
+            64px 44px,
+            60px 44px,
+            60px 40px,
+            56px 40px,
+            56px 36px,
+            52px 36px,
+            52px 32px,
+            48px 32px,
+            48px 36px,
+            44px 36px,
+            44px 40px,
+            40px 40px,
+            40px 44px,
+            36px 44px,
+            36px 40px,
+            32px 40px,
+            32px 36px,
+            28px 36px,
+            28px 32px,
+            24px 32px,
+            24px 36px,
+            20px 36px,
+            20px 40px,
+            16px 40px,
+            16px 44px,
+            0 44px,
+            0 12px,
+            8px 12px,
+            8px 16px,
+            32px 16px,
+            32px 12px,
+            44px 12px,
+            44px 8px,
+            56px 8px,
+            56px 4px,
+            64px 4px
+          );
         }
     '''),
     part('wings', '蝴蝶翅膀', 'html', 35, html='''
@@ -1354,120 +1941,126 @@ PARTS += [
           <span class="wing-butterfly-bottom"></span>
         </div>
     ''', css='''
+        /* 想換顏色、移位置，改這裡就好 */
         .wing-butterfly {
-          position: absolute;
+          --top-color: #e8a33d;
+          --bottom-color: #e8a0a0;
           top: calc(var(--wing-y, 10%) - 12px);
-          width: 56px;
-          height: 80px;
         }
 
         .wing-butterfly.left {
-          left: calc(-56px + var(--wing-x, 0px));
+          left: calc(-48px + var(--wing-x, 0px));
         }
 
         .wing-butterfly.right {
           left: calc(100% - var(--wing-x, 0px));
-          transform: scaleX(-1);
+        }
+
+        /* 上下兩片，上面大 10 × 8 格、下面小 7 × 6 格 */
+        .wing-butterfly {
+          position: absolute;
+          width: 48px;
+          height: 72px;
         }
 
         .wing-butterfly span {
           position: absolute;
-          border: 3px solid #4a3426;
-          border-radius: 50%;
+          /* 外框用 box-shadow 往上下左右各複製一次深棕色，四個角空出來，看起來就是像素風的圓 */
+          box-shadow:
+            0 -4px 0 #4a3426,
+            0 4px 0 #4a3426,
+            -4px 0 0 #4a3426,
+            4px 0 0 #4a3426;
         }
 
         .wing-butterfly-top {
-          top: 0;
-          left: 0;
-          width: 48px;
-          height: 42px;
-          background: radial-gradient(circle at 40% 45%, #ffffff 0 6px, transparent 7px), #f2a541;
+          top: 4px;
+          width: 40px;
+          height: 32px;
+          background: var(--top-color);
         }
 
         .wing-butterfly-bottom {
           top: 40px;
-          left: 14px;
-          width: 34px;
-          height: 32px;
-          background: #9b7fd1;
+          width: 28px;
+          height: 24px;
+          background: var(--bottom-color);
+        }
+
+        /* 上翅膀中間一個 2 × 2 格的白點 */
+        .wing-butterfly-top::after {
+          content: '';
+          position: absolute;
+          top: 12px;
+          left: 16px;
+          width: 8px;
+          height: 8px;
+          background: #fbf8f1;
+        }
+
+        /* 兩片翅膀都貼著身體那一側：左邊的靠右、右邊的靠左 */
+        .wing-butterfly.left span {
+          right: 4px;
+        }
+
+        .wing-butterfly.right span {
+          left: 4px;
         }
     '''),
     part('wings', '蜻蜓翅膀', 'css', 30, html='''
         <div class="wing-dragonfly left"></div>
         <div class="wing-dragonfly right"></div>
     ''', css='''
-        /* 前翅是本體，後翅用 ::after 畫在下面 */
-        .wing-dragonfly,
-        .wing-dragonfly::after {
-          position: absolute;
-          height: 14px;
-          background: rgba(180, 220, 240, 0.6);
-          border: 2px solid rgba(74, 52, 38, 0.6);
-          border-radius: 50%;
-        }
-
+        /* 想換顏色、移位置，改這裡就好；最後的 60% 是透明度 */
         .wing-dragonfly {
+          --wing-color: rgb(156 196 190 / 60%);
           top: var(--wing-y, 10%);
-          width: 84px;
-          transform-origin: right center;
-          transform: rotate(12deg);
         }
 
         .wing-dragonfly.left {
-          left: calc(-86px + var(--wing-x, 0px));
+          left: calc(-84px + var(--wing-x, 0px));
         }
 
         .wing-dragonfly.right {
-          left: calc(100% - 2px - var(--wing-x, 0px));
-          transform-origin: left center;
-          transform: rotate(-12deg);
+          left: calc(100% + 4px - var(--wing-x, 0px));
+        }
+
+        /* 前翅 19 × 2 格，後翅用 ::after 畫在下面、短一點；半透明看得到後面 */
+        .wing-dragonfly,
+        .wing-dragonfly::after {
+          position: absolute;
+          height: 8px;
+          background: var(--wing-color);
+          border: 4px solid rgb(74 52 38 / 60%);
+        }
+
+        .wing-dragonfly {
+          width: 76px;
         }
 
         .wing-dragonfly::after {
           content: '';
-          top: 18px;
-          width: 72px;
-          transform: rotate(-18deg);
+          top: 16px;
+          width: 60px;
         }
 
+        /* 後翅貼著身體那一側：左邊的靠右、右邊的靠左 */
         .wing-dragonfly.left::after {
-          right: 0;
-          transform-origin: right center;
+          right: -4px;
         }
 
         .wing-dragonfly.right::after {
-          left: 0;
-          transform-origin: left center;
-          transform: rotate(18deg);
+          left: -4px;
         }
     '''),
     part('wings', '龍翼', 'css', 40, html='''
         <div class="wing-dragon left"><span></span></div>
         <div class="wing-dragon right"><span></span></div>
     ''', css='''
-        /* clip-path 切掉的地方畫不出邊框，所以外層深色、裡面縮 4px 疊淺色，看起來像有框 */
-        .wing-dragon,
-        .wing-dragon span {
-          clip-path: polygon(
-            100% 30%,
-            60% 0,
-            0 8%,
-            16% 42%,
-            4% 100%,
-            34% 74%,
-            50% 100%,
-            64% 72%,
-            80% 94%,
-            100% 70%
-          );
-        }
-
+        /* 想換顏色、移位置，改這裡就好 */
         .wing-dragon {
-          position: absolute;
+          --wing-color: #5a9a4a;
           top: calc(var(--wing-y, 10%) - 24px);
-          width: 100px;
-          height: 82px;
-          background: #4a3426;
         }
 
         .wing-dragon.left {
@@ -1476,39 +2069,227 @@ PARTS += [
 
         .wing-dragon.right {
           left: calc(100% + 4px - var(--wing-x, 0px));
-          transform: scaleX(-1);
+        }
+
+        /* 每片翅膀 25 × 20 格：上緣是骨架往外伸，下緣三個大尖角 */
+        .wing-dragon {
+          position: absolute;
+          width: 100px;
+          height: 80px;
+          /* 外框用 drop-shadow 往上下左右各畫一次 4px，外框就會跟著剪出來的形狀走 */
+          filter:
+            drop-shadow(4px 0 0 #4a3426)
+            drop-shadow(-4px 0 0 #4a3426)
+            drop-shadow(0 4px 0 #4a3426)
+            drop-shadow(0 -4px 0 #4a3426);
         }
 
         .wing-dragon span {
           position: absolute;
-          inset: 4px;
-          background: #5a9a4a;
+          inset: 0;
+          background: var(--wing-color);
+          box-shadow:
+            inset 4px 4px 0 rgb(255 255 255 / 35%),
+            inset -4px -4px 0 rgb(46 34 26 / 25%);
+          clip-path: var(--wing-shape);
+        }
+
+        /* 下面是剪出形狀的程式，想改形狀再研究 */
+        /* 從左上開始順時針走一圈，每一行是一個轉角；右邊那片是左邊左右翻過來 */
+        .wing-dragon.left {
+          --wing-shape: polygon(
+            4px 0,
+            16px 0,
+            16px 4px,
+            28px 4px,
+            28px 8px,
+            44px 8px,
+            44px 12px,
+            64px 12px,
+            64px 16px,
+            80px 16px,
+            80px 20px,
+            100px 20px,
+            100px 80px,
+            92px 80px,
+            92px 76px,
+            88px 76px,
+            88px 72px,
+            84px 72px,
+            84px 68px,
+            80px 68px,
+            80px 72px,
+            76px 72px,
+            76px 76px,
+            72px 76px,
+            72px 80px,
+            64px 80px,
+            64px 76px,
+            60px 76px,
+            60px 72px,
+            56px 72px,
+            56px 68px,
+            52px 68px,
+            52px 64px,
+            48px 64px,
+            48px 60px,
+            44px 60px,
+            44px 56px,
+            40px 56px,
+            40px 52px,
+            36px 52px,
+            36px 56px,
+            32px 56px,
+            32px 60px,
+            28px 60px,
+            28px 64px,
+            24px 64px,
+            24px 68px,
+            20px 68px,
+            20px 72px,
+            16px 72px,
+            16px 76px,
+            12px 76px,
+            12px 80px,
+            0 80px,
+            0 48px,
+            4px 48px,
+            4px 40px,
+            8px 40px,
+            8px 32px,
+            12px 32px,
+            12px 24px,
+            16px 24px,
+            16px 16px,
+            12px 16px,
+            12px 8px,
+            8px 8px,
+            8px 4px,
+            4px 4px
+          );
+        }
+
+        .wing-dragon.right {
+          --wing-shape: polygon(
+            84px 0,
+            96px 0,
+            96px 4px,
+            92px 4px,
+            92px 8px,
+            88px 8px,
+            88px 16px,
+            84px 16px,
+            84px 24px,
+            88px 24px,
+            88px 32px,
+            92px 32px,
+            92px 40px,
+            96px 40px,
+            96px 48px,
+            100px 48px,
+            100px 80px,
+            88px 80px,
+            88px 76px,
+            84px 76px,
+            84px 72px,
+            80px 72px,
+            80px 68px,
+            76px 68px,
+            76px 64px,
+            72px 64px,
+            72px 60px,
+            68px 60px,
+            68px 56px,
+            64px 56px,
+            64px 52px,
+            60px 52px,
+            60px 56px,
+            56px 56px,
+            56px 60px,
+            52px 60px,
+            52px 64px,
+            48px 64px,
+            48px 68px,
+            44px 68px,
+            44px 72px,
+            40px 72px,
+            40px 76px,
+            36px 76px,
+            36px 80px,
+            28px 80px,
+            28px 76px,
+            24px 76px,
+            24px 72px,
+            20px 72px,
+            20px 68px,
+            16px 68px,
+            16px 72px,
+            12px 72px,
+            12px 76px,
+            8px 76px,
+            8px 80px,
+            0 80px,
+            0 20px,
+            20px 20px,
+            20px 16px,
+            36px 16px,
+            36px 12px,
+            56px 12px,
+            56px 8px,
+            72px 8px,
+            72px 4px,
+            84px 4px
+          );
         }
     '''),
     part('wings', '拍拍翅膀', 'css', 45, html='''
         <div class="wing-flap left"></div>
         <div class="wing-flap right"></div>
     ''', css='''
-        /* transform-origin 設在靠身體那一側，旋轉起來才像在拍 */
+        /* 想換顏色、移位置，改這裡就好 */
         .wing-flap {
-          position: absolute;
-          top: var(--wing-y, 10%);
-          width: 50px;
-          height: 32px;
-          background: #85b7eb;
-          border: 4px solid #4a3426;
+          --wing-color: #6b8fb0;
+          top: calc(var(--wing-y, 10%) + 4px);
         }
 
         .wing-flap.left {
-          left: calc(-60px + var(--wing-x, 0px));
-          border-radius: 32px 4px 32px 4px;
+          left: calc(-56px + var(--wing-x, 0px));
+        }
+
+        .wing-flap.right {
+          left: calc(100% + 4px - var(--wing-x, 0px));
+        }
+
+        /* 每片翅膀 12 × 8 格；transform-origin 設在靠身體那一側，旋轉起來才像在拍 */
+        .wing-flap {
+          position: absolute;
+          width: 48px;
+          height: 32px;
+          /* 外框用 drop-shadow 往上下左右各畫一次 4px，外框就會跟著剪出來的形狀走 */
+          filter:
+            drop-shadow(4px 0 0 #4a3426)
+            drop-shadow(-4px 0 0 #4a3426)
+            drop-shadow(0 4px 0 #4a3426)
+            drop-shadow(0 -4px 0 #4a3426);
+        }
+
+        .wing-flap::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: var(--wing-color);
+          box-shadow:
+            inset 4px 4px 0 rgb(255 255 255 / 35%),
+            inset -4px -4px 0 rgb(46 34 26 / 25%);
+          clip-path: var(--wing-shape);
+        }
+
+        .wing-flap.left {
           transform-origin: right center;
           animation: wing-flap-left 0.5s ease-in-out infinite alternate;
         }
 
         .wing-flap.right {
-          left: calc(100% + 2px - var(--wing-x, 0px));
-          border-radius: 4px 32px 4px 32px;
           transform-origin: left center;
           animation: wing-flap-right 0.5s ease-in-out infinite alternate;
         }
@@ -1524,30 +2305,99 @@ PARTS += [
             transform: rotate(-25deg);
           }
         }
+
+        /* 下面是剪出形狀的程式，想改形狀再研究 */
+        /* 從左上開始順時針走一圈，每一行是一個轉角；右邊那片是左邊左右翻過來 */
+        .wing-flap.left {
+          --wing-shape: polygon(
+            16px 0,
+            48px 0,
+            48px 20px,
+            44px 20px,
+            44px 24px,
+            40px 24px,
+            40px 28px,
+            32px 28px,
+            32px 32px,
+            0 32px,
+            0 12px,
+            4px 12px,
+            4px 8px,
+            8px 8px,
+            8px 4px,
+            16px 4px
+          );
+        }
+
+        .wing-flap.right {
+          --wing-shape: polygon(
+            0 0,
+            32px 0,
+            32px 4px,
+            40px 4px,
+            40px 8px,
+            44px 8px,
+            44px 12px,
+            48px 12px,
+            48px 32px,
+            16px 32px,
+            16px 28px,
+            8px 28px,
+            8px 24px,
+            4px 24px,
+            4px 20px,
+            0 20px
+          );
+        }
     '''),
     part('wings', '會飛的翅膀', 'js', 70, html='''
         <div class="wing-fly left"></div>
         <div class="wing-fly right"></div>
     ''', css='''
+        /* 想換顏色、移位置，改這裡就好 */
         .wing-fly {
-          position: absolute;
-          top: var(--wing-y, 10%);
-          width: 50px;
-          height: 32px;
-          background: #f3ead8;
-          border: 4px solid #4a3426;
-          cursor: pointer;
+          --wing-color: #fbf8f1;
+          top: calc(var(--wing-y, 10%) + 4px);
         }
 
         .wing-fly.left {
-          left: calc(-60px + var(--wing-x, 0px));
-          border-radius: 32px 4px 32px 4px;
+          left: calc(-56px + var(--wing-x, 0px));
+        }
+
+        .wing-fly.right {
+          left: calc(100% + 4px - var(--wing-x, 0px));
+        }
+
+        /* 每片翅膀 12 × 8 格 */
+        .wing-fly {
+          position: absolute;
+          width: 48px;
+          height: 32px;
+          cursor: pointer;
+          /* 外框用 drop-shadow 往上下左右各畫一次 4px，外框就會跟著剪出來的形狀走 */
+          filter:
+            drop-shadow(4px 0 0 #4a3426)
+            drop-shadow(-4px 0 0 #4a3426)
+            drop-shadow(0 4px 0 #4a3426)
+            drop-shadow(0 -4px 0 #4a3426);
+        }
+
+        .wing-fly::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: var(--wing-color);
+          box-shadow:
+            inset 4px 4px 0 rgb(255 255 255 / 35%),
+            inset -4px -4px 0 rgb(46 34 26 / 25%);
+          clip-path: var(--wing-shape);
+        }
+
+        .wing-fly.left {
           transform-origin: right center;
         }
 
         .wing-fly.right {
-          left: calc(100% + 2px - var(--wing-x, 0px));
-          border-radius: 4px 32px 4px 32px;
           transform-origin: left center;
         }
 
@@ -1577,6 +2427,50 @@ PARTS += [
           to {
             scale: 1 0.6;
           }
+        }
+
+        /* 下面是剪出形狀的程式，想改形狀再研究 */
+        /* 從左上開始順時針走一圈，每一行是一個轉角；右邊那片是左邊左右翻過來 */
+        .wing-fly.left {
+          --wing-shape: polygon(
+            16px 0,
+            48px 0,
+            48px 20px,
+            44px 20px,
+            44px 24px,
+            40px 24px,
+            40px 28px,
+            32px 28px,
+            32px 32px,
+            0 32px,
+            0 12px,
+            4px 12px,
+            4px 8px,
+            8px 8px,
+            8px 4px,
+            16px 4px
+          );
+        }
+
+        .wing-fly.right {
+          --wing-shape: polygon(
+            0 0,
+            32px 0,
+            32px 4px,
+            40px 4px,
+            40px 8px,
+            44px 8px,
+            44px 12px,
+            48px 12px,
+            48px 32px,
+            16px 32px,
+            16px 28px,
+            8px 28px,
+            8px 24px,
+            4px 24px,
+            4px 20px,
+            0 20px
+          );
         }
     ''', js='''
         // 點翅膀讓整隻飄起來，再點一下停下來；飄和拍翅膀的動作寫在 CSS 的 .flying
@@ -1652,161 +2546,400 @@ PARTS += [
     part('tail', '毛球尾巴', 'html', 15, html='''
         <div class="tail-pompom"></div>
     ''', css='''
+        /* 想換顏色、移位置，改這裡就好 */
+        .tail-pompom {
+          --tail-color: #fbf8f1;
+          top: calc(var(--tail-y, 60%) - 4px);
+          left: calc(100% + 4px);
+        }
+
+        /* 毛球 4 × 4 格；外框用 box-shadow 往上下左右各複製一次，四個角空出來就是圓圓的 */
         .tail-pompom {
           position: absolute;
-          top: calc(var(--tail-y, 60%) - 6px);
-          left: calc(100% - 4px);
-          width: 24px;
-          height: 24px;
-          background: #f3ead8;
-          border: 4px solid #4a3426;
-          border-radius: 50%;
+          width: 16px;
+          height: 16px;
+          background: var(--tail-color);
+          box-shadow:
+            0 -4px 0 #4a3426,
+            0 4px 0 #4a3426,
+            -4px 0 0 #4a3426,
+            4px 0 0 #4a3426;
+        }
+
+        /* 右下角一格陰影，看起來有立體感 */
+        .tail-pompom::after {
+          content: '';
+          position: absolute;
+          right: 0;
+          bottom: 0;
+          width: 4px;
+          height: 4px;
+          background: rgb(46 34 26 / 20%);
         }
     '''),
     part('tail', '捲捲尾巴', 'css', 15, html='''
         <div class="tail-curly"></div>
     ''', css='''
-        /* 圓圈少畫一邊，看起來就是捲起來的豬尾巴 */
+        /* 想換顏色、移位置，改這裡就好 */
         .tail-curly {
-          position: absolute;
-          top: calc(var(--tail-y, 60%) - 12px);
-          left: calc(100% + 12px);
-          width: 18px;
-          height: 18px;
-          border: 5px solid #e89aa8;
-          border-left-color: transparent;
-          border-radius: 50%;
+          --tail-color: #e8a0a0;
+          top: var(--tail-y, 60%);
+          left: calc(100% + 4px);
         }
 
-        /* 接回身體的那一小段 */
-        .tail-curly::before {
-          content: '';
+        /* 豬尾巴是 4 塊一上一下排成鋸齒，看起來就是捲捲的；每一塊 2 × 2 格（8px） */
+        /* 元素本身是第一塊，另外 3 塊用 box-shadow 複製出來 */
+        .tail-curly {
           position: absolute;
-          top: 13px;
-          left: -13px;
-          width: 12px;
-          height: 5px;
-          background: #e89aa8;
+          width: 8px;
+          height: 8px;
+          background: var(--tail-color);
+          box-shadow:
+            8px -8px 0 var(--tail-color),
+            16px 0 0 var(--tail-color),
+            24px -8px 0 var(--tail-color);
+          /* 外框用 drop-shadow 往上下左右各畫一次 4px，會沿著形狀走 */
+          filter:
+            drop-shadow(4px 0 0 #4a3426)
+            drop-shadow(-4px 0 0 #4a3426)
+            drop-shadow(0 4px 0 #4a3426)
+            drop-shadow(0 -4px 0 #4a3426);
         }
     '''),
     part('tail', '狐狸尾巴', 'css', 25, html='''
         <div class="tail-fox"></div>
     ''', css='''
-        /* 尾端白色是漸層硬切出來的 */
+        /* 想換顏色、移位置，改這裡就好 */
+        .tail-fox {
+          --tail-color: #e8a33d;
+          --tip-color: #fbf8f1;
+          top: calc(var(--tail-y, 60%) - 24px);
+          left: 100%;
+        }
+
+        /* 尾巴 20 × 9 格，往右上翹；尾端白色是背景在 75% 的地方直接換顏色 */
         .tail-fox {
           position: absolute;
-          top: calc(var(--tail-y, 60%) - 16px);
-          left: 100%;
-          width: 72px;
-          height: 34px;
-          background: linear-gradient(90deg, #e07b39 70%, #ffffff 70%);
-          border: 4px solid #4a3426;
-          border-radius: 10px 40px 40px 10px / 10px 30px 30px 10px;
-          transform-origin: left center;
-          transform: rotate(-25deg);
+          width: 80px;
+          height: 36px;
+          /* 外框用 drop-shadow 往上下左右各畫一次 4px，會沿著形狀走 */
+          filter:
+            drop-shadow(4px 0 0 #4a3426)
+            drop-shadow(-4px 0 0 #4a3426)
+            drop-shadow(0 4px 0 #4a3426)
+            drop-shadow(0 -4px 0 #4a3426);
+        }
+
+        .tail-fox::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(90deg, var(--tail-color) 75%, var(--tip-color) 75%);
+          box-shadow:
+            inset 4px 4px 0 rgb(255 255 255 / 35%),
+            inset -4px -4px 0 rgb(46 34 26 / 25%);
+          clip-path: var(--tail-shape);
+        }
+
+        /* 下面是剪出形狀的程式，想改形狀再研究 */
+        /* 從左上開始順時針走一圈，每一行是一個轉角 */
+        .tail-fox {
+          --tail-shape: polygon(
+            48px 0,
+            64px 0,
+            64px 4px,
+            72px 4px,
+            72px 20px,
+            80px 20px,
+            80px 24px,
+            76px 24px,
+            76px 28px,
+            68px 28px,
+            68px 32px,
+            56px 32px,
+            56px 36px,
+            20px 36px,
+            20px 32px,
+            12px 32px,
+            12px 28px,
+            4px 28px,
+            4px 24px,
+            0 24px,
+            0 20px,
+            8px 20px,
+            8px 16px,
+            16px 16px,
+            16px 12px,
+            24px 12px,
+            24px 8px,
+            36px 8px,
+            36px 4px,
+            48px 4px
+          );
         }
     '''),
     part('tail', '惡魔尾巴', 'html', 20, html='''
         <div class="tail-devil"></div>
     ''', css='''
+        /* 想換顏色、移位置，改這裡就好 */
         .tail-devil {
-          position: absolute;
+          --line-color: #4a3426;
+          --arrow-color: #c8553d;
           top: calc(var(--tail-y, 60%) + 6px);
           left: calc(100% + 4px);
-          width: 56px;
-          height: 4px;
-          background: #4a3426;
-          transform-origin: left center;
-          transform: rotate(-20deg);
         }
 
-        /* 尾端的箭頭 */
+        /* 細細的尾巴一階一階往上：元素本身是第一段，另外 3 段用 box-shadow 複製出來 */
+        .tail-devil {
+          position: absolute;
+          width: 12px;
+          height: 4px;
+          background: var(--line-color);
+          box-shadow:
+            12px -4px 0 var(--line-color),
+            24px -8px 0 var(--line-color),
+            36px -12px 0 var(--line-color);
+        }
+
+        /* 尾端的箭頭：直的 3 格加上往右一格尖端 */
         .tail-devil::after {
           content: '';
           position: absolute;
-          top: -7px;
-          right: -14px;
-          border-top: 9px solid transparent;
-          border-bottom: 9px solid transparent;
-          border-left: 16px solid #c8553d;
+          top: -16px;
+          left: 48px;
+          width: 4px;
+          height: 4px;
+          background: var(--arrow-color);
+          box-shadow:
+            0 4px 0 var(--arrow-color),
+            0 8px 0 var(--arrow-color),
+            4px 4px 0 var(--arrow-color);
+          /* 外框用 drop-shadow 往上下左右各畫一次 4px，會沿著形狀走 */
+          filter:
+            drop-shadow(4px 0 0 #4a3426)
+            drop-shadow(-4px 0 0 #4a3426)
+            drop-shadow(0 4px 0 #4a3426)
+            drop-shadow(0 -4px 0 #4a3426);
         }
     '''),
     part('tail', '魚尾巴', 'css', 20, html='''
         <div class="tail-fish"></div>
     ''', css='''
+        /* 想換顏色、移位置，改這裡就好 */
+        .tail-fish {
+          --tail-color: #6b8fb0;
+          top: var(--tail-y, 60%);
+          left: calc(100% + 4px);
+        }
+
+        /* 魚尾巴 6 塊：接身體的一塊、中間直的三塊、上下兩塊分岔；每一塊 2 × 2 格（8px） */
+        /* 元素本身是接身體那塊，另外 5 塊用 box-shadow 複製出來 */
         .tail-fish {
           position: absolute;
-          top: calc(var(--tail-y, 60%) - 18px);
-          left: calc(100% + 2px);
-          width: 40px;
-          height: 46px;
-          background: #5aa9e6;
-          clip-path: polygon(0 40%, 100% 0, 72% 50%, 100% 100%, 0 60%);
+          width: 8px;
+          height: 8px;
+          background: var(--tail-color);
+          box-shadow:
+            8px -8px 0 var(--tail-color),
+            8px 0 0 var(--tail-color),
+            8px 8px 0 var(--tail-color),
+            16px -16px 0 var(--tail-color),
+            16px 16px 0 var(--tail-color);
+          /* 外框用 drop-shadow 往上下左右各畫一次 4px，會沿著形狀走 */
+          filter:
+            drop-shadow(4px 0 0 #4a3426)
+            drop-shadow(-4px 0 0 #4a3426)
+            drop-shadow(0 4px 0 #4a3426)
+            drop-shadow(0 -4px 0 #4a3426);
         }
     '''),
     part('tail', '閃電尾巴', 'css', 25, html='''
         <div class="tail-bolt"></div>
     ''', css='''
-        /* 照 clip-path 的點連起來就是閃電的形狀 */
+        /* 想換顏色、移位置，改這裡就好 */
         .tail-bolt {
-          position: absolute;
+          --tail-color: #f2d16b;
           top: calc(var(--tail-y, 60%) - 30px);
           left: calc(100% + 2px);
-          width: 66px;
-          height: 52px;
-          background: #f5c542;
-          clip-path: polygon(0 45%, 48% 20%, 42% 45%, 100% 5%, 60% 85%, 66% 58%, 0 80%);
+        }
+
+        /* 閃電 16 × 10 格，從身體往右上一折一折 */
+        .tail-bolt {
+          position: absolute;
+          width: 64px;
+          height: 40px;
+          /* 外框用 drop-shadow 往上下左右各畫一次 4px，會沿著形狀走 */
+          filter:
+            drop-shadow(4px 0 0 #4a3426)
+            drop-shadow(-4px 0 0 #4a3426)
+            drop-shadow(0 4px 0 #4a3426)
+            drop-shadow(0 -4px 0 #4a3426);
+        }
+
+        .tail-bolt::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: var(--tail-color);
+          box-shadow:
+            inset 4px 4px 0 rgb(255 255 255 / 35%),
+            inset -4px -4px 0 rgb(46 34 26 / 25%);
+          clip-path: var(--tail-shape);
+        }
+
+        /* 下面是剪出形狀的程式，想改形狀再研究 */
+        /* 從左上開始順時針走一圈，每一行是一個轉角 */
+        .tail-bolt {
+          --tail-shape: polygon(
+            48px 0,
+            64px 0,
+            64px 4px,
+            56px 4px,
+            56px 8px,
+            48px 8px,
+            48px 12px,
+            56px 12px,
+            56px 20px,
+            48px 20px,
+            48px 24px,
+            40px 24px,
+            40px 28px,
+            32px 28px,
+            32px 32px,
+            24px 32px,
+            24px 36px,
+            16px 36px,
+            16px 40px,
+            0 40px,
+            0 36px,
+            8px 36px,
+            8px 32px,
+            16px 32px,
+            16px 28px,
+            24px 28px,
+            24px 24px,
+            32px 24px,
+            32px 20px,
+            40px 20px,
+            40px 16px,
+            24px 16px,
+            24px 12px,
+            32px 12px,
+            32px 8px,
+            40px 8px,
+            40px 4px,
+            48px 4px
+          );
         }
     '''),
     part('tail', '恐龍尾巴', 'css', 25, html='''
         <div class="tail-dino"></div>
     ''', css='''
-        /* 下緣是一條斜線，上緣的點一高一低就是背刺 */
+        /* 想換顏色、移位置，改這裡就好 */
         .tail-dino {
-          position: absolute;
+          --tail-color: #5a9a4a;
           top: calc(var(--tail-y, 60%) - 18px);
           left: 100%;
+        }
+
+        /* 尾巴 22 × 9 格，往外越來越細，上面三根背刺 */
+        .tail-dino {
+          position: absolute;
           width: 88px;
-          height: 40px;
-          background: #5a9a4a;
-          clip-path: polygon(
-            0 40%,
-            14% 40%,
-            20% 10%,
-            28% 44%,
-            40% 52%,
-            46% 26%,
-            54% 58%,
-            66% 64%,
-            71% 46%,
-            77% 72%,
-            100% 88%,
-            0 100%
+          height: 36px;
+          /* 外框用 drop-shadow 往上下左右各畫一次 4px，會沿著形狀走 */
+          filter:
+            drop-shadow(4px 0 0 #4a3426)
+            drop-shadow(-4px 0 0 #4a3426)
+            drop-shadow(0 4px 0 #4a3426)
+            drop-shadow(0 -4px 0 #4a3426);
+        }
+
+        .tail-dino::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: var(--tail-color);
+          box-shadow:
+            inset 4px 4px 0 rgb(255 255 255 / 35%),
+            inset -4px -4px 0 rgb(46 34 26 / 25%);
+          clip-path: var(--tail-shape);
+        }
+
+        /* 下面是剪出形狀的程式，想改形狀再研究 */
+        /* 從左上開始順時針走一圈，每一行是一個轉角 */
+        .tail-dino {
+          --tail-shape: polygon(
+            12px 0,
+            16px 0,
+            16px 4px,
+            20px 4px,
+            20px 8px,
+            32px 8px,
+            32px 4px,
+            36px 4px,
+            36px 0,
+            40px 0,
+            40px 4px,
+            44px 4px,
+            44px 8px,
+            56px 8px,
+            56px 4px,
+            60px 4px,
+            60px 0,
+            64px 0,
+            64px 4px,
+            68px 4px,
+            68px 8px,
+            88px 8px,
+            88px 16px,
+            80px 16px,
+            80px 20px,
+            68px 20px,
+            68px 24px,
+            52px 24px,
+            52px 28px,
+            32px 28px,
+            32px 32px,
+            16px 32px,
+            16px 36px,
+            0 36px,
+            0 8px,
+            8px 8px,
+            8px 4px,
+            12px 4px
           );
         }
     '''),
     part('tail', '會長大的尾巴', 'js', 50, html='''
         <div class="tail-grow"></div>
     ''', css='''
+        /* 想換顏色、移位置，改這裡就好 */
+        .tail-grow {
+          --tail-color: #9a6440;
+          top: var(--tail-y, 60%);
+          left: 100%;
+        }
+
+        /* 尾巴 2 格高，一開始 8 格長，JS 每點一下加 4 格 */
         .tail-grow {
           position: absolute;
-          top: var(--tail-y, 60%);
-          left: calc(100% + 4px);
-          width: 30px;
-          height: 12px;
-          background: #4a3426;
-          border-radius: 0 6px 6px 0;
+          width: 32px;
+          height: 8px;
+          background: var(--tail-color);
+          border: 4px solid #4a3426;
+          box-shadow: inset 0 4px 0 rgb(255 255 255 / 35%);
           cursor: pointer;
-          transition: width 0.3s;
+          transition: width 0.3s steps(4);
         }
     ''', js='''
-        // 每點一下變長 20px，超過 130px 就變回原本的 30px
+        // 每點一下變長 4 格（16px），超過 32 格（128px）就變回原本的 8 格（32px）
         const growTail = document.querySelector('.tail-grow')
-        let growLength = 30
+        let growLength = 32
         growTail.addEventListener('click', (event) => {
           // 尾巴長在身體裡，不擋住的話也會觸發身體的點擊
           event.stopPropagation()
-          growLength = growLength >= 130 ? 30 : growLength + 20
+          growLength = growLength >= 128 ? 32 : growLength + 16
           growTail.style.width = `${growLength}px`
         })
     '''),
@@ -1819,13 +2952,10 @@ PARTS += [
         <div class="feet-short left"></div>
         <div class="feet-short right"></div>
     ''', css='''
+        /* 想換顏色、移位置，改這裡就好 */
         .feet-short {
-          position: absolute;
-          z-index: 1;
+          --foot-color: #9a6440;
           top: calc(var(--leg-y, 100%) + 4px);
-          width: 20px;
-          height: 16px;
-          background: #4a3426;
         }
 
         .feet-short.left {
@@ -1835,20 +2965,27 @@ PARTS += [
         .feet-short.right {
           right: 16.67%;
         }
+
+        /* 一隻腳 3 × 2 格，加上 4px 的深棕外框 */
+        .feet-short {
+          position: absolute;
+          z-index: 1;
+          width: 12px;
+          height: 8px;
+          background: var(--foot-color);
+          border: 4px solid #4a3426;
+          box-shadow: inset 0 -4px 0 rgb(46 34 26 / 25%);
+        }
     '''),
     part('feet', '肉球腳掌', 'html', 15, html='''
         <div class="feet-paw left"></div>
         <div class="feet-paw right"></div>
     ''', css='''
+        /* 想換顏色、移位置，改這裡就好 */
         .feet-paw {
-          position: absolute;
-          z-index: 1;
-          top: var(--leg-y, 100%);
-          width: 26px;
-          height: 18px;
-          background: #f3ead8;
-          border: 3px solid #4a3426;
-          border-radius: 50% 50% 40% 40%;
+          --paw-color: #fbf8f1;
+          --pad-color: #e8a0a0;
+          top: calc(var(--leg-y, 100%) + 4px);
         }
 
         .feet-paw.left {
@@ -1859,29 +2996,40 @@ PARTS += [
           right: 11.67%;
         }
 
-        /* 底下的粉紅肉球 */
+        /* 腳掌 5 × 3 格 */
+        .feet-paw {
+          position: absolute;
+          z-index: 1;
+          width: 20px;
+          height: 12px;
+          background: var(--paw-color);
+          /* 外框用 box-shadow 往上下左右各複製一次深棕色，四個角空出來，看起來就是像素風的圓 */
+          box-shadow:
+            0 -4px 0 #4a3426,
+            0 4px 0 #4a3426,
+            -4px 0 0 #4a3426,
+            4px 0 0 #4a3426;
+        }
+
+        /* 底下的粉紅肉球 2 × 1 格 */
         .feet-paw::after {
           content: '';
           position: absolute;
-          bottom: 2px;
-          left: 7px;
-          width: 12px;
-          height: 7px;
-          background: #f2b8c6;
-          border-radius: 50%;
+          bottom: 0;
+          left: 6px;
+          width: 8px;
+          height: 4px;
+          background: var(--pad-color);
         }
     '''),
     part('feet', '長腿', 'html', 20, html='''
         <div class="feet-long left"></div>
         <div class="feet-long right"></div>
     ''', css='''
+        /* 想換顏色、移位置，改這裡就好 */
         .feet-long {
-          position: absolute;
-          z-index: 1;
+          --leg-color: #4a3426;
           top: calc(var(--leg-y, 100%) + 4px);
-          width: 8px;
-          height: 38px;
-          background: #4a3426;
         }
 
         .feet-long.left {
@@ -1892,14 +3040,23 @@ PARTS += [
           right: 21.67%;
         }
 
-        /* 腳掌往外側伸出去 */
+        /* 腿 2 格寬、9 格長 */
+        .feet-long {
+          position: absolute;
+          z-index: 1;
+          width: 8px;
+          height: 36px;
+          background: var(--leg-color);
+        }
+
+        /* 腳掌 4 × 2 格，往外側伸出去 */
         .feet-long::after {
           content: '';
           position: absolute;
           bottom: 0;
           width: 16px;
-          height: 6px;
-          background: #4a3426;
+          height: 8px;
+          background: var(--leg-color);
         }
 
         .feet-long.left::after {
@@ -1914,13 +3071,10 @@ PARTS += [
         <div class="feet-duck left"></div>
         <div class="feet-duck right"></div>
     ''', css='''
+        /* 想換顏色、移位置，改這裡就好 */
         .feet-duck {
-          position: absolute;
-          z-index: 1;
+          --foot-color: #e8a33d;
           top: calc(var(--leg-y, 100%) + 4px);
-          width: 6px;
-          height: 10px;
-          background: #e8a33d;
         }
 
         .feet-duck.left {
@@ -1931,29 +3085,42 @@ PARTS += [
           right: 22.5%;
         }
 
-        /* 扇形的蹼，下緣切成三個尖 */
+        /* 細細的腿 1 格寬、2 格長 */
+        .feet-duck {
+          position: absolute;
+          z-index: 1;
+          width: 4px;
+          height: 8px;
+          background: var(--foot-color);
+        }
+
+        /* 蹼是 6 格：一排 4 格，最左、最右再往下各一格，看起來是張開的腳掌 */
+        /* 元素本身是左上那一格，另外 5 格用 box-shadow 複製出來 */
         .feet-duck::after {
           content: '';
           position: absolute;
           top: 8px;
-          left: -12px;
-          width: 30px;
-          height: 14px;
-          background: #e8a33d;
-          clip-path: polygon(50% 0, 100% 100%, 75% 80%, 50% 100%, 25% 80%, 0 100%);
+          left: -6px;
+          width: 4px;
+          height: 4px;
+          background: var(--foot-color);
+          box-shadow:
+            4px 0 0 var(--foot-color),
+            8px 0 0 var(--foot-color),
+            12px 0 0 var(--foot-color),
+            0 4px 0 var(--foot-color),
+            12px 4px 0 var(--foot-color);
         }
     '''),
     part('feet', '馬蹄', 'html', 20, html='''
         <div class="feet-hoof left"><span class="feet-hoof-tip"></span></div>
         <div class="feet-hoof right"><span class="feet-hoof-tip"></span></div>
     ''', css='''
+        /* 想換顏色、移位置，改這裡就好 */
         .feet-hoof {
-          position: absolute;
-          z-index: 1;
+          --leg-color: #c99a6b;
+          --hoof-color: #2e221a;
           top: calc(var(--leg-y, 100%) + 4px);
-          width: 16px;
-          height: 22px;
-          background: #b98b62;
         }
 
         .feet-hoof.left {
@@ -1964,44 +3131,70 @@ PARTS += [
           right: 18.33%;
         }
 
+        /* 腿 4 格寬、5 格長 */
+        .feet-hoof {
+          position: absolute;
+          z-index: 1;
+          width: 16px;
+          height: 20px;
+          background: var(--leg-color);
+          box-shadow: inset -4px 0 0 rgb(46 34 26 / 20%);
+        }
+
+        /* 蹄比腿左右各寬一格，2 格高 */
         .feet-hoof-tip {
           position: absolute;
           bottom: -8px;
-          left: -2px;
-          width: 20px;
+          left: -4px;
+          width: 24px;
           height: 8px;
-          background: #2b1d14;
+          background: var(--hoof-color);
         }
     '''),
     part('feet', '章魚觸手', 'css', 25, html='''
         <div class="feet-octopus"><span></span><span></span><span></span><span></span></div>
     ''', css='''
-        /* 每條觸手只畫兩個邊再把角弄圓，就是一條彎彎的線；左右兩邊往外彎 */
-        /* 整排寬度是身體的 83%，身體變寬觸手會分開一點 */
+        /* 想換顏色、移位置，改這裡就好 */
+        .feet-octopus {
+          --tentacle-color: #e8a0a0;
+          top: calc(var(--leg-y, 100%) + 4px);
+        }
+
+        /* 四條觸手平均排開，整排寬度是身體的 83%，身體變寬觸手會分開一點 */
         .feet-octopus {
           position: absolute;
           z-index: 1;
-          top: calc(var(--leg-y, 100%) + 2px);
           left: 8.5%;
           width: 83%;
           display: flex;
           justify-content: space-between;
         }
 
+        /* 每條觸手 2 格寬、5 格長，最底下往外勾一格 */
         .feet-octopus span {
-          width: 14px;
-          height: 26px;
-          border-bottom: 6px solid #c97ca0;
+          position: relative;
+          width: 8px;
+          height: 20px;
+          background: var(--tentacle-color);
+          box-shadow: inset -4px 0 0 rgb(46 34 26 / 15%);
         }
 
-        .feet-octopus span:nth-child(-n + 2) {
-          border-left: 6px solid #c97ca0;
-          border-radius: 0 0 0 16px;
+        .feet-octopus span::after {
+          content: '';
+          position: absolute;
+          bottom: 0;
+          width: 4px;
+          height: 4px;
+          background: var(--tentacle-color);
         }
 
-        .feet-octopus span:nth-child(n + 3) {
-          border-right: 6px solid #c97ca0;
-          border-radius: 0 0 16px 0;
+        /* 左邊兩條往左勾、右邊兩條往右勾 */
+        .feet-octopus span:nth-child(-n + 2)::after {
+          left: -4px;
+        }
+
+        .feet-octopus span:nth-child(n + 3)::after {
+          right: -4px;
         }
     '''),
     part('feet', '輪子', 'html', 25, html='''
@@ -2009,64 +3202,69 @@ PARTS += [
         <div class="feet-wheel left"></div>
         <div class="feet-wheel right"></div>
     ''', css='''
+        /* 想換顏色、移位置，改這裡就好 */
+        .feet-wheel {
+          --tire-color: #2e221a;
+          --hub-color: #a8a29a;
+          top: calc(var(--leg-y, 100%) + 8px);
+        }
+
+        .feet-wheel-axle {
+          top: calc(var(--leg-y, 100%) + 16px);
+        }
+
         /* 輪軸是身體寬度的一半，兩個輪子裝在輪軸兩端 */
         .feet-wheel-axle {
           position: absolute;
           z-index: 1;
-          top: calc(var(--leg-y, 100%) + 18px);
           left: 25%;
           width: 50%;
           height: 4px;
           background: #4a3426;
         }
 
-        .feet-wheel {
-          position: absolute;
-          z-index: 1;
-          top: calc(var(--leg-y, 100%) + 4px);
-          width: 26px;
-          height: 26px;
-          background: #2b1d14;
-          border: 3px solid #4a3426;
-          border-radius: 50%;
-        }
-
         .feet-wheel.left {
-          left: calc(25% - 16px);
+          left: calc(25% - 10px);
         }
 
         .feet-wheel.right {
-          right: calc(25% - 16px);
+          right: calc(25% - 10px);
         }
 
-        /* 輪子中間的輪框 */
+        /* 輪子 5 × 5 格 */
+        .feet-wheel {
+          position: absolute;
+          z-index: 1;
+          width: 20px;
+          height: 20px;
+          background: var(--tire-color);
+          /* 外框用 box-shadow 往上下左右各複製一次深棕色，四個角空出來，看起來就是像素風的圓 */
+          box-shadow:
+            0 -4px 0 #4a3426,
+            0 4px 0 #4a3426,
+            -4px 0 0 #4a3426,
+            4px 0 0 #4a3426;
+        }
+
+        /* 輪子中間的輪框 2 × 2 格 */
         .feet-wheel::after {
           content: '';
           position: absolute;
-          top: 8px;
-          left: 8px;
-          width: 10px;
-          height: 10px;
-          background: #b4b2a9;
-          border-radius: 50%;
+          top: 6px;
+          left: 6px;
+          width: 8px;
+          height: 8px;
+          background: var(--hub-color);
         }
     '''),
     part('feet', '彈簧腳', 'css', 30, html='''
         <div class="feet-spring left"></div>
         <div class="feet-spring right"></div>
     ''', css='''
-        /* 斜斜的條紋疊起來像一圈一圈的彈簧，::after 是底下的腳墊 */
+        /* 想換顏色、移位置，改這裡就好 */
         .feet-spring {
-          position: absolute;
-          z-index: 1;
+          --spring-color: #6f6a64;
           top: calc(var(--leg-y, 100%) + 4px);
-          width: 16px;
-          height: 30px;
-          background: repeating-linear-gradient(
-            160deg,
-            transparent 0 3px,
-            #6f6a64 3px 6px
-          );
         }
 
         .feet-spring.left {
@@ -2077,13 +3275,26 @@ PARTS += [
           right: 18.33%;
         }
 
+        /* 彈簧 4 格寬、7 格長：一格線、一格空一直重複，像一圈一圈的彈簧 */
+        .feet-spring {
+          position: absolute;
+          z-index: 1;
+          width: 16px;
+          height: 28px;
+          background: repeating-linear-gradient(
+            var(--spring-color) 0 4px,
+            transparent 4px 8px
+          );
+        }
+
+        /* 底下的腳墊，比彈簧左右各寬一格 */
         .feet-spring::after {
           content: '';
           position: absolute;
-          bottom: -6px;
+          bottom: -4px;
           left: -4px;
           width: 24px;
-          height: 6px;
+          height: 4px;
           background: #4a3426;
         }
     '''),
@@ -2091,14 +3302,10 @@ PARTS += [
         <div class="feet-walk left"></div>
         <div class="feet-walk right"></div>
     ''', css='''
+        /* 想換顏色、移位置，改這裡就好 */
         .feet-walk {
-          position: absolute;
-          z-index: 1;
+          --foot-color: #9a6440;
           top: calc(var(--leg-y, 100%) + 4px);
-          width: 16px;
-          height: 22px;
-          background: #4a3426;
-          cursor: pointer;
         }
 
         .feet-walk.left {
@@ -2109,9 +3316,21 @@ PARTS += [
           right: 18.33%;
         }
 
-        /* 走路時兩隻腳輪流抬起來，右腳晚半拍；JS 只負責加上、拿掉 walking */
+        /* 一隻腳 3 × 4 格，加上 4px 的深棕外框 */
+        .feet-walk {
+          position: absolute;
+          z-index: 1;
+          width: 12px;
+          height: 16px;
+          background: var(--foot-color);
+          border: 4px solid #4a3426;
+          box-shadow: inset 0 -4px 0 rgb(46 34 26 / 25%);
+          cursor: pointer;
+        }
+
+        /* 走路時兩隻腳輪流抬起來，右腳晚半拍；一次抬兩格，一格一格動；JS 只負責加上、拿掉 walking */
         .body.walking .feet-walk {
-          animation: feet-step 0.6s ease-in-out infinite;
+          animation: feet-step 0.6s steps(2) infinite;
         }
 
         .body.walking .feet-walk.right {
@@ -2142,185 +3361,247 @@ PARTS += [
     part('accessory', '領結', 'html', 10, html='''
         <div class="accessory-bowtie"><span></span></div>
     ''', css='''
-        /* 左右兩個三角形對在一起，中間的 span 是結；寬度是身體的 28%，身體變寬領結也跟著變寬 */
+        /* 想換顏色、移位置，改這裡就好 */
         .accessory-bowtie {
-          position: absolute;
-          top: calc(var(--neck-y, 80%) - 4px);
-          left: 36%;
-          width: 28%;
-          height: 18px;
+          --bow-color: #c8553d;
+          top: calc(var(--neck-y, 80%) - 8px);
         }
 
-        /* 三角形用 clip-path 切，寬度用百分比才會跟著領結變寬 */
+        /* 領結寬度是身體的 40%，身體變寬也跟著變寬；左右兩塊是蝴蝶結的兩邊，中間的 span 是結 */
+        .accessory-bowtie {
+          position: absolute;
+          left: 30%;
+          width: 40%;
+          height: 24px;
+        }
+
+        /* box-sizing: border-box 讓寬度把外框也算進去，兩塊各占一半剛好排滿 */
         .accessory-bowtie::before,
         .accessory-bowtie::after {
           content: '';
           position: absolute;
           top: 0;
+          box-sizing: border-box;
           width: 50%;
-          height: 100%;
-          background: #c8553d;
+          height: 24px;
+          background: var(--bow-color);
+          border: 4px solid #4a3426;
+          box-shadow: inset 0 -4px 0 rgb(46 34 26 / 20%);
         }
 
         .accessory-bowtie::before {
           left: 0;
-          clip-path: polygon(0 0, 100% 50%, 0 100%);
         }
 
         .accessory-bowtie::after {
           right: 0;
-          clip-path: polygon(100% 0, 0 50%, 100% 100%);
         }
 
+        /* 中間的結 2 × 2 格，疊在兩塊上面；兩邊比中間高，看起來就是蝴蝶結 */
         .accessory-bowtie span {
           position: absolute;
+          z-index: 1;
           top: 4px;
-          left: calc(50% - 5px);
-          width: 10px;
-          height: 10px;
-          background: #9c3f2c;
+          left: calc(50% - 8px);
+          width: 8px;
+          height: 8px;
+          background: var(--bow-color);
+          border: 4px solid #4a3426;
         }
     '''),
     part('accessory', '圍巾', 'css', 15, html='''
         <div class="accessory-scarf"></div>
     ''', css='''
-        /* 橫的一條繞在身體上，::after 是垂下來的那一端 */
+        /* 想換顏色、移位置，改這裡就好 */
         .accessory-scarf {
-          position: absolute;
+          --scarf-color: #5a9a4a;
+          --stripe-color: #fbf8f1;
           top: calc(var(--neck-y, 80%) + 4px);
-          left: -4px;
-          width: calc(100% + 8px);
-          height: 12px;
-          background: repeating-linear-gradient(90deg, #5a9a4a 0 10px, #f3ead8 10px 14px);
-          border-top: 3px solid #4a3426;
-          border-bottom: 3px solid #4a3426;
         }
 
+        /* 橫的一條繞在身體上，寬度是身體加一圈；條紋是 2 格綠、1 格白一直重複 */
+        .accessory-scarf {
+          position: absolute;
+          left: -4px;
+          width: calc(100% + 8px);
+          height: 8px;
+          background: repeating-linear-gradient(
+            90deg,
+            var(--scarf-color) 0 8px,
+            var(--stripe-color) 8px 12px
+          );
+          border-top: 4px solid #4a3426;
+          border-bottom: 4px solid #4a3426;
+        }
+
+        /* 垂下來的那一端：3 格寬、8 格長，條紋改成橫的 */
         .accessory-scarf::after {
           content: '';
           position: absolute;
           top: 8px;
-          right: 14px;
-          width: 14px;
-          height: 34px;
-          background: repeating-linear-gradient(#5a9a4a 0 10px, #f3ead8 10px 14px);
-          border: 3px solid #4a3426;
-          transform: rotate(8deg);
+          right: 16px;
+          width: 12px;
+          height: 32px;
+          background: repeating-linear-gradient(
+            var(--scarf-color) 0 8px,
+            var(--stripe-color) 8px 12px
+          );
+          border: 4px solid #4a3426;
         }
     '''),
     part('accessory', '項鍊', 'html', 15, html='''
         <div class="accessory-necklace"></div>
     ''', css='''
-        /* dotted 邊框剛好是一顆一顆的珠子，::after 是墜子；寬度是身體的 53%，跟著身體變寬 */
+        /* 想換顏色、移位置，改這裡就好 */
         .accessory-necklace {
-          position: absolute;
+          --bead-color: #fbf8f1;
+          --pendant-color: #e8a33d;
           top: calc(var(--neck-y, 80%) - 16px);
-          left: calc(23.5% - 4px);
-          width: 53%;
-          height: 16px;
-          border: 4px dotted #f3ead8;
-          border-top: none;
-          border-radius: 0 0 40px 40px;
         }
 
+        /* 虛線邊框剛好是一顆一顆方方的珠子，寬度是身體的 53%，跟著身體變寬 */
+        .accessory-necklace {
+          position: absolute;
+          left: calc(23.5% - 4px);
+          width: 53%;
+          height: 12px;
+          border: 4px dashed var(--bead-color);
+          border-top: none;
+        }
+
+        /* 墜子 2 × 2 格，掛在正中間 */
         .accessory-necklace::after {
           content: '';
           position: absolute;
-          bottom: -11px;
+          bottom: -12px;
           left: calc(50% - 8px);
-          width: 12px;
-          height: 12px;
-          background: #e8a33d;
-          border: 2px solid #4a3426;
-          border-radius: 50%;
+          width: 8px;
+          height: 8px;
+          background: var(--pendant-color);
+          border: 4px solid #4a3426;
         }
     '''),
     part('accessory', '小花', 'html', 15, html='''
         <div class="accessory-flower"></div>
     ''', css='''
-        /* 中間是花心，四片花瓣用 box-shadow 複製出來 */
+        /* 想換顏色、移位置，改這裡就好 */
+        .accessory-flower {
+          --center-color: #f2d16b;
+          --petal-color: #e8a0a0;
+          top: calc(var(--horn-y, 0%) + 6px);
+          left: calc(50% + 34px);
+        }
+
+        /* 中間是花心，上下左右四片花瓣用 box-shadow 複製出來；每一塊 2 × 2 格（8px） */
         .accessory-flower {
           position: absolute;
           z-index: 1;
-          top: calc(var(--horn-y, 0%) + 6px);
-          left: calc(50% + 38px);
-          width: 10px;
-          height: 10px;
-          background: #f5c542;
-          border-radius: 50%;
+          width: 8px;
+          height: 8px;
+          background: var(--center-color);
           box-shadow:
-            0 -9px 0 #f2b8c6,
-            9px 0 0 #f2b8c6,
-            0 9px 0 #f2b8c6,
-            -9px 0 0 #f2b8c6;
+            0 -8px 0 var(--petal-color),
+            8px 0 0 var(--petal-color),
+            0 8px 0 var(--petal-color),
+            -8px 0 0 var(--petal-color);
+          /* 外框用 drop-shadow 往上下左右各畫一次 4px，會沿著形狀走 */
+          filter:
+            drop-shadow(4px 0 0 #4a3426)
+            drop-shadow(-4px 0 0 #4a3426)
+            drop-shadow(0 4px 0 #4a3426)
+            drop-shadow(0 -4px 0 #4a3426);
         }
     '''),
     part('accessory', '勳章', 'html', 20, html='''
-        <div class="accessory-medal">★</div>
+        <div class="accessory-medal"></div>
     ''', css='''
-        /* 掛在胸口左邊，大小是身體寬度的 17%，用 aspect-ratio 保持圓形 */
+        /* 想換顏色、移位置，改這裡就好 */
         .accessory-medal {
-          position: absolute;
+          --medal-color: #f2d16b;
+          --ribbon-color: #6b8fb0;
           top: calc(var(--neck-y, 80%) - 14px);
           left: 5%;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          width: 17%;
-          aspect-ratio: 1;
-          background: #f5c542;
-          border: 3px solid #4a3426;
-          border-radius: 50%;
-          color: #c8553d;
-          font-size: 14px;
         }
 
-        /* 上面的緞帶 */
+        /* 掛在胸口左邊，大小是身體寬度的 17%，用 aspect-ratio 保持方方正正 */
+        .accessory-medal {
+          position: absolute;
+          width: 17%;
+          aspect-ratio: 1;
+          background: var(--medal-color);
+          /* 外框用 box-shadow 往上下左右各複製一次深棕色，四個角空出來，看起來就是像素風的圓 */
+          box-shadow:
+            0 -4px 0 #4a3426,
+            0 4px 0 #4a3426,
+            -4px 0 0 #4a3426,
+            4px 0 0 #4a3426;
+        }
+
+        /* 上面的緞帶 2 × 3 格 */
         .accessory-medal::before {
           content: '';
           position: absolute;
-          top: -14px;
-          left: calc(50% - 6px);
-          width: 12px;
+          top: -16px;
+          left: calc(50% - 4px);
+          width: 8px;
           height: 12px;
-          background: #5aa9e6;
+          background: var(--ribbon-color);
+        }
+
+        /* 左上角一格白色反光 */
+        .accessory-medal::after {
+          content: '';
+          position: absolute;
+          top: 4px;
+          left: 4px;
+          width: 4px;
+          height: 4px;
+          background: #fbf8f1;
         }
     '''),
     part('accessory', '背包', 'html', 20, html='''
         <div class="accessory-backpack"></div>
     ''', css='''
-        /* 只畫露在身體左邊的那一截，右邊貼著身體的框 */
+        /* 想換顏色、移位置，改這裡就好 */
         .accessory-backpack {
-          position: absolute;
+          --bag-color: #6b8fb0;
           top: calc(var(--wing-y, 10%) + 10px);
-          left: calc(-32px + var(--wing-x, 0px));
-          width: 25px;
-          height: 54px;
-          background: #6b8fb0;
-          border: 3px solid #4a3426;
-          border-right: none;
-          border-radius: 10px 0 0 10px;
+          left: calc(-28px + var(--wing-x, 0px));
         }
 
-        /* 外面的口袋 */
+        /* 只畫露在身體左邊的那一截 6 × 13 格，右邊貼著身體的框 */
+        .accessory-backpack {
+          position: absolute;
+          width: 24px;
+          height: 52px;
+          background: var(--bag-color);
+          border: 4px solid #4a3426;
+          border-right: none;
+          box-shadow: inset 4px 4px 0 rgb(255 255 255 / 30%);
+        }
+
+        /* 外面的口袋 3 × 3 格 */
         .accessory-backpack::after {
           content: '';
           position: absolute;
           top: 24px;
-          left: 3px;
-          width: 14px;
-          height: 16px;
-          background: #4f7091;
-          border: 2px solid #4a3426;
-          border-radius: 4px;
+          left: 4px;
+          width: 12px;
+          height: 12px;
+          background: rgb(46 34 26 / 20%);
+          border: 4px solid #4a3426;
         }
     '''),
     part('accessory', '披風', 'css', 25, html='''
         <div class="accessory-cape"></div>
     ''', css='''
+        /* 想換顏色，改這裡就好 */
+        .accessory-cape {
+          --cape-color: #c8553d;
+        }
+
         /* 披風疊在身體外框上，border-radius: inherit 讓它跟身體同一個形狀 */
         /* 紅色用 box-shadow 畫：影子只畫在外框外面，身體那一塊永遠是空的，圓的、蛋形的身體也不會露白 */
-        /* 再用 clip-path 切成從肩膀往下張開的梯形 */
         /* 不用 z-index: -1，身體做動畫的時候會變成自己一層，披風就會跑到身體前面 */
         .accessory-cape {
           position: absolute;
@@ -2329,59 +3610,160 @@ PARTS += [
           width: calc(100% + 8px);
           height: calc(100% + 8px);
           border-radius: inherit;
-          box-shadow: 0 0 0 40px #c8553d;
-          clip-path: polygon(0 63%, -16px calc(100% + 12px), calc(100% + 16px) calc(100% + 12px), 100% 63%);
+          box-shadow: 0 0 0 40px var(--cape-color);
+          clip-path: var(--cape-shape);
+        }
+
+        /* 下面是剪出形狀的程式，想改形狀再研究 */
+        /* 從肩膀（身體 63% 的高度）開始，左右兩邊每往下一段就往外一格，一階一階張開 */
+        .accessory-cape {
+          --cape-shape: polygon(
+            0 63%,
+            0 72%,
+            -4px 72%,
+            -4px 81%,
+            -8px 81%,
+            -8px 90%,
+            -12px 90%,
+            -12px 100%,
+            -16px 100%,
+            -16px calc(100% + 12px),
+            calc(100% + 16px) calc(100% + 12px),
+            calc(100% + 16px) 100%,
+            calc(100% + 12px) 100%,
+            calc(100% + 12px) 90%,
+            calc(100% + 8px) 90%,
+            calc(100% + 8px) 81%,
+            calc(100% + 4px) 81%,
+            calc(100% + 4px) 72%,
+            100% 72%,
+            100% 63%
+          );
         }
     '''),
     part('accessory', '小雨傘', 'html', 25, html='''
-        <div class="accessory-umbrella"></div>
+        <div class="accessory-umbrella"><span class="accessory-umbrella-top"></span></div>
     ''', css='''
-        /* 上半圓是傘面，::after 是傘柄 */
+        /* 想換顏色、移位置，改這裡就好 */
+        .accessory-umbrella {
+          --canopy-color: #c8553d;
+          --stripe-color: #fbf8f1;
+          top: calc(var(--wing-y, 10%) - 32px);
+          left: calc(100% + 14px);
+        }
+
+        /* 本體是 1 格寬、14 格長的傘柄，最下面往左勾一格 */
         .accessory-umbrella {
           position: absolute;
-          top: calc(var(--wing-y, 10%) - 52px);
-          left: calc(100% - 12px);
-          width: 56px;
-          height: 28px;
-          background: repeating-linear-gradient(90deg, #e0526b 0 14px, #ffffff 14px 28px);
-          border: 3px solid #4a3426;
-          border-bottom: none;
-          border-radius: 56px 56px 0 0;
+          width: 4px;
+          height: 56px;
+          background: #4a3426;
         }
 
         .accessory-umbrella::after {
           content: '';
           position: absolute;
-          top: 28px;
-          left: 26px;
+          bottom: 0;
+          left: -4px;
           width: 4px;
-          height: 56px;
+          height: 4px;
           background: #4a3426;
+        }
+
+        /* 傘面 14 × 5 格，紅白直條紋；外框跟著剪出來的圓頂走 */
+        .accessory-umbrella-top {
+          position: absolute;
+          top: -20px;
+          left: -26px;
+          width: 56px;
+          height: 20px;
+          /* 外框用 drop-shadow 往上下左右各畫一次 4px，會沿著形狀走 */
+          filter:
+            drop-shadow(4px 0 0 #4a3426)
+            drop-shadow(-4px 0 0 #4a3426)
+            drop-shadow(0 4px 0 #4a3426)
+            drop-shadow(0 -4px 0 #4a3426);
+        }
+
+        .accessory-umbrella-top::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: repeating-linear-gradient(
+            90deg,
+            var(--canopy-color) 0 8px,
+            var(--stripe-color) 8px 16px
+          );
+          clip-path: var(--canopy-shape);
+        }
+
+        /* 下面是剪出形狀的程式，想改形狀再研究 */
+        /* 從左上開始順時針走一圈，每一行是一個轉角，左右兩邊一階一階收成圓頂 */
+        .accessory-umbrella-top {
+          --canopy-shape: polygon(
+            16px 0,
+            40px 0,
+            40px 4px,
+            48px 4px,
+            48px 8px,
+            52px 8px,
+            52px 12px,
+            56px 12px,
+            56px 20px,
+            0 20px,
+            0 12px,
+            4px 12px,
+            4px 8px,
+            8px 8px,
+            8px 4px,
+            16px 4px
+          );
         }
     '''),
     part('accessory', '會飄的氣球', 'js', 60, html='''
         <div class="accessory-balloon"></div>
     ''', css='''
+        /* 想換顏色、移位置，改這裡就好 */
+        .accessory-balloon {
+          --balloon-color: #c8553d;
+          top: calc(var(--wing-y, 10%) - 60px);
+          left: calc(100% + 4px);
+        }
+
+        /* 氣球 6 × 7 格 */
         .accessory-balloon {
           position: absolute;
-          top: calc(var(--wing-y, 10%) - 60px);
-          left: calc(100% + 2px);
-          width: 30px;
-          height: 36px;
-          background: #e0526b;
-          border: 3px solid #4a3426;
-          border-radius: 50%;
+          width: 24px;
+          height: 28px;
+          background: var(--balloon-color);
+          /* 外框用 box-shadow 往上下左右各複製一次深棕色，四個角空出來，看起來就是像素風的圓 */
+          box-shadow:
+            0 -4px 0 #4a3426,
+            0 4px 0 #4a3426,
+            -4px 0 0 #4a3426,
+            4px 0 0 #4a3426;
           cursor: pointer;
         }
 
-        /* 綁在身體上的線 */
+        /* 左上角一格白色反光 */
+        .accessory-balloon::before {
+          content: '';
+          position: absolute;
+          top: 4px;
+          left: 4px;
+          width: 4px;
+          height: 4px;
+          background: #fbf8f1;
+        }
+
+        /* 綁在身體上的線，1 格寬 */
         .accessory-balloon::after {
           content: '';
           position: absolute;
-          top: 36px;
-          left: 14px;
-          width: 2px;
-          height: 62px;
+          top: 32px;
+          left: 10px;
+          width: 4px;
+          height: 60px;
           background: #4a3426;
         }
 
@@ -2646,7 +4028,8 @@ def build_check(parts):
             i, p = by_name[name]
             chimera = install(chimera, p, i)
         page = build_page(chimera, small)
-        return f'<td><iframe sandbox="allow-scripts" srcdoc="{html_lib.escape(page)}"></iframe></td>'
+        # 576 格一次全部載入很慢，loading="lazy" 讓捲到附近才載入
+        return f'<td><iframe loading="lazy" sandbox="allow-scripts" srcdoc="{html_lib.escape(page)}"></iframe></td>'
 
     head = '<tr><th></th>' + ''.join(f'<th>{body or "預設"}</th>' for body in CHECK_BODIES) + '</tr>'
     sections = []
