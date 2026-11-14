@@ -1356,10 +1356,18 @@ h2::before {
 
 /* 合成獸編輯器：左邊程式碼，右邊 iframe 預覽 */
 /* 兩欄固定一半一半；用 minmax(0, 1fr)，程式碼有很長的一行也不會把左邊撐寬、把預覽擠窄 */
+/* 高度也固定：程式碼再長都在編輯器裡面捲，預覽框不會跟著變高，合成獸的位置和走路的邊界才不會跳 */
 .editor {
+  --editor-height: 440px;
+  --preview-height: 440px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
   gap: 14px;
+}
+
+.editor > .editor-code {
+  height: var(--editor-height);
 }
 
 .editor-code {
@@ -1439,8 +1447,8 @@ h2::before {
 }
 
 /* 程式碼區收起來：只留分頁列，靠上對齊，旁邊的預覽大小不變 */
-.editor.collapsed .editor-code {
-  align-self: start;
+.editor.collapsed > .editor-code {
+  height: auto;
 }
 
 .editor.collapsed .editor-tabs {
@@ -1458,6 +1466,7 @@ h2::before {
 
 .editor-cm {
   flex: 1;
+  min-height: 0;
   font-size: 14px;
 }
 
@@ -1478,6 +1487,7 @@ h2::before {
   position: relative;
   display: flex;
   min-width: 0;
+  height: var(--preview-height);
 }
 
 .editor-play {
@@ -1491,15 +1501,17 @@ h2::before {
 .editor-preview {
   flex: 1;
   width: 100%;
-  min-height: 320px;
   background: #fff;
   border: var(--pixel) solid var(--ink);
   box-shadow: var(--shadow);
 }
 
+/* 手機上下排列：程式碼和預覽各自固定高度 */
 @media (max-width: 640px) {
   .editor {
-    grid-template-columns: 1fr;
+    --editor-height: 360px;
+    --preview-height: 320px;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
