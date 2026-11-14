@@ -1227,7 +1227,7 @@ h2::before {
   font-weight: 700;
 }
 
-/* 說明文字裡的程式碼：淡黃底、深色字、等寬字體；新手教程和動作指南的說明都用這個 */
+/* 說明文字裡的程式碼：淡黃底、深色字、等寬字體；新手教程和動作參考的說明都用這個 */
 /* 長的程式碼可以在中間換行，換行後每一段都有完整的底色和邊框 */
 .inline-code {
   padding: 0 4px;
@@ -1355,27 +1355,42 @@ h2::before {
 }
 
 /* 合成獸編輯器：左邊程式碼，右邊 iframe 預覽 */
+/* 兩欄固定一半一半；用 minmax(0, 1fr)，程式碼有很長的一行也不會把左邊撐寬、把預覽擠窄 */
 .editor {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 14px;
 }
 
 .editor-code {
   display: flex;
   flex-direction: column;
+  min-width: 0;
   border: var(--pixel) solid var(--ink);
   box-shadow: var(--shadow);
   background: var(--code);
 }
 
+/* 分頁平分寬度，切換時寬度不變；選中的只換顏色和底色 */
 .editor-tabs {
-  display: flex;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
   border-bottom: var(--pixel) solid var(--ink);
 }
 
+/* 編輯器的分頁固定三格，有收合按鈕時最右邊多一格窄的 */
+.editor-tabs.main {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.editor-tabs.main.with-toggle {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) 44px;
+}
+
 .editor-tab {
-  flex: 1;
+  position: relative;
+  min-width: 0;
   min-height: 44px;
   padding: 6px 4px;
   background: var(--card);
@@ -1389,6 +1404,51 @@ h2::before {
 
 .editor-tab:last-child {
   border-right: none;
+}
+
+/* 收起時 JS 分頁右上角的紅色錯誤數字，疊在分頁上面，不會把分頁撐寬 */
+.editor-tab-errors {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  background: var(--red);
+  color: #fff;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 20px;
+}
+
+/* 收合按鈕：44px 正方形，箭頭上下左右置中；在同一列會被拉成跟旁邊分頁一樣高 */
+.editor-collapse {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  min-height: 44px;
+  padding: 0;
+  background: var(--card);
+  color: var(--ink);
+  border: none;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* 程式碼區收起來：只留分頁列，靠上對齊，旁邊的預覽大小不變 */
+.editor.collapsed .editor-code {
+  align-self: start;
+}
+
+.editor.collapsed .editor-tabs {
+  border-bottom: none;
+}
+
+.editor.collapsed .editor-cm {
+  display: none;
 }
 
 .editor-tab.active {
@@ -1446,6 +1506,11 @@ h2::before {
   box-shadow: var(--shadow);
   font-family: ui-monospace, Menlo, monospace;
   font-size: 14px;
+}
+
+/* 程式碼區收起來時主控台也一起收；.console 有寫 display，要另外蓋過 hidden */
+.console[hidden] {
+  display: none;
 }
 
 .console-title {
@@ -1612,4 +1677,169 @@ h2::before {
   padding: 8px 10px;
   background: #fff;
   border: 2px solid var(--ink);
+}
+
+/* 動作參考：編輯器下面，平常收起來 */
+.move-guide {
+  background: var(--card);
+  border: var(--pixel) solid var(--ink);
+  box-shadow: var(--shadow);
+}
+
+.move-guide-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+  min-height: 52px;
+  padding: 10px 16px;
+  background: none;
+  border: none;
+  color: var(--ink);
+  font: inherit;
+  font-size: 20px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.move-guide-toggle .muted {
+  font-size: 15px;
+  font-weight: 400;
+}
+
+.move-guide-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 0 16px 16px;
+}
+
+.move-levels {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+/* 每一招平常只有一行標題，點了才展開；展開的那招框成黃色 */
+.move-card {
+  min-width: 0;
+  background: #fff;
+  border: 2px solid var(--ink);
+  scroll-margin-top: 12px;
+}
+
+.move-card.open {
+  border-color: var(--yellow);
+  box-shadow: 0 0 0 2px var(--yellow);
+}
+
+.move-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 48px;
+  padding: 8px 14px;
+  background: none;
+  border: none;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.move-number {
+  min-width: 1.6em;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.move-title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  min-width: 0;
+}
+
+.move-name {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.move-arrow {
+  flex-shrink: 0;
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.move-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  padding: 0 14px 14px;
+}
+
+/* 需要零件的招式標成橘色，一眼看出要先裝零件 */
+.move-need {
+  padding: 0 8px;
+  background: #fbe3c4;
+  border: 1px solid var(--yellow);
+  font-size: 14px;
+}
+
+.move-key {
+  color: #9b2c2c;
+  font-weight: 700;
+}
+
+.move-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.move-demo-preview {
+  display: block;
+  width: 100%;
+  height: 320px;
+  background: #fff;
+  border: var(--pixel) solid var(--ink);
+}
+
+.move-code-label {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* 程式碼不換行，太長的在手機上左右捲動 */
+.move-code {
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 10px 12px;
+  background: var(--code);
+  color: #f3ead8;
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.move-explain {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-left: 20px;
+}
+
+@media (max-width: 640px) {
+  .move-levels {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }

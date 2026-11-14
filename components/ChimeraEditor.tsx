@@ -37,6 +37,8 @@ type EditorProps = {
   onRestore?: (code: ChimeraCode, label: string) => void
   // 新手教程用：預覽裡的合成獸真的跳起來、對話框的文字變了，就連同當下的程式碼交出去
   onPreview?: (code: ChimeraCode, event: PreviewEvent) => void
+  // 程式碼區可不可以收起來；新手教程進行中不行，玩家才不會找不到要改的地方
+  canCollapse?: boolean
 }
 
 // 合成獸編輯器：左邊改程式碼，右邊即時預覽
@@ -48,8 +50,12 @@ export function ChimeraEditor({
   onSave,
   onRestore,
   onPreview,
+  canCollapse = true,
 }: EditorProps) {
   const [status, setStatus] = useState('')
+  // 程式碼區收起來了沒，不存檔，重新整理就恢復打開
+  const [collapsedState, setCollapsed] = useState(false)
+  const collapsed = canCollapse && collapsedState
   const [showVersions, setShowVersions] = useState(false)
   // 存檔成功幾次，版本紀錄看到數字變了就重新拿列表
   const [savedCount, setSavedCount] = useState(0)
@@ -122,6 +128,23 @@ export function ChimeraEditor({
     if (tab === 'js' && jumpLine.current) moveToLine()
   }, [tab])
 
+  // 換分頁就打開程式碼區，例如裝上零件、加了動作，編輯器切過去的時候
+  useEffect(() => {
+    setCollapsed(false)
+  }, [tab])
+
+  // 點目前開著的分頁就收起來；收起來的時候點任一分頁就打開那一格
+  function clickTab(key: EditorTab) {
+    if (collapsed) {
+      setCollapsed(false)
+      onTabChange(key)
+    } else if (key === tab) {
+      if (canCollapse) setCollapsed(true)
+    } else {
+      onTabChange(key)
+    }
+  }
+
   async function save() {
     if (!onSave) return
     setStatus('存檔中…')
@@ -137,18 +160,43 @@ export function ChimeraEditor({
 
   return (
     <>
-      <section className="editor">
+      <section className={`editor ${collapsed ? 'collapsed' : ''}`}>
         <div className="editor-code">
-          <div className="editor-tabs">
+          <div className={`editor-tabs main ${canCollapse ? 'with-toggle' : ''}`}>
             {tabs.map((t) => (
               <button
                 key={t.key}
-                className={`editor-tab ${tab === t.key ? 'active' : ''}`}
-                onClick={() => onTabChange(t.key)}
+                className={`editor-tab ${tab === t.key && !collapsed ? 'active' : ''}`}
+                onClick={() => clickTab(t.key)}
               >
                 {t.label}
+                {/* 收起來的時候看不到主控台，有錯誤就在 JS 分頁上顯示幾個 */}
+                {t.key === 'js' && collapsed && consoleErrors.length > 0 && (
+                  <span className="editor-tab-errors" aria-label={`${consoleErrors.length} 個錯誤`}>
+                    {consoleErrors.length}
+                  </span>
+                )}
               </button>
             ))}
+            {canCollapse && (
+              <button
+                className="editor-collapse"
+                onClick={() => setCollapsed((v) => !v)}
+                aria-label={collapsed ? '打開程式碼區' : '收起程式碼區'}
+                aria-expanded={!collapsed}
+              >
+                {/* 用 SVG 畫箭頭，字元的上下留白每種字體不一樣，會對不正 */}
+                <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+                  <path
+                    d={collapsed ? 'M2 4.5l5 5 5-5' : 'M2 9.5l5-5 5 5'}
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="square"
+                  />
+                </svg>
+              </button>
+            )}
           </div>
           <CodeMirror
             ref={cmRef}
@@ -171,7 +219,7 @@ export function ChimeraEditor({
           srcDoc={page}
         />
       </section>
-      <section className="console" aria-live="polite">
+      <section className="console" aria-live="polite" hidden={collapsed}>
         <p className="console-title">主控台</p>
         {consoleErrors.length ? (
           <ul className="console-list">

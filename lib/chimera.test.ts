@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  hasChimeraWrapper,
   installPart,
   installedPartId,
   buildPage,
@@ -62,8 +63,8 @@ describe('installPart', () => {
     expect(code.html).toBe(
       [
         '<div class="chimera">',
+        '  <div class="speech">……</div>',
         '  <div class="body">',
-        '    <div class="speech">……</div>',
         '    <!-- [horn:7] 鹿角 開始 -->',
         '    <div class="horn-deer"></div>',
         '    <!-- [horn:7] 結束 -->',
@@ -226,5 +227,62 @@ describe('商店預覽不顯示對話框', () => {
     expect(lastSpeechRule(buildPage(starterChimera, { catchErrors: true }))).not.toBe(
       'display: none;',
     )
+  })
+})
+
+describe('對話框', () => {
+  it('預設合成獸和練習用合成獸的對話框在 .chimera 裡、跟 .body 同一層，不在身體裡', () => {
+    for (const code of [starterChimera, practiceChimera]) {
+      const speechAt = code.html.indexOf('<div class="speech">')
+      const bodyAt = code.html.indexOf('<div class="body">')
+      expect(speechAt).toBeGreaterThan(code.html.indexOf('<div class="chimera">'))
+      expect(speechAt).toBeLessThan(bodyAt)
+    }
+  })
+
+  it('舊存檔對話框在 .body 裡，裝零件也不會搬動它', () => {
+    const old = {
+      ...starterChimera,
+      html: '<div class="chimera">\n  <div class="body">\n    <div class="speech">嗨</div>\n    <!-- 零件裝在這裡 -->\n  </div>\n</div>',
+    }
+    const next = installPart(old, deerHorn)
+    expect(next.html).toContain('<div class="body">\n    <div class="speech">嗨</div>')
+  })
+})
+
+describe('寫在 .chimera 上的零件', () => {
+  const breathing: InstallablePart = {
+    id: 8,
+    slot: 'body',
+    name: '會呼吸的身體',
+    code: { html: '', css: '.chimera {\n  animation: body-breathe 2.4s infinite;\n}', js: '' },
+  }
+
+  it('有外框的合成獸照原樣裝上，HTML 不變', () => {
+    const next = installPart(starterChimera, breathing)
+    expect(next.html).toBe(starterChimera.html)
+  })
+
+  it('外框被刪掉的話，裝上時整段包一層 .chimera', () => {
+    const noWrapper = {
+      ...starterChimera,
+      html: '<div class="body">\n  <div class="speech">嗨</div>\n</div>',
+    }
+    const next = installPart(noWrapper, breathing)
+    expect(hasChimeraWrapper(noWrapper.html)).toBe(false)
+    expect(next.html).toBe(
+      '<div class="chimera">\n  <div class="body">\n    <div class="speech">嗨</div>\n  </div>\n</div>',
+    )
+  })
+
+  it('不是寫在 .chimera 上的零件不會加外框', () => {
+    const noWrapper = { ...starterChimera, html: '<div class="body"></div>' }
+    expect(installPart(noWrapper, deerHorn).html).not.toContain('chimera')
+  })
+
+  it('class 裡有其他名字也認得出外框', () => {
+    expect(hasChimeraWrapper('<div class="pet chimera big">')).toBe(true)
+    expect(hasChimeraWrapper('<div class="chimera-like">')).toBe(false)
+    expect(hasChimeraWrapper('<div class="body">')).toBe(false)
   })
 })

@@ -10,12 +10,13 @@ export type ChimeraCode = {
 // 合成獸的身體：一個方形身體，毛色用變數，買了毛色零件就能改
 // 零件裝在 .body 裡面，身體動的時候零件會跟著一起動
 // .body 的 position: relative 讓零件的 calc(50% ± Npx) 以身體中心為準；身體在畫面正中央，所以位置跟以前一樣
+// 對話框放在 .body 外面，換位置的動作寫在 .chimera，對話框才會跟著走、不跟著身體轉
 // 對話框的預設文字，教程第二步要玩家換成自己想說的話
 export const SPEECH_PLACEHOLDER = '……'
 
 const BODY_HTML = `<div class="chimera">
+  <div class="speech">${SPEECH_PLACEHOLDER}</div>
   <div class="body">
-    <div class="speech">${SPEECH_PLACEHOLDER}</div>
     <!-- 零件裝在這裡 -->
   </div>
 </div>`
@@ -38,11 +39,12 @@ const BODY_CSS = `.chimera {
   border: 4px solid #4a3426;
 }
 
-/* 對話框：放在身體裡，跳的時候跟著一起動；擺在頭的正上方，抬高到角的上面 */
+/* 對話框：跟 .body 同一層，跟著 .chimera 換位置，身體轉圈、發抖、跳的時候不會跟著變形 */
+/* 擺在頭的正上方，抬高到角的上面：身體高 108px，頂端在 50% - 54px，再往上 46px */
 /* 寬度最多到預覽框寬度少一點（100vw 是預覽框的寬度），手機上也不會超出去；夠寬，長的句子也只要兩三行 */
 .speech {
   position: absolute;
-  bottom: calc(100% + 50px);
+  bottom: calc(50% + 100px);
   left: 50%;
   translate: -50% 0;
   z-index: 1;
@@ -290,6 +292,17 @@ function indent(text: string, spaces: string) {
   return text.split('\n').join(`\n${spaces}`)
 }
 
+// HTML 裡有沒有 class 含 chimera 的外框
+export function hasChimeraWrapper(html: string) {
+  return /class\s*=\s*["']([^"']*\s)?chimera(\s[^"']*)?["']/.test(html)
+}
+
+// 會呼吸的身體這類零件寫在外層 .chimera 上，玩家把外框刪掉的話就套不上去，也不會報錯
+// 裝這種零件時，HTML 沒有外框就整段包一層 <div class="chimera">
+function wrapWithChimera(html: string) {
+  return `<div class="chimera">\n  ${indent(html.trim(), '  ')}\n</div>`
+}
+
 // 裝上零件：同部位的舊段落整段拿掉，再放新的
 // HTML 原本就有同部位段落的話換在原位置，玩家自己排好的順序不會亂掉；沒有才插到「零件裝在這裡」前面
 // 新的合成獸「零件裝在這裡」在 .body 裡面，11/14 以前存的在 .body 外面，兩種都照那一行的位置插
@@ -315,6 +328,10 @@ export function installPart(code: ChimeraCode, part: InstallablePart): ChimeraCo
       const spaces = indentAt(html, at)
       html = `${html.slice(0, at)}${indent(wrapped.html, spaces)}\n${spaces}${html.slice(at)}`
     }
+  }
+
+  if (/\.chimera\b/.test(part.code.css) && !hasChimeraWrapper(html)) {
+    html = wrapWithChimera(html)
   }
 
   const css = code.css.replace(slotBlocks('css', part.slot), '')

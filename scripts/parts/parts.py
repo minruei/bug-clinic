@@ -2239,7 +2239,7 @@ def build_sql(parts):
 
 # 跟 components/ChimeraEditor.tsx 的 starterChimera 一樣
 STARTER = {
-    'html': '<div class="chimera">\n  <div class="body">\n    <div class="speech">……</div>\n    <!-- 零件裝在這裡 -->\n  </div>\n</div>',
+    'html': '<div class="chimera">\n  <div class="speech">……</div>\n  <div class="body">\n    <!-- 零件裝在這裡 -->\n  </div>\n</div>',
     'css': code('''
         .chimera {
           position: relative;
@@ -2259,11 +2259,12 @@ STARTER = {
           border: 4px solid #4a3426;
         }
 
-        /* 對話框：放在身體裡，跳的時候跟著一起動；擺在頭的正上方，抬高到角的上面 */
+        /* 對話框：跟 .body 同一層，跟著 .chimera 換位置，身體轉圈、發抖、跳的時候不會跟著變形 */
+        /* 擺在頭的正上方，抬高到角的上面：身體高 108px，頂端在 50% - 54px，再往上 46px */
         /* 寬度最多到預覽框寬度少一點（100vw 是預覽框的寬度），手機上也不會超出去；夠寬，長的句子也只要兩三行 */
         .speech {
           position: absolute;
-          bottom: calc(100% + 50px);
+          bottom: calc(50% + 100px);
           left: 50%;
           translate: -50% 0;
           z-index: 1;

@@ -6,6 +6,7 @@ import { api } from '@/lib/api'
 import { Pixel } from '@/components/Pixel'
 import { ChimeraEditor, CodeViewer } from '@/components/ChimeraEditor'
 import {
+  hasChimeraWrapper,
   installPart,
   installedPartId,
   partPreviewPage,
@@ -19,6 +20,8 @@ import {
   type Slot,
 } from '@/lib/chimera'
 import { Tutorial } from '@/components/Tutorial'
+import { MoveGuide } from '@/components/MoveGuide'
+import { addMove, hasMove, hasNeededPart, needLabel, type Move } from '@/lib/moves'
 import type { Progress } from '@/lib/tutorial'
 
 type Part = {
@@ -190,10 +193,37 @@ export default function LabPage() {
     }
 
     const action = installedPartId(code, part.slot) === null ? '裝上' : '換上'
+    const next = installPart(code, { ...part, code: partCode })
+    // 寫在外層 .chimera 的零件，外框被刪掉的話 installPart 會補回來，告訴玩家 HTML 也變了
+    const wrapped = !hasChimeraWrapper(code.html) && hasChimeraWrapper(next.html)
     setUndoCode(code)
-    setCode(installPart(code, { ...part, code: partCode }))
+    setCode(next)
     setTab(part.category)
-    setMessage(`已${action}${part.name}，記得按存檔`)
+    setMessage(
+      `已${action}${part.name}${wrapped ? '，HTML 外面補上了 .chimera 外框' : ''}，記得按存檔`,
+    )
+  }
+
+  // 動作參考的「放進我的合成獸」：接在 CSS 和 JS 最後面，跟零件一樣可以復原
+  function addMoveToChimera(move: Move) {
+    if (!code) return
+    if (practicing) {
+      setMessage('練習中不能加動作，完成或離開練習後再加')
+      return
+    }
+    if (hasMove(code, move)) {
+      setMessage(`${move.name}已經加過了`)
+      return
+    }
+
+    setUndoCode(code)
+    setCode(addMove(code, move))
+    setTab('js')
+    const need =
+      move.needs && !hasNeededPart(code, move)
+        ? `。這招要裝上${needLabel[move.needs]}零件才看得到效果`
+        : ''
+    setMessage(`已加上${move.name}，記得按存檔${need}`)
   }
 
   // 卸下零件：把這個部位的標記段落拿掉
@@ -369,6 +399,7 @@ export default function LabPage() {
           onSave={loggedIn && !practicing ? saveChimera : undefined}
           onRestore={loggedIn && !practicing ? restoreVersion : undefined}
           onPreview={practicing ? onPreview : undefined}
+          canCollapse={!practicing}
         />
       )}
 
@@ -382,6 +413,8 @@ export default function LabPage() {
           )}
         </p>
       )}
+
+      {code && <MoveGuide code={code} onAdd={addMoveToChimera} />}
 
       <h2>零件商店</h2>
       {viewingPart && viewingCode && (
