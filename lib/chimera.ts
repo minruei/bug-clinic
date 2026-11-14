@@ -7,12 +7,20 @@ export type ChimeraCode = {
   js: string
 }
 
-// 還沒改過的合成獸：一個方形身體，毛色用變數，買了毛色零件就能改
+// 合成獸的身體：一個方形身體，毛色用變數，買了毛色零件就能改
 // 零件裝在 .body 裡面，身體動的時候零件會跟著一起動
 // .body 的 position: relative 讓零件的 calc(50% ± Npx) 以身體中心為準；身體在畫面正中央，所以位置跟以前一樣
-export const starterChimera: ChimeraCode = {
-  html: '<div class="chimera">\n  <div class="body">\n    <!-- 零件裝在這裡 -->\n  </div>\n</div>',
-  css: `.chimera {
+// 對話框的預設文字，教程第二步要玩家換成自己想說的話
+export const SPEECH_PLACEHOLDER = '……'
+
+const BODY_HTML = `<div class="chimera">
+  <div class="body">
+    <div class="speech">${SPEECH_PLACEHOLDER}</div>
+    <!-- 零件裝在這裡 -->
+  </div>
+</div>`
+
+const BODY_CSS = `.chimera {
   position: relative;
   display: flex;
   justify-content: center;
@@ -28,12 +36,103 @@ export const starterChimera: ChimeraCode = {
   height: 100px;
   background: var(--fur-color);
   border: 4px solid #4a3426;
-}`,
-  js: '// 讓合成獸動起來的程式寫在這裡\n',
 }
 
-// 錯誤主控台用：放在玩家的 JS 前面，抓到錯誤就把訊息和行號傳給外面的頁面
-// 預覽是 sandbox iframe，錯誤不會自己跑出來，要靠 postMessage 傳
+/* 對話框：放在身體裡，跳的時候跟著一起動；擺在頭的正上方，抬高到角的上面 */
+/* 寬度最多到預覽框寬度少一點（100vw 是預覽框的寬度），手機上也不會超出去；夠寬，長的句子也只要兩三行 */
+.speech {
+  position: absolute;
+  bottom: calc(100% + 50px);
+  left: 50%;
+  translate: -50% 0;
+  z-index: 1;
+  box-sizing: border-box;
+  width: max-content;
+  max-width: calc(100vw - 16px);
+  padding: 6px 10px;
+  background: #ffffff;
+  border: 3px solid #4a3426;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.4;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+/* 指向合成獸的小尾巴：深色三角形當邊框，上面再疊一個白色三角形 */
+.speech::before,
+.speech::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  translate: -50% 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+}
+
+.speech::before {
+  top: 100%;
+  border-top: 12px solid #4a3426;
+}
+
+.speech::after {
+  top: calc(100% - 4px);
+  border-left-width: 6px;
+  border-right-width: 6px;
+  border-top: 9px solid #ffffff;
+}`
+
+// 合成獸的動作一律這樣寫：CSS 寫「怎麼動」（@keyframes 加上一個 class），JS 只決定「什麼時候動」（加上、拿掉 class）
+// 跳用 translate 不用 transform，才不會蓋掉零件或其他程式設的 transform
+export const JUMP_CSS = `/* 點一下往上跳再落下，改 -30px 調跳多高、改 0.4s 調多快 */
+.body.jump {
+  animation: jump 0.4s ease-out;
+}
+
+@keyframes jump {
+  50% {
+    translate: 0 -30px;
+  }
+}`
+
+export const JUMP_JS = `// 點一下合成獸，牠會跳起來
+const body = document.querySelector('.body');
+
+body.addEventListener('click', () => {
+  body.classList.add('jump');
+});
+
+// 動畫播完就把 class 拿掉，下次才能再跳
+body.addEventListener('animationend', () => {
+  body.classList.remove('jump');
+});
+`
+
+// 教程第四步要玩家自己補上的那一行
+export const JUMP_LINE = "body.classList.add('jump');"
+export const JUMP_PLACEHOLDER = '// 在這裡加上一行，讓合成獸跳起來'
+
+// 新手教程用的練習合成獸：CSS 已經寫好怎麼跳，JS 留一個空格讓玩家補上「什麼時候跳」
+// 跟正式版分開，教程怎麼改都不會影響玩家自己的合成獸
+export const practiceChimera: ChimeraCode = {
+  html: BODY_HTML,
+  css: `${BODY_CSS}\n\n${JUMP_CSS}`,
+  js: JUMP_JS.replace(JUMP_LINE, JUMP_PLACEHOLDER),
+}
+
+// 還沒改過的合成獸（新玩家、按「還原預設」都是這隻）：點一下就會跳
+export const starterChimera: ChimeraCode = {
+  html: BODY_HTML,
+  css: `${BODY_CSS}\n\n${JUMP_CSS}`,
+  js: JUMP_JS,
+}
+
+// 編輯器的預覽用：放在玩家的 JS 前面，有事就用 postMessage 告訴外面的頁面
+// 預覽是 sandbox iframe，裡面發生什麼外面看不到，要靠 postMessage 傳
+// 1. 抓到錯誤，把訊息和行號傳出去，給錯誤主控台用
+// 2. 玩家點了合成獸、某個元素被加上 jump，而且那個元素真的套用了 jump 動畫，就回報一聲，給新手教程判斷「真的跳起來了」
+//    看 class 變化，不等 animationstart：分頁在背景時畫面不更新，animationstart 不會觸發
+// 3. 對話框實際顯示的文字，一開始回報一次，之後文字變了再回報，給新手教程判斷「真的說話了」
 // 只抓得到 JS 執行時的錯誤；CSS、HTML 寫錯瀏覽器不會報錯，無窮迴圈會讓預覽卡住也抓不到
 const ERROR_CATCHER = `<script>
 (function () {
@@ -48,8 +147,31 @@ const ERROR_CATCHER = `<script>
     var found = reason && reason.stack ? /about:srcdoc:(\\d+)/.exec(reason.stack) : null
     send(reason && reason.message ? reason.message : reason, found ? Number(found[1]) : null)
   })
+  var clicked = false
+  document.addEventListener('click', function () { clicked = true }, true)
+  new MutationObserver(function (records) {
+    records.forEach(function (record) {
+      var el = record.target
+      if (!clicked || !el.classList.contains('jump')) return
+      if (getComputedStyle(el).animationName.indexOf('jump') === -1) return
+      parent.postMessage({ type: 'chimera-jump' }, '*')
+    })
+  }).observe(document.documentElement, { attributes: true, attributeFilter: ['class'], subtree: true })
+  function sendSpeech() {
+    var speech = document.querySelector('.speech')
+    parent.postMessage({ type: 'chimera-speech', text: speech ? speech.textContent : null }, '*')
+  }
+  sendSpeech()
+  new MutationObserver(sendSpeech).observe(document.body, {
+    childList: true,
+    characterData: true,
+    subtree: true,
+  })
 })()
 </script>`
+
+// 編輯器的預覽傳出來的事件，新手教程拿來判斷玩家真的做到了
+export type PreviewEvent = { type: 'jump' } | { type: 'speech'; text: string | null }
 
 type PageOptions = {
   // 只有編輯器的預覽要接錯誤主控台，商店卡片和詳情框的預覽不用

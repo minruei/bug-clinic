@@ -9,14 +9,17 @@ import {
   buildPage,
   installPart,
   installedPartId,
+  practiceChimera,
   removePart,
   slots,
   starterChimera,
   type ChimeraCode,
   type EditorTab,
+  type PreviewEvent,
   type Slot,
 } from '@/lib/chimera'
 import { Tutorial } from '@/components/Tutorial'
+import type { Progress } from '@/lib/tutorial'
 
 type Part = {
   id: number
@@ -78,6 +81,24 @@ export default function LabPage() {
   // 不是 null 就代表教程正在進行（練習模式）
   const [practiceBackup, setPracticeBackup] = useState<ChimeraCode | null>(null)
   const practicing = practiceBackup !== null
+  // 教程用：預覽回報的事都記著是哪一版程式碼發生的，程式碼一改就重新算
+  // 例如跳過之後又改了程式碼，要再點一次才算
+  const [preview, setPreview] = useState<{ code: ChimeraCode | null } & Progress>({
+    code: null,
+    jumped: false,
+    speech: null,
+  })
+  const progress: Progress =
+    preview.code === code
+      ? { jumped: preview.jumped, speech: preview.speech }
+      : { jumped: false, speech: null }
+
+  function onPreview(from: ChimeraCode, event: PreviewEvent) {
+    setPreview((prev) => {
+      const base = prev.code === from ? prev : { code: from, jumped: false, speech: null }
+      return event.type === 'jump' ? { ...base, jumped: true } : { ...base, speech: event.text }
+    })
+  }
 
   useEffect(() => {
     async function load() {
@@ -94,7 +115,7 @@ export default function LabPage() {
       // 有登入、還沒做過教程：自動進入練習模式，自己的合成獸先收起來
       if (userRes.data && !userRes.data.tutorial_done) {
         setPracticeBackup(myCode)
-        setCode(starterChimera)
+        setCode(practiceChimera)
       } else {
         setCode(myCode)
       }
@@ -107,11 +128,11 @@ export default function LabPage() {
     return !res.error
   }
 
-  // 再玩一次：把自己的合成獸收起來，換一隻預設的來練習，不會動到存檔
+  // 再玩一次：把自己的合成獸收起來，換一隻練習用的來練習，不會動到存檔
   function startPractice() {
     if (!code) return
     setPracticeBackup(code)
-    setCode(starterChimera)
+    setCode(practiceChimera)
     setTab('css')
     setMessage('')
     setUndoCode(null)
@@ -314,7 +335,7 @@ export default function LabPage() {
       {code && practicing && (
         <Tutorial
           code={code}
-          onChange={setCode}
+          progress={progress}
           tab={tab}
           onTabChange={setTab}
           replay={tutorialDone}
@@ -342,6 +363,7 @@ export default function LabPage() {
           // 教程中不給存檔，避免練習用的合成獸蓋掉自己的作品；版本紀錄也一樣不顯示
           onSave={loggedIn && !practicing ? saveChimera : undefined}
           onRestore={loggedIn && !practicing ? restoreVersion : undefined}
+          onPreview={practicing ? onPreview : undefined}
         />
       )}
 

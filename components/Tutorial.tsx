@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import type { ChimeraCode, EditorTab } from '@/lib/chimera'
-import { JUMP_SAMPLE, steps } from '@/lib/tutorial'
+import { FINISH_VOICE, steps, type Progress } from '@/lib/tutorial'
 
 const tabLabel = {
   html: 'HTML 骨架',
@@ -12,7 +12,8 @@ const tabLabel = {
 
 type TutorialProps = {
   code: ChimeraCode
-  onChange: (code: ChimeraCode) => void
+  // 預覽裡發生的事：對話框的文字、有沒有真的跳起來，第二步和第四步看這個過關
+  progress: Progress
   // 編輯器現在開在哪一格，不是這一步要改的那格時，才顯示「打開」按鈕
   tab: EditorTab
   onTabChange: (tab: EditorTab) => void
@@ -26,7 +27,7 @@ type TutorialProps = {
 // 新手教程：放在編輯器上面，一步一步帶玩家改三格程式碼
 export function Tutorial({
   code,
-  onChange,
+  progress,
   tab,
   onTabChange,
   onFinish,
@@ -37,16 +38,9 @@ export function Tutorial({
   const [error, setError] = useState('')
 
   // 每一步完成沒有，都是從目前的程式碼算出來的，不用另外記
-  const doneList = steps.map((step) => step.done(code))
+  const doneList = steps.map((step) => step.done(code, progress))
   const current = doneList.indexOf(false)
   const allDone = current === -1
-
-  // 按鈕是玩家自己點的，這時候順便切到 JS 格不會打斷打字
-  function addJumpSample() {
-    onTabChange('js')
-    if (code.js.includes("querySelector('.body')")) return
-    onChange({ ...code, js: `${code.js}${JUMP_SAMPLE}` })
-  }
 
   async function finish() {
     setFinishing(true)
@@ -80,19 +74,25 @@ export function Tutorial({
                 <p className="tutorial-step-title">{step.title}</p>
                 {state === 'now' && (
                   <>
-                    <p className="muted">{step.hint}</p>
-                    {step.tab === 'js' ? (
-                      <button className="btn ghost" onClick={addJumpSample}>
-                        放入範例
+                    <p className="tutorial-voice">「{step.voice}」</p>
+                    <p>
+                      <b>要做什麼：</b>
+                      {step.todo}
+                    </p>
+                    <p className="muted">
+                      <b>為什麼是這一格：</b>
+                      {step.why}
+                    </p>
+                    <p className="muted">
+                      <b>卡住了？</b>
+                      {step.stuck}
+                    </p>
+                    {/* 不在玩家打字時自動切分頁：刪到一半剛好達成條件就被切走，
+                        接下來打的字會寫進別的格子。改成按鈕，讓玩家自己決定什麼時候換 */}
+                    {tab !== step.tab && (
+                      <button className="btn ghost" onClick={() => onTabChange(step.tab)}>
+                        打開{tabLabel[step.tab]}
                       </button>
-                    ) : (
-                      // 不在玩家打字時自動切分頁：刪到一半剛好達成條件就被切走，
-                      // 接下來打的字會寫進別的格子。改成按鈕，讓玩家自己決定什麼時候換
-                      tab !== step.tab && (
-                        <button className="btn ghost" onClick={() => onTabChange(step.tab)}>
-                          打開{tabLabel[step.tab]}
-                        </button>
-                      )
                     )}
                   </>
                 )}
@@ -104,7 +104,10 @@ export function Tutorial({
 
       {allDone && (
         <div className="tutorial-finish">
-          <p>四個都完成了！你已經改過 HTML、CSS、JS 三格</p>
+          <div>
+            <p className="tutorial-voice">「{FINISH_VOICE}」</p>
+            <p className="muted">四個都完成了，你已經改過 HTML、CSS、JS 三格</p>
+          </div>
           {replay ? (
             <button className="btn" onClick={finish}>
               完成練習，回到我的合成獸

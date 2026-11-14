@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   installPart,
   installedPartId,
+  practiceChimera,
   removePart,
   starterChimera,
   type ChimeraCode,
@@ -60,6 +61,7 @@ describe('installPart', () => {
       [
         '<div class="chimera">',
         '  <div class="body">',
+        '    <div class="speech">……</div>',
         '    <!-- [horn:7] 鹿角 開始 -->',
         '    <div class="horn-deer"></div>',
         '    <!-- [horn:7] 結束 -->',
@@ -179,5 +181,21 @@ describe('installedPartId', () => {
     expect(installedPartId(code, 'body')).toBe(11)
     expect(installedPartId(code, 'tail')).toBeNull()
     expect(installedPartId(starterChimera, 'horn')).toBeNull()
+  })
+})
+
+describe('預設合成獸', () => {
+  it('新的合成獸點一下會跳：JS 有 click 和 animationend，CSS 有 .jump 動畫', () => {
+    expect(starterChimera.js).toContain("body.classList.add('jump')")
+    expect(starterChimera.js).toContain("addEventListener('animationend'")
+    expect(starterChimera.css).toContain('.body.jump')
+    expect(starterChimera.css).toContain('@keyframes jump')
+  })
+
+  it('練習用的合成獸跟正式版長一樣，只差 JS 喊跳的那一行留給玩家補', () => {
+    expect(practiceChimera.html).toBe(starterChimera.html)
+    expect(practiceChimera.css).toBe(starterChimera.css)
+    expect(practiceChimera.js).not.toContain("classList.add('jump')")
+    expect(practiceChimera.js).toContain('在這裡加上一行')
   })
 })

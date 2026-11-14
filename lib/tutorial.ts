@@ -1,23 +1,5 @@
 // 新手教程的步驟和判斷，畫面在 components/Tutorial.tsx
-import type { ChimeraCode, EditorTab } from '@/lib/chimera'
-
-// 第四步要放進 JS 格的範例：點一下身體，牠會往上跳再落下
-// 玩家要自己把 -30px 改成別的數字，才算完成
-// 零件和名字都在 .body 裡面，讓 body 跳就會整隻一起跳
-export const JUMP_SAMPLE = `
-// 點一下身體，牠會跳起來
-const body = document.querySelector('.body')
-body.addEventListener('click', () => {
-  body.animate(
-    [
-      { transform: 'translateY(0)' },
-      { transform: 'translateY(-30px)' },
-      { transform: 'translateY(0)' },
-    ],
-    { duration: 400 },
-  )
-})
-`
+import { SPEECH_PLACEHOLDER, type ChimeraCode, type EditorTab } from '@/lib/chimera'
 
 // 用瀏覽器自己的規則判斷是不是合法的顏色，像只打了 # 或打錯字都不算
 // CSS.supports 只有瀏覽器有，在伺服器上跑的時候一律當成不是
@@ -33,18 +15,39 @@ export function bodyBlock(css: string) {
 export type Step = {
   title: string
   tab: EditorTab
-  hint: string
-  // 看玩家現在的程式碼，判斷這一步做完了沒
-  done: (code: ChimeraCode) => boolean
+  // 說明欄用怪物的口吻開頭
+  voice: string
+  // 要在哪一格做什麼
+  todo: string
+  // 為什麼是這一格：HTML 決定有什麼，CSS 決定長什麼樣子和怎麼動，JS 決定什麼時候動
+  why: string
+  // 卡住的時候看這句
+  stuck: string
+  // 看玩家現在的程式碼和預覽裡發生的事，判斷這一步做完了沒
+  done: (code: ChimeraCode, progress: Progress) => boolean
 }
 
-// 教程的四個步驟：CSS 換顏色 → CSS 改大小 → HTML 加名字 → JS 讓牠跳
+// 預覽裡發生的事，只看程式碼判斷不出來的
+export type Progress = {
+  // 玩家點了預覽裡的合成獸，而且 jump 動畫真的播了
+  jumped: boolean
+  // 預覽裡對話框實際顯示的文字，還沒收到回報是 null
+  speech: string | null
+}
+
+// 全部做完時怪物說的話
+export const FINISH_VOICE = '我現在是完整的合成獸了！去零件商店幫我打扮吧！'
+
+// 教程的四個步驟：CSS 換顏色 → HTML 說話 → CSS 長大 → JS 喊跳，三格都會用到
 // 每一步都是「改一個地方，右邊馬上看到變化」
 export const steps: Step[] = [
   {
     title: '幫牠換毛色',
     tab: 'css',
-    hint: '在 CSS 烤漆找到 --fur-color: #b4b2a9，把色碼改掉。也可以點色碼旁邊的小色塊直接選顏色',
+    voice: '我全身灰灰的好無聊，可以幫我換個顏色嗎？',
+    todo: '在 CSS 烤漆找到 --fur-color: #b4b2a9，把色碼改掉。也可以點色碼旁邊的小色塊直接選顏色。',
+    why: '顏色是「長什麼樣子」，樣子歸 CSS 管。',
+    stuck: '色碼是 # 加上 6 個 0～9 或 a～f，例如 #e8a33d；打錯的話毛色不會變。',
     // 要改成別的顏色，而且是瀏覽器看得懂的顏色才算
     done: (code) =>
       [...code.css.matchAll(/--fur-color:\s*([^;]+);/g)].some((m) => {
@@ -53,9 +56,25 @@ export const steps: Step[] = [
       }),
   },
   {
+    title: '幫牠說話',
+    tab: 'html',
+    voice: '我想跟你說話，可是不知道要說什麼……幫我在 HTML 寫一句話吧！',
+    todo: `在 HTML 骨架找到 <div class="speech">${SPEECH_PLACEHOLDER}</div>，把中間的「${SPEECH_PLACEHOLDER}」換成你想讓牠說的話。`,
+    why: '頁面上有什麼東西、寫了什麼字，歸 HTML 管；對話框的白底和小尾巴已經用 CSS 畫好了。',
+    stuck: '只改兩個標籤中間的字，<div class="speech"> 和 </div> 不要刪到，不然對話框會不見。',
+    // 看預覽裡對話框實際顯示的字，不是「……」也不是空的才算
+    done: (_code, progress) => {
+      const text = progress.speech?.trim()
+      return !!text && text !== SPEECH_PLACEHOLDER
+    },
+  },
+  {
     title: '讓牠長大一點',
     tab: 'css',
-    hint: '在 .body 裡面，把 width: 120px 或 height: 100px 改成別的數字',
+    voice: '我覺得自己有點小隻，可以讓我長大一點嗎？',
+    todo: '在 CSS 烤漆的 .body 裡，把 width: 120px 或 height: 100px 改成別的數字。',
+    why: '大小也是「長什麼樣子」，所以還是 CSS。',
+    stuck: '數字後面的 px 要留著，例如 160px。',
     done: (code) => {
       const block = bodyBlock(code.css)
       const width = block.match(/(?:^|[\s;])width:\s*(\d+)px/)?.[1]
@@ -64,17 +83,13 @@ export const steps: Step[] = [
     },
   },
   {
-    title: '幫牠取名字',
-    tab: 'html',
-    hint: '在 HTML 骨架的「零件裝在這裡」上面加一行 <p>小咪</p>，名字會寫在牠的身體上，名字自己取',
-    done: (code) => /<p[^>]*>\s*[^<\s][^<]*<\/p>/.test(code.html),
-  },
-  {
-    title: '點一下讓牠跳',
+    title: '喊一聲讓牠跳',
     tab: 'js',
-    hint: '先按「放入範例」，再把 translateY(-30px) 的 30 改成別的數字，改完點右邊的身體試試看',
-    done: (code) =>
-      code.js.includes('addEventListener') &&
-      [...code.js.matchAll(/translateY\(-(\d+)px\)/g)].some((m) => m[1] !== '30'),
+    voice: '我已經學會怎麼跳了，可是要有人喊『跳』我才會跳！',
+    todo: "在 JS 引擎「在這裡加上一行」的地方寫 body.classList.add('jump');，再點右邊的我。",
+    why: 'CSS 已經編好舞步了（.jump 和 @keyframes jump），什麼時候跳要靠 JS 決定。',
+    stuck: '點了沒反應的話，看下面主控台的紅字，會告訴你第幾行哪裡打錯。',
+    // 不比對字串：要玩家真的點了合成獸、而且真的跳起來才算
+    done: (_code, progress) => progress.jumped,
   },
 ]

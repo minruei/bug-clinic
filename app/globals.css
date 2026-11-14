@@ -1221,6 +1221,12 @@ h2::before {
   text-decoration: line-through;
 }
 
+/* 說明欄開頭那句是合成獸說的話 */
+.tutorial-voice {
+  font-weight: 700;
+  color: var(--ink);
+}
+
 .tutorial-step-title {
   font-weight: 700;
 }

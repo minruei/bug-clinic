@@ -12,6 +12,7 @@ import {
   starterChimera,
   toJsLine,
   type ChimeraCode,
+  type PreviewEvent,
   type EditorTab,
 } from '@/lib/chimera'
 import { addConsoleError, formatConsoleError, type ConsoleError } from '@/lib/console'
@@ -34,6 +35,8 @@ type EditorProps = {
   onSave?: (code: ChimeraCode) => Promise<boolean>
   // 有傳 onRestore 才會出現版本紀錄，選好的版本交給實驗室頁面放進編輯器
   onRestore?: (code: ChimeraCode, label: string) => void
+  // 新手教程用：預覽裡的合成獸真的跳起來、對話框的文字變了，就連同當下的程式碼交出去
+  onPreview?: (code: ChimeraCode, event: PreviewEvent) => void
 }
 
 // 合成獸編輯器：左邊改程式碼，右邊即時預覽
@@ -44,6 +47,7 @@ export function ChimeraEditor({
   onTabChange,
   onSave,
   onRestore,
+  onPreview,
 }: EditorProps) {
   const [status, setStatus] = useState('')
   const [showVersions, setShowVersions] = useState(false)
@@ -64,6 +68,15 @@ export function ChimeraEditor({
     function onMessage(event: MessageEvent) {
       // 只收自己這個預覽 iframe 傳來的，商店卡片的預覽或其他頁面傳的都不理
       if (event.source !== previewRef.current?.contentWindow) return
+      if (event.data?.type === 'chimera-jump') {
+        onPreview?.(code, { type: 'jump' })
+        return
+      }
+      if (event.data?.type === 'chimera-speech') {
+        const text = typeof event.data.text === 'string' ? event.data.text : null
+        onPreview?.(code, { type: 'speech', text })
+        return
+      }
       if (event.data?.type !== 'chimera-error') return
       const error = {
         line: toJsLine(code, event.data.line, { catchErrors: true }),
@@ -76,7 +89,7 @@ export function ChimeraEditor({
     }
     window.addEventListener('message', onMessage)
     return () => window.removeEventListener('message', onMessage)
-  }, [code, page])
+  }, [code, page, onPreview])
 
   // 點主控台的錯誤：切到 JS 格，游標移到出錯的那一行
   // 要等 JS 格的內容換上去才能移，所以先記在 jumpLine，等分頁換好再移

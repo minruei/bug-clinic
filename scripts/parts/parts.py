@@ -126,28 +126,47 @@ PARTS += [
           height: 60px;
         }
     '''),
-    part('body', '會呼吸的身體', 'js', 40, js='''
-        // 零件都長在身體裡，身體放大縮小，零件也會跟著一起動
-        // 用 scale 不用 transform，才不會蓋掉別的地方設的 transform
-        // 改 2400 調呼吸快慢，改 1.06 調放大多少
-        document.querySelector('.body').animate(
-          [{ scale: '1' }, { scale: '1.06' }, { scale: '1' }],
-          { duration: 2400, easing: 'ease-in-out', iterations: Infinity },
-        )
+    part('body', '會呼吸的身體', 'css', 40, css='''
+        /* 待機的時候一直慢慢呼吸，不用 JS 觸發 */
+        /* 放在外層的 .chimera：點一下跳是放在 .body，兩個動畫在不同元素上，不會互相蓋掉 */
+        /* 用 scale 不用 transform，商店小預覽縮小 .chimera 用的是 transform，兩個會疊在一起 */
+        /* 改 2.4s 調呼吸快慢，改 1.06 調放大多少 */
+        .chimera {
+          animation: body-breathe 2.4s ease-in-out infinite;
+        }
+
+        @keyframes body-breathe {
+          50% {
+            scale: 1.06;
+          }
+        }
     '''),
     part('body', '會變形的身體', 'js', 60, css='''
         .body {
           cursor: pointer;
           transition: border-radius 0.3s;
         }
+
+        /* 每個形狀一個 class，想加形狀就多寫一個 .shape-4，JS 那邊的 4 也要改成 5 */
+        .body.shape-1 {
+          border-radius: 50%;
+        }
+
+        .body.shape-2 {
+          border-radius: 60px 60px 8px 8px;
+        }
+
+        .body.shape-3 {
+          border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+        }
     ''', js='''
-        // 點身體輪流換形狀，想加形狀就在陣列裡多放一個 border-radius
+        // 點身體輪流換形狀：形狀寫在 CSS 的 .shape-1 ~ .shape-3，JS 只負責換 class
         const morphBody = document.querySelector('.body')
-        const morphShapes = ['0', '50%', '60px 60px 8px 8px', '50% 50% 50% 50% / 60% 60% 40% 40%']
         let morphIndex = 0
         morphBody.addEventListener('click', () => {
-          morphIndex = (morphIndex + 1) % morphShapes.length
-          morphBody.style.borderRadius = morphShapes[morphIndex]
+          morphBody.classList.remove(`shape-${morphIndex}`)
+          morphIndex = (morphIndex + 1) % 4
+          if (morphIndex) morphBody.classList.add(`shape-${morphIndex}`)
         })
     '''),
 ]
@@ -1342,9 +1361,26 @@ PARTS += [
           transform-origin: left center;
         }
 
-        /* 飛的時候翅膀一直拍 */
+        /* 飛的時候整隻上下飄、翅膀一直拍；JS 只負責加上、拿掉 flying */
+        .body.flying {
+          animation: wing-float 1.2s ease-in-out infinite alternate;
+        }
+
+        /* 飛的時候點身體還是要能跳：兩個動畫一起放，跳的時候疊在飄浮上面，跳完繼續飄 */
+        .body.flying.jump {
+          animation:
+            wing-float 1.2s ease-in-out infinite alternate,
+            jump 0.4s ease-out;
+        }
+
         .body.flying .wing-fly {
           animation: wing-fly 0.3s ease-in-out infinite alternate;
+        }
+
+        @keyframes wing-float {
+          to {
+            translate: 0 -16px;
+          }
         }
 
         @keyframes wing-fly {
@@ -1353,27 +1389,13 @@ PARTS += [
           }
         }
     ''', js='''
-        // 點翅膀讓整隻飄起來，再點一下停下來
-        // composite: 'add' 是疊加上去，跟會走路的腳一起裝也不會互相蓋掉
+        // 點翅膀讓整隻飄起來，再點一下停下來；飄和拍翅膀的動作寫在 CSS 的 .flying
         const flyBody = document.querySelector('.body')
-        let flyAnimation = null
         document.querySelectorAll('.wing-fly').forEach((wing) => {
           wing.addEventListener('click', (event) => {
             // 翅膀長在身體裡，不擋住的話也會觸發身體的點擊
             event.stopPropagation()
-            if (flyAnimation) {
-              flyAnimation.cancel()
-              flyAnimation = null
-            } else {
-              flyAnimation = flyBody.animate([{ translate: '0 0' }, { translate: '0 -16px' }], {
-                duration: 1200,
-                easing: 'ease-in-out',
-                direction: 'alternate',
-                iterations: Infinity,
-                composite: 'add',
-              })
-            }
-            flyBody.classList.toggle('flying', !!flyAnimation)
+            flyBody.classList.toggle('flying')
           })
         })
     '''),
@@ -1862,31 +1884,29 @@ PARTS += [
         .feet-walk.right {
           left: calc(50% + 22px);
         }
+
+        /* 走路時兩隻腳輪流抬起來，右腳晚半拍；JS 只負責加上、拿掉 walking */
+        .body.walking .feet-walk {
+          animation: feet-step 0.6s ease-in-out infinite;
+        }
+
+        .body.walking .feet-walk.right {
+          animation-delay: 0.3s;
+        }
+
+        @keyframes feet-step {
+          50% {
+            translate: 0 -8px;
+          }
+        }
     ''', js='''
-        // 點腳開始左右交替踏步，整隻跟著上下晃；再點一下停下來
-        // 晃動用 composite: 'add' 疊上去，跟會飛的翅膀一起裝也不會互相蓋掉
+        // 點腳開始左右交替踏步，再點一下停下來；踏步的動作寫在 CSS 的 .walking
         const walkBody = document.querySelector('.body')
-        const walkFeet = document.querySelectorAll('.feet-walk')
-        let walkAnimations = []
-        walkFeet.forEach((foot) => {
+        document.querySelectorAll('.feet-walk').forEach((foot) => {
           foot.addEventListener('click', (event) => {
             // 腳長在身體裡，不擋住的話也會觸發身體的點擊
             event.stopPropagation()
-            if (walkAnimations.length) {
-              walkAnimations.forEach((animation) => animation.cancel())
-              walkAnimations = []
-              return
-            }
-            const step = [{ translate: '0 0' }, { translate: '0 -8px' }, { translate: '0 0' }]
-            walkAnimations = [
-              walkFeet[0].animate(step, { duration: 600, iterations: Infinity }),
-              walkFeet[1].animate(step, { duration: 600, iterations: Infinity, delay: 300 }),
-              walkBody.animate([{ translate: '0 0' }, { translate: '0 -3px' }, { translate: '0 0' }], {
-                duration: 300,
-                iterations: Infinity,
-                composite: 'add',
-              }),
-            ]
+            walkBody.classList.toggle('walking')
           })
         })
     '''),
@@ -2132,16 +2152,31 @@ PARTS += [
           height: 62px;
           background: #4a3426;
         }
+
+        /* 飄上去再慢慢回來；JS 只負責加上 rising */
+        .accessory-balloon.rising {
+          animation: balloon-rise 2.4s ease-in-out;
+        }
+
+        @keyframes balloon-rise {
+          30% {
+            translate: 0 -60px;
+          }
+        }
     ''', js='''
-        // 點氣球讓它飄上去，再慢慢回到原本的位置
+        // 點氣球讓它飄上去，再慢慢回到原本的位置；飄的動作寫在 CSS 的 .rising
         const balloon = document.querySelector('.accessory-balloon')
         balloon.addEventListener('click', (event) => {
           // 氣球長在身體裡，不擋住的話也會觸發身體的點擊
           event.stopPropagation()
-          balloon.animate(
-            [{ translate: '0 0' }, { translate: '0 -60px', offset: 0.3 }, { translate: '0 0' }],
-            { duration: 2400, easing: 'ease-in-out' },
-          )
+          balloon.classList.add('rising')
+        })
+
+        // 動畫播完把 class 拿掉，下次才能再飄
+        // 擋住不往上傳，不然身體收到 animationend 會把自己的 jump 也拿掉
+        balloon.addEventListener('animationend', (event) => {
+          event.stopPropagation()
+          balloon.classList.remove('rising')
         })
     '''),
 ]
@@ -2204,7 +2239,7 @@ def build_sql(parts):
 
 # 跟 components/ChimeraEditor.tsx 的 starterChimera 一樣
 STARTER = {
-    'html': '<div class="chimera">\n  <div class="body">\n    <!-- 零件裝在這裡 -->\n  </div>\n</div>',
+    'html': '<div class="chimera">\n  <div class="body">\n    <div class="speech">……</div>\n    <!-- 零件裝在這裡 -->\n  </div>\n</div>',
     'css': code('''
         .chimera {
           position: relative;
@@ -2223,8 +2258,75 @@ STARTER = {
           background: var(--fur-color);
           border: 4px solid #4a3426;
         }
+
+        /* 對話框：放在身體裡，跳的時候跟著一起動；擺在頭的正上方，抬高到角的上面 */
+        /* 寬度最多到預覽框寬度少一點（100vw 是預覽框的寬度），手機上也不會超出去；夠寬，長的句子也只要兩三行 */
+        .speech {
+          position: absolute;
+          bottom: calc(100% + 50px);
+          left: 50%;
+          translate: -50% 0;
+          z-index: 1;
+          box-sizing: border-box;
+          width: max-content;
+          max-width: calc(100vw - 16px);
+          padding: 6px 10px;
+          background: #ffffff;
+          border: 3px solid #4a3426;
+          border-radius: 12px;
+          font-size: 14px;
+          line-height: 1.4;
+          text-align: center;
+          overflow-wrap: anywhere;
+        }
+
+        /* 指向合成獸的小尾巴：深色三角形當邊框，上面再疊一個白色三角形 */
+        .speech::before,
+        .speech::after {
+          content: '';
+          position: absolute;
+          left: 50%;
+          translate: -50% 0;
+          border-left: 8px solid transparent;
+          border-right: 8px solid transparent;
+        }
+
+        .speech::before {
+          top: 100%;
+          border-top: 12px solid #4a3426;
+        }
+
+        .speech::after {
+          top: calc(100% - 4px);
+          border-left-width: 6px;
+          border-right-width: 6px;
+          border-top: 9px solid #ffffff;
+        }
+
+        /* 點一下往上跳再落下，改 -30px 調跳多高、改 0.4s 調多快 */
+        .body.jump {
+          animation: jump 0.4s ease-out;
+        }
+
+        @keyframes jump {
+          50% {
+            translate: 0 -30px;
+          }
+        }
     '''),
-    'js': '// 讓合成獸動起來的程式寫在這裡\n',
+    'js': code('''
+        // 點一下合成獸，牠會跳起來
+        const body = document.querySelector('.body');
+
+        body.addEventListener('click', () => {
+          body.classList.add('jump');
+        });
+
+        // 動畫播完就把 class 拿掉，下次才能再跳
+        body.addEventListener('animationend', () => {
+          body.classList.remove('jump');
+        });
+    ''') + '\n',
 }
 
 PART_MARKER = '<!-- 零件裝在這裡 -->'
