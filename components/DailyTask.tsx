@@ -5,7 +5,13 @@ import { api } from '@/lib/api'
 import { CodeText } from '@/components/CodeText'
 import { Pixel } from '@/components/Pixel'
 import type { ChimeraCode } from '@/lib/chimera'
-import { dailyCheckPage, passesDaily, type DailyMeasure, type DailyTask as Task } from '@/lib/daily'
+import {
+  dailyCheckPage,
+  examplePlaces,
+  passesDaily,
+  type DailyMeasure,
+  type DailyTask as Task,
+} from '@/lib/daily'
 import { markCode } from '@/lib/inlineCode'
 import { moves } from '@/lib/moves'
 
@@ -19,6 +25,9 @@ type Props = {
   // 點「參考動作」，請動作參考打開那一招
   onShowMove: (moveId: string) => void
 }
+
+// 難度標籤的顏色
+const levelClass: Record<string, string> = { 簡單: 'easy', 普通: 'normal', 挑戰: 'hard' }
 
 // 檢查要多久沒回應才算失敗：變色龍那題要等兩秒多看毛色有沒有變
 const CHECK_TIMEOUT = 6000
@@ -34,11 +43,19 @@ export function DailyTask({ code, onSave, onCoins, onShowMove }: Props) {
   const [failed, setFailed] = useState(false)
   // 409：過了午夜題目換了，請玩家重新整理題目
   const [stale, setStale] = useState(false)
+  // 看到第幾層提示：一開始只有第 1 層，按「再多一點提示」才往下
+  const [hintLevel, setHintLevel] = useState(1)
   const frameRef = useRef<HTMLIFrameElement>(null)
+
+  // 上一次拿到的是哪一題，換題的時候提示從第 1 層重新開始
+  const keyRef = useRef<string | null>(null)
 
   const load = useCallback(async () => {
     const res = await api('/api/daily')
-    setTask(res.error ? null : res.data)
+    const next: Task | null = res.error ? null : res.data
+    if (next?.key !== keyRef.current) setHintLevel(1)
+    keyRef.current = next?.key ?? null
+    setTask(next)
   }, [])
 
   useEffect(() => {
@@ -137,17 +154,53 @@ export function DailyTask({ code, onSave, onCoins, onShowMove }: Props) {
       <div className="daily-task-head">
         <span className="tag">每日任務</span>
         <h3 className="daily-task-title">{task.title}</h3>
-        <span className="daily-task-reward">
-          <Pixel name="coin" size={18} /> {task.reward}
+        {/* 難度和金幣包在一起：手機上放不下時兩個一起換到下一行 */}
+        <span className="daily-task-meta">
+          <span className={`daily-task-level level-${levelClass[task.level] ?? 'easy'}`}>
+            難度：{task.level}
+          </span>
+          <span className="daily-task-reward">
+            <Pixel name="coin" size={18} /> {task.reward}
+          </span>
         </span>
       </div>
       <p>
         <CodeText text={markCode(task.description)} />
       </p>
-      <p className="muted">
-        <b>提示：</b>
-        <CodeText text={markCode(task.hint)} />
-      </p>
+      <div className="daily-task-hints">
+        <p>
+          <b>提示 1：</b>
+          <CodeText text={markCode(task.hint)} />
+        </p>
+        {hintLevel >= 2 && (
+          <p>
+            <b>提示 2：</b>
+            <CodeText text={markCode(task.reference)} />
+          </p>
+        )}
+        {hintLevel >= 3 && (
+          <div className="daily-task-example">
+            <b>提示 3：直接貼上就能過關</b>
+            {examplePlaces
+              .filter((place) => task.example[place.tab])
+              .map((place) => (
+                <div key={place.tab}>
+                  <p className="move-code-label">
+                    <CodeText text={place.where} />
+                  </p>
+                  <pre className="move-code">
+                    <code>{task.example[place.tab]}</code>
+                  </pre>
+                </div>
+              ))}
+          </div>
+        )}
+        {hintLevel < 3 && (
+          <button className="daily-task-more" onClick={() => setHintLevel((n) => n + 1)}>
+            再多一點提示
+          </button>
+        )}
+      </div>
 
       <div className="daily-task-actions">
         {task.claimed ? (

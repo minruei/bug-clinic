@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { challenges } from '@/server/src/challenges'
 import { practiceChimera, starterChimera, type ChimeraCode } from '@/lib/chimera'
 import { moves } from '@/lib/moves'
-import { dailyCheckPage, dailyKeys, passesDaily } from '@/lib/daily'
+import { dailyCheckPage, dailyKeys, passesDaily, pasteExample } from '@/lib/daily'
 
 const withCss = (css: string): ChimeraCode => ({
   ...starterChimera,
@@ -59,6 +59,12 @@ describe('每日任務的前端檢查', () => {
     for (const c of challenges) {
       expect(c.check(starterChimera), c.key).toBe(false)
       expect(c.check(practiceChimera), c.key).toBe(false)
+    }
+  })
+
+  it('每一題照第 3 層提示貼到預設合成獸上，寫法檢查就會過（不用先買零件）', () => {
+    for (const c of challenges) {
+      expect(c.check(pasteExample(starterChimera, c.example)), c.key).toBe(true)
     }
   })
 

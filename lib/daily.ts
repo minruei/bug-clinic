@@ -11,10 +11,31 @@ export type DailyTask = {
   key: string
   title: string
   description: string
+  level: '簡單' | '普通' | '挑戰'
+  // 三層提示：方向、去哪裡找參考、可以直接貼的範例
   hint: string
+  reference: string
+  example: Partial<ChimeraCode>
   moveId: string | null
   reward: number
   claimed: boolean
+}
+
+// 第 3 層提示：範例程式碼分成幾格，每一格寫清楚要貼在哪裡
+export const examplePlaces: { tab: keyof ChimeraCode; where: string }[] = [
+  { tab: 'html', where: '貼到 HTML 骨架裡 `<!-- 零件裝在這裡 -->` 那一行的上面' },
+  { tab: 'css', where: '貼到 CSS 烤漆的最後面' },
+  { tab: 'js', where: '貼到 JS 引擎的最後面' },
+]
+
+// 照第 3 層提示把範例貼到程式碼裡，測試用：確認貼上去就會過關
+export function pasteExample(code: ChimeraCode, example: Partial<ChimeraCode>): ChimeraCode {
+  const marker = '<!-- 零件裝在這裡 -->'
+  return {
+    html: example.html ? code.html.replace(marker, `${example.html}\n${marker}`) : code.html,
+    css: example.css ? `${code.css}\n\n${example.css}` : code.css,
+    js: example.js ? `${code.js}\n${example.js}` : code.js,
+  }
 }
 
 // 預覽裡量到的東西，每題只量自己需要的那幾項
