@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   hasChimeraWrapper,
   installPart,
+  SPEECH_CSS,
   installedPartId,
   buildPage,
   partPreviewPage,
@@ -63,7 +64,6 @@ describe('installPart', () => {
     expect(code.html).toBe(
       [
         '<div class="chimera">',
-        '  <div class="speech">……</div>',
         '  <div class="body">',
         '    <!-- [horn:7] 鹿角 開始 -->',
         '    <div class="horn-deer"></div>',
@@ -75,17 +75,47 @@ describe('installPart', () => {
     )
   })
 
-  it('11/14 以前存的合成獸「零件裝在這裡」在 .body 外面，就照原本的位置插，不改結構', () => {
+  it('11/14 以前存的合成獸「零件裝在這裡」在 .body 外面：搬進 .body，CSS 補上 position: relative', () => {
     const oldStarter: ChimeraCode = {
-      ...starterChimera,
       html: '<div class="chimera">\n  <div class="body"></div>\n  <!-- 零件裝在這裡 -->\n</div>',
+      css: '.body {\n  width: 120px;\n}',
+      js: '',
     }
 
     const code = installPart(oldStarter, deerHorn)
 
-    expect(code.html).toContain('<div class="body"></div>')
-    expect(code.html).toContain('\n  <div class="horn-deer"></div>\n  <!-- [horn:7] 結束 -->\n')
-    expect(removePart(code, 'horn').html).toBe(oldStarter.html)
+    expect(code.html).toBe(
+      [
+        '<div class="chimera">',
+        '  <div class="body">',
+        '    <!-- [horn:7] 鹿角 開始 -->',
+        '    <div class="horn-deer"></div>',
+        '    <!-- [horn:7] 結束 -->',
+        '    <!-- 零件裝在這裡 -->',
+        '  </div>',
+        '</div>',
+      ].join('\n'),
+    )
+    expect(code.css).toContain('.body {\n  position: relative;\n}')
+  })
+
+  it('舊結構裡已經裝在 .body 外面的同部位零件，換新的時候改裝到 .body 裡', () => {
+    const oldWithHorn: ChimeraCode = {
+      html: '<div class="chimera">\n  <div class="body"></div>\n  <!-- [horn:7] 鹿角 開始 -->\n  <div class="horn-deer"></div>\n  <!-- [horn:7] 結束 -->\n  <!-- 零件裝在這裡 -->\n</div>',
+      css: '.body {\n  position: relative;\n}',
+      js: '',
+    }
+
+    const code = installPart(oldWithHorn, colorHorn)
+
+    expect(code.html.match(/horn-/g)).toHaveLength(1)
+    expect(code.html).toContain('<div class="body">\n    <!-- [horn:9] 會變色的角 開始 -->')
+    // 已經有 position: relative 就不重複加
+    expect(code.css.match(/position: relative/g)).toHaveLength(1)
+  })
+
+  it('新結構不會被搬動', () => {
+    expect(installPart(starterChimera, roundBody).html).toBe(starterChimera.html)
   })
 
   it('零件哪一格是空的，那一格就不加標記', () => {
@@ -195,9 +225,12 @@ describe('預設合成獸', () => {
     expect(starterChimera.css).toContain('@keyframes jump')
   })
 
-  it('練習用的合成獸跟正式版長一樣，只差 JS 喊跳的那一行留給玩家補', () => {
-    expect(practiceChimera.html).toBe(starterChimera.html)
-    expect(practiceChimera.css).toBe(starterChimera.css)
+  it('練習用的合成獸跟正式版長一樣，只多了對話框，JS 喊跳的那一行留給玩家補', () => {
+    expect(practiceChimera.html.replace('\n  <div class="speech">……</div>', '')).toBe(
+      starterChimera.html,
+    )
+    expect(practiceChimera.css).toContain(SPEECH_CSS)
+    expect(practiceChimera.css.replace(`\n\n${SPEECH_CSS}`, '')).toBe(starterChimera.css)
     expect(practiceChimera.js).not.toContain("classList.add('jump')")
     expect(practiceChimera.js).toContain('在這裡加上一行')
   })
@@ -213,31 +246,37 @@ describe('商店預覽不顯示對話框', () => {
 
   it('商店卡片和詳情框的預覽，最後一條 .speech 規則是 display: none', () => {
     const page = partPreviewPage(deerHorn, '\n.chimera { transform: scale(0.55); }')
-    expect(lastSpeechRule(page)).toBe('display: none;')
+    expect(lastSpeechRule(page)).toBe('display: none !important;')
   })
 
-  it('只是在預覽頁加 CSS 蓋過去，對話框和零件的 HTML 都還在', () => {
+  it('只是在預覽頁加 CSS 蓋過去，零件的 HTML 都還在', () => {
     const page = partPreviewPage(deerHorn)
-    expect(page).toContain('<div class="speech">')
     expect(page).toContain('horn-deer')
   })
 
   it('編輯器和一般的預覽照常顯示對話框', () => {
-    expect(lastSpeechRule(buildPage(starterChimera))).not.toBe('display: none;')
-    expect(lastSpeechRule(buildPage(starterChimera, { catchErrors: true }))).not.toBe(
-      'display: none;',
+    expect(lastSpeechRule(buildPage(practiceChimera))).not.toBe('display: none !important;')
+    expect(lastSpeechRule(buildPage(practiceChimera, { catchErrors: true }))).not.toBe(
+      'display: none !important;',
     )
   })
 })
 
 describe('對話框', () => {
-  it('預設合成獸和練習用合成獸的對話框在 .chimera 裡、跟 .body 同一層，不在身體裡', () => {
-    for (const code of [starterChimera, practiceChimera]) {
-      const speechAt = code.html.indexOf('<div class="speech">')
-      const bodyAt = code.html.indexOf('<div class="body">')
-      expect(speechAt).toBeGreaterThan(code.html.indexOf('<div class="chimera">'))
-      expect(speechAt).toBeLessThan(bodyAt)
-    }
+  it('正式版的預設合成獸沒有對話框', () => {
+    expect(starterChimera.html).not.toContain('speech')
+    expect(starterChimera.css).not.toContain('speech')
+  })
+
+  it('教程怪物的對話框在 .chimera 裡、跟 .body 同一層，不在身體裡', () => {
+    const speechAt = practiceChimera.html.indexOf('<div class="speech">')
+    expect(speechAt).toBeGreaterThan(practiceChimera.html.indexOf('<div class="chimera">'))
+    expect(speechAt).toBeLessThan(practiceChimera.html.indexOf('<div class="body">'))
+  })
+
+  it('對話框的高度跟著身體的 --speech-y，只管 .chimera 底下那一層', () => {
+    expect(SPEECH_CSS).toContain('.chimera > .speech {')
+    expect(SPEECH_CSS).toContain('bottom: calc(50% + var(--speech-y, 100px))')
   })
 
   it('舊存檔對話框在 .body 裡，裝零件也不會搬動它', () => {

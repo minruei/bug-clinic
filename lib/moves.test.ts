@@ -21,6 +21,11 @@ function fakeElement() {
       contains: (name: string) => classes.has(name),
     },
     style: { setProperty: () => {}, getPropertyValue: () => '' },
+    className: '',
+    children: [] as unknown[],
+    append(child: unknown) {
+      this.children.push(child)
+    },
     addEventListener: (type: string, fn: (event: unknown) => void) => {
       ;(listeners[type] ??= []).push(fn)
     },
@@ -30,19 +35,25 @@ function fakeElement() {
 
 type FakeElement = ReturnType<typeof fakeElement>
 
-// 在假的 document 上執行一段 JS；found 決定 querySelector 找不找得到元素
-function run(js: string, found: boolean) {
+// 在假的 document 上執行一段 JS；found 決定 querySelector 找不找得到元素，missing 裡的選擇器一律找不到
+function run(js: string, found: boolean, missing: string[] = []) {
   const elements: Record<string, FakeElement> = {}
+  const created: FakeElement[] = []
   const document = {
     ...fakeElement(),
     querySelector: (selector: string) => {
-      if (!found) return null
+      if (!found || missing.includes(selector)) return null
       return (elements[selector] ??= fakeElement())
+    },
+    createElement: () => {
+      const element = fakeElement()
+      created.push(element)
+      return element
     },
   }
   const window = { innerWidth: 400 }
   new Function('document', 'window', js)(document, window)
-  return { document, elements }
+  return { document, elements, created }
 }
 
 // 把每個元素收到的事件都觸發一次
@@ -165,6 +176,28 @@ describe('招式執行起來', () => {
     expect(body.classes.has('hop')).toBe(true)
     body.listeners.animationend[0]({})
     expect(body.classes.has('hop')).toBe(false)
+  })
+
+  it('被戳計數、隨機說一句話：沒有對話框就生一個放進 .chimera，點了換文字', () => {
+    for (const id of ['poke-count', 'random-line']) {
+      const move = moves.find((m) => m.id === id) as Move
+      const { elements, created } = run(move.js, true, ['.speech'])
+      expect(created, id).toHaveLength(1)
+      expect(created[0].className, id).toBe('speech')
+      expect(elements['.chimera'].children, id).toEqual([created[0]])
+      elements['.body'].listeners.click[0]({})
+      expect(created[0].textContent, id).not.toBe('')
+    }
+  })
+
+  it('已經有對話框（教程怪物、舊存檔）就直接用，不會多生一個', () => {
+    for (const id of ['poke-count', 'random-line']) {
+      const move = moves.find((m) => m.id === id) as Move
+      const { elements, created } = run(move.js, true)
+      expect(created, id).toHaveLength(0)
+      elements['.body'].listeners.click[0]({})
+      expect(elements['.speech'].textContent, id).not.toBe('')
+    }
   })
 
   it('定時眨眼：每 3 秒加上 blink，0.2 秒後拿掉', () => {

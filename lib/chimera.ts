@@ -8,18 +8,19 @@ export type ChimeraCode = {
 }
 
 // 合成獸的身體：一個方形身體，毛色用變數，買了毛色零件就能改
-// 零件裝在 .body 裡面，身體動的時候零件會跟著一起動
-// .body 的 position: relative 讓零件的 calc(50% ± Npx) 以身體中心為準；身體在畫面正中央，所以位置跟以前一樣
-// 對話框放在 .body 外面，換位置的動作寫在 .chimera，對話框才會跟著走、不跟著身體轉
+// 零件裝在 .body 裡面，身體動的時候零件會跟著一起動；零件的位置跟著身體的大小和定位變數走
 // 對話框的預設文字，教程第二步要玩家換成自己想說的話
 export const SPEECH_PLACEHOLDER = '……'
 
-const BODY_HTML = `<div class="chimera">
-  <div class="speech">${SPEECH_PLACEHOLDER}</div>
+// 正式版的合成獸沒有對話框，想說話用動作參考的招式讓 JS 生一個；新手教程的怪物一開始就有
+function bodyHtml(withSpeech: boolean) {
+  const speech = withSpeech ? `\n  <div class="speech">${SPEECH_PLACEHOLDER}</div>` : ''
+  return `<div class="chimera">${speech}
   <div class="body">
     <!-- 零件裝在這裡 -->
   </div>
 </div>`
+}
 
 const BODY_CSS = `.chimera {
   position: relative;
@@ -37,14 +38,17 @@ const BODY_CSS = `.chimera {
   height: 100px;
   background: var(--fur-color);
   border: 4px solid #4a3426;
-}
+}`
 
-/* 對話框：跟 .body 同一層，跟著 .chimera 換位置，身體轉圈、發抖、跳的時候不會跟著變形 */
-/* 擺在頭的正上方，抬高到角的上面：身體高 108px，頂端在 50% - 54px，再往上 46px */
+// 對話框的樣式：教程怪物和動作參考會說話的招式共用
+// 選擇器寫 .chimera > .speech，只管放在 .chimera 底下的對話框；以前存檔放在 .body 裡的對話框照它自己的樣式
+export const SPEECH_CSS = `/* 對話框：跟 .body 同一層，跟著 .chimera 換位置，身體轉圈、發抖、跳的時候不會跟著變形 */
+/* 擺在頭的正上方，抬高到角的上面：預設身體高 108px，頂端在 50% - 54px，再往上 46px */
+/* 換了比較高或比較矮的身體，身體零件會在 .chimera 改 --speech-y */
 /* 寬度最多到預覽框寬度少一點（100vw 是預覽框的寬度），手機上也不會超出去；夠寬，長的句子也只要兩三行 */
-.speech {
+.chimera > .speech {
   position: absolute;
-  bottom: calc(50% + 100px);
+  bottom: calc(50% + var(--speech-y, 100px));
   left: 50%;
   translate: -50% 0;
   z-index: 1;
@@ -61,9 +65,14 @@ const BODY_CSS = `.chimera {
   overflow-wrap: anywhere;
 }
 
+/* 還沒有字的時候不顯示 */
+.chimera > .speech:empty {
+  display: none;
+}
+
 /* 指向合成獸的小尾巴：深色三角形當邊框，上面再疊一個白色三角形 */
-.speech::before,
-.speech::after {
+.chimera > .speech::before,
+.chimera > .speech::after {
   content: '';
   position: absolute;
   left: 50%;
@@ -72,12 +81,12 @@ const BODY_CSS = `.chimera {
   border-right: 8px solid transparent;
 }
 
-.speech::before {
+.chimera > .speech::before {
   top: 100%;
   border-top: 12px solid #4a3426;
 }
 
-.speech::after {
+.chimera > .speech::after {
   top: calc(100% - 4px);
   border-left-width: 6px;
   border-right-width: 6px;
@@ -117,14 +126,14 @@ export const JUMP_PLACEHOLDER = '// 在這裡加上一行，讓合成獸跳起�
 // 新手教程用的練習合成獸：CSS 已經寫好怎麼跳，JS 留一個空格讓玩家補上「什麼時候跳」
 // 跟正式版分開，教程怎麼改都不會影響玩家自己的合成獸
 export const practiceChimera: ChimeraCode = {
-  html: BODY_HTML,
-  css: `${BODY_CSS}\n\n${JUMP_CSS}`,
+  html: bodyHtml(true),
+  css: `${BODY_CSS}\n\n${SPEECH_CSS}\n\n${JUMP_CSS}`,
   js: JUMP_JS.replace(JUMP_LINE, JUMP_PLACEHOLDER),
 }
 
 // 還沒改過的合成獸（新玩家、按「還原預設」都是這隻）：點一下就會跳
 export const starterChimera: ChimeraCode = {
-  html: BODY_HTML,
+  html: bodyHtml(false),
   css: `${BODY_CSS}\n\n${JUMP_CSS}`,
   js: JUMP_JS,
 }
@@ -188,7 +197,7 @@ export type PreviewEvent =
 type PageOptions = {
   // 只有編輯器的預覽要接錯誤主控台，商店卡片和詳情框的預覽不用
   catchErrors?: boolean
-  // 商店卡片和詳情框只是要看零件，不顯示對話框；接在 CSS 最後面蓋過原本的樣式，不改到程式碼
+  // 商店卡片和詳情框只是要看零件，不顯示對話框；接在 CSS 最後面，用 !important 蓋過 .chimera > .speech，不改到程式碼
   hideSpeech?: boolean
 }
 
@@ -197,7 +206,7 @@ function pageBeforeJs(code: ChimeraCode, options: PageOptions) {
   return `<!doctype html>
 <html>
 <head>
-<style>body { margin: 0; } ${code.css}${options.hideSpeech ? '\n.speech { display: none; }' : ''}</style>
+<style>body { margin: 0; } ${code.css}${options.hideSpeech ? '\n.speech { display: none !important; }' : ''}</style>
 </head>
 <body>
 ${code.html}
@@ -303,18 +312,40 @@ function wrapWithChimera(html: string) {
   return `<div class="chimera">\n  ${indent(html.trim(), '  ')}\n</div>`
 }
 
+const EMPTY_BODY = '<div class="body"></div>'
+
+// 11/14 以前存的合成獸：.body 是空的，「零件裝在這裡」在 .body 外面，.body 也沒有 position: relative
+// 現在的零件跟著身體定位，要裝在 .body 裡面，所以把那一行搬進 .body，CSS 補上 position: relative
+// 之前裝的零件留在原位，用的還是以前的寫法，樣子不會變；不是這種舊結構就回 null
+function moveMarkerIntoBody(code: ChimeraCode) {
+  const bodyAt = code.html.indexOf(EMPTY_BODY)
+  if (bodyAt === -1 || !code.html.includes(PART_MARKER)) return null
+
+  const spaces = indentAt(code.html, bodyAt)
+  const html = code.html
+    .replace(new RegExp(`\\n?[ \\t]*${PART_MARKER}`), '')
+    .replace(EMPTY_BODY, `<div class="body">\n${spaces}  ${PART_MARKER}\n${spaces}</div>`)
+  const hasRelative = /\.body\s*\{[^}]*position:\s*relative/.test(code.css)
+  const css = hasRelative
+    ? code.css
+    : `${code.css}\n\n/* 零件跟著身體定位，身體要當定位的基準 */\n.body {\n  position: relative;\n}`
+  return { ...code, html, css }
+}
+
 // 裝上零件：同部位的舊段落整段拿掉，再放新的
 // HTML 原本就有同部位段落的話換在原位置，玩家自己排好的順序不會亂掉；沒有才插到「零件裝在這裡」前面
-// 新的合成獸「零件裝在這裡」在 .body 裡面，11/14 以前存的在 .body 外面，兩種都照那一行的位置插
+// 11/14 以前存的舊結構先把「零件裝在這裡」搬進 .body，同部位的舊段落也不留在原位，改插到 .body 裡
 // CSS 和 JS 接在最後面
-export function installPart(code: ChimeraCode, part: InstallablePart): ChimeraCode {
+export function installPart(original: ChimeraCode, part: InstallablePart): ChimeraCode {
   const wrapped = wrapPart(part)
+  const moved = moveMarkerIntoBody(original)
+  const code = moved ?? original
 
   let replaced = false
   let html = code.html.replace(
     slotBlocks('html', part.slot),
     (_match, offset: number, text: string) => {
-      if (replaced) return ''
+      if (replaced || moved) return ''
       replaced = true
       const spaces = indentAt(text, offset)
       return wrapped.html ? `${indent(wrapped.html, spaces)}\n${spaces}` : ''

@@ -2,7 +2,7 @@
 // 規則跟新手教程一樣：動作寫在 CSS（@keyframes 加上一個 class），JS 只負責加上、拿掉 class 或改 CSS 變數
 // 每招的 JS 用 { } 包起來，裡面的 const body 不會跟預設程式碼的 const body 撞名
 // 說明文字裡的程式碼用反引號包起來，畫面會顯示成行內程式碼
-import { buildPage, installPart, starterChimera, type ChimeraCode } from '@/lib/chimera'
+import { buildPage, installPart, SPEECH_CSS, starterChimera, type ChimeraCode } from '@/lib/chimera'
 
 export type MoveLevel = 1 | 2 | 3 | 4
 
@@ -440,8 +440,11 @@ export const moves: Move[] = [
     level: 3,
     name: '被戳計數',
     concept: '變數可以記住數字，每次加一，再把結果寫回畫面上。',
-    effect: '每點一下，對話框就顯示「被戳了 N 下」，數字一直往上加。',
-    css: `/* 數字變了，對話框彈一下 */
+    effect:
+      '每點一下，對話框就顯示「被戳了 N 下」，數字一直往上加。合成獸沒有對話框的話，JS 會先生一個出來。',
+    css: `${SPEECH_CSS}
+
+/* 數字變了，對話框彈一下 */
 .speech.pop {
   animation: pop 0.2s ease-out;
 }
@@ -453,7 +456,14 @@ export const moves: Move[] = [
 }`,
     js: `{
   const body = document.querySelector('.body');
-  const speech = document.querySelector('.speech');
+  const chimera = document.querySelector('.chimera');
+  let speech = document.querySelector('.speech');
+
+  if (!speech && chimera) {
+    speech = document.createElement('div');
+    speech.className = 'speech';
+    chimera.append(speech);
+  }
 
   if (body && speech) {
     let count = 0;
@@ -470,7 +480,12 @@ export const moves: Move[] = [
   }
 }`,
     explain: [
-      "`document.querySelector('.speech')`：找到對話框；`if (body && speech)` 兩個都找到才做。",
+      "`let speech = document.querySelector('.speech')`：先找找看有沒有對話框；用 `let` 是因為等一下可能要換成新生出來的那個。",
+      '`if (!speech && chimera)`：`!speech` 是「沒有找到對話框」，沒有的話就自己生一個，放進外層的 .chimera。',
+      "`document.createElement('div')`：JS 也能生出新的元素，這行做出一個新的 `<div>`，這時候還沒放進網頁。",
+      "`speech.className = 'speech'`：幫它取名叫 speech，CSS 寫好的對話框樣式就會套上去。",
+      '`chimera.append(speech)`：放進 .chimera 裡面，畫面上就出現了；本來就有對話框的合成獸會直接用原本那個，不會多生一個。',
+      '`.chimera > .speech`：CSS 只管放在 .chimera 底下那一層的對話框；`:empty` 是還沒有字的時候先藏起來。',
       '`let count = 0`：做一個叫 count 的變數，從 0 開始。',
       '`count = count + 1`：每點一下，拿原本的數字加 1 再存回去。',
       "`speech.textContent = '被戳了 ' + count + ' 下'`：用 `+` 把文字和數字接起來，換掉對話框裡的字。",
@@ -550,8 +565,11 @@ export const moves: Move[] = [
     level: 3,
     name: '點一下隨機說一句話',
     concept: '陣列：把好幾個東西排成一列，用編號拿出其中一個。',
-    effect: '每點一下，對話框隨機換成一句話。想讓牠說別的，就改陣列裡的句子。',
-    css: `/* 換句子的時候，對話框搖一下 */
+    effect:
+      '每點一下，對話框隨機換成一句話。合成獸沒有對話框的話，JS 會先生一個出來。想讓牠說別的，就改陣列裡的句子。',
+    css: `${SPEECH_CSS}
+
+/* 換句子的時候，對話框搖一下 */
 .speech.chat {
   animation: chat 0.3s ease-in-out;
 }
@@ -566,7 +584,14 @@ export const moves: Move[] = [
 }`,
     js: `{
   const body = document.querySelector('.body');
-  const speech = document.querySelector('.speech');
+  const chimera = document.querySelector('.chimera');
+  let speech = document.querySelector('.speech');
+
+  if (!speech && chimera) {
+    speech = document.createElement('div');
+    speech.className = 'speech';
+    chimera.append(speech);
+  }
 
   if (body && speech) {
     const lines = ['你好！', '肚子餓了', '再點一下嘛', '我會跳喔', '今天天氣真好'];
@@ -583,6 +608,9 @@ export const moves: Move[] = [
   }
 }`,
     explain: [
+      "`document.querySelector('.speech')`：先找找看有沒有對話框，找到就直接用，例如新手教程的怪物本來就有。",
+      "`document.createElement('div')`：找不到的話，JS 也能生出新的元素：做一個新的 `<div>`，取名 speech，再用 `chimera.append(speech)` 放進 .chimera；第 11 招「被戳計數」也是同樣的做法。",
+      '`.chimera > .speech` 那一大段 CSS：對話框的白底、圓角和小尾巴，跟著身體的 `--speech-y` 擺在頭上；`:empty` 是還沒有字的時候先藏起來。',
       "`const lines = ['你好！', …]`：方括號是陣列，裡面五句話，用逗號隔開。",
       '`lines.length`：陣列有幾個東西，這裡是 5。',
       '`Math.floor(Math.random() * lines.length)`：抽一個 0～4 的整數，當作編號。',

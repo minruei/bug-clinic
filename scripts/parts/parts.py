@@ -6,9 +6,15 @@
 加上 --preview 會另外輸出一張預覽頁，用瀏覽器打開就能一次看全部零件：
   python3 scripts/parts/parts.py --preview /tmp/parts-preview.html
 
-座標規則（照規格第四節）：
-- .chimera 滿版置中，零件用 position: absolute 加 calc(50% ± Npx)
-- 身體外框：上下 50% ∓ 54px、左右 50% ∓ 64px
+座標規則：
+- 零件裝在 .body 裡，用 position: absolute 跟著身體定位
+- 上下位置讀身體定義的變數，百分比是身體高度的幾成，沒定義就用預設身體（120×100）的位置：
+  --horn-y 0%（上緣）、--eye-y 30%、--mouth-y 60%、--neck-y 80%、--wing-y 10%、--tail-y 60%、--leg-y 100%（下緣）
+- 翅膀、尾巴、背包、雨傘、氣球接在身體左右邊緣（0 或 100%），身體變寬變窄會跟著走
+- 圓形的身體左右邊會往內縮，用 --wing-x 讓翅膀往內靠
+- 眼睛、嘴巴、角、腳左右照中線 calc(50% ± Npx) 擺
+- 預設合成獸沒有對話框，動作參考第 11、14 招會用 JS 生一個放在 .chimera 裡
+  身體變高變矮時在 .chimera 定義 --speech-y（中心到對話框底部多遠），那個對話框會跟著調整
 - 線條 #4a3426、奶油色 #f3ead8
 """
 
@@ -57,21 +63,35 @@ PARTS = []
 # 身體：只改形狀，不設 background
 PARTS += [
     part('body', '圓滾滾', 'css', 20, css='''
+        /* 圓的上下比較窄：角往下、腳往上，翅膀往內靠，才不會跟身體分開 */
         .body {
+          --horn-y: 7%;
+          --leg-y: 93%;
+          --wing-x: 5px;
           border-radius: 50%;
         }
     '''),
     part('body', '蛋形', 'css', 20, css='''
         /* 上窄下寬：上面的垂直半徑比較大 */
         .body {
+          --horn-y: 9%;
+          --leg-y: 93%;
+          --wing-x: 9px;
           width: 110px;
           height: 120px;
           border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+        }
+
+        /* 身體比較高，對話框跟著往上移：身體高度的一半 + 50px */
+        .chimera {
+          --speech-y: 110px;
         }
     '''),
     part('body', '麵包', 'css', 20, css='''
         /* 上面圓、下面平 */
         .body {
+          --horn-y: 8%;
+          --wing-x: 8px;
           border-radius: 60px 60px 8px 8px;
         }
     '''),
@@ -81,12 +101,27 @@ PARTS += [
           height: 126px;
           border-radius: 16px;
         }
+
+        /* 身體比較高，對話框跟著往上移：身體高度的一半 + 50px */
+        .chimera {
+          --speech-y: 113px;
+        }
     '''),
     part('body', '扁扁胖胖', 'css', 25, css='''
+        /* 身體比較矮：眼睛、嘴巴、脖子往上挪一點，領結才不會掉到身體外面 */
         .body {
+          --eye-y: 25%;
+          --mouth-y: 52%;
+          --neck-y: 72%;
+          --wing-x: 4px;
           width: 150px;
           height: 80px;
           border-radius: 40px;
+        }
+
+        /* 身體比較矮，對話框跟著往下移：身體高度的一半 + 50px */
+        .chimera {
+          --speech-y: 90px;
         }
     '''),
     part('body', '布丁', 'css', 30, css='''
@@ -98,8 +133,15 @@ PARTS += [
     '''),
     part('body', '雲朵', 'css', 40, css='''
         /* 頭上兩顆圓凸起，下緣不畫框、壓在身體的上框上，看起來就跟身體連在一起 */
+        /* 角往上移到凸起上面，對話框也抬高到凸起上面 */
         .body {
+          --horn-y: -56%;
+          --wing-x: 4px;
           border-radius: 50px;
+        }
+
+        .chimera {
+          --speech-y: 122px;
         }
 
         .body::before,
@@ -148,15 +190,24 @@ PARTS += [
         }
 
         /* 每個形狀一個 class，想加形狀就多寫一個 .shape-4，JS 那邊的 4 也要改成 5 */
+        /* 每個形狀也調整角、腳、翅膀的位置，零件才會貼著身體 */
         .body.shape-1 {
+          --horn-y: 7%;
+          --leg-y: 93%;
+          --wing-x: 5px;
           border-radius: 50%;
         }
 
         .body.shape-2 {
+          --horn-y: 8%;
+          --wing-x: 8px;
           border-radius: 60px 60px 8px 8px;
         }
 
         .body.shape-3 {
+          --horn-y: 8%;
+          --leg-y: 94%;
+          --wing-x: 8px;
           border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
         }
     ''', js='''
@@ -171,14 +222,14 @@ PARTS += [
     '''),
 ]
 
-# 角：身體上緣在 50% - 54px，角的底部對到 50% - 50px 附近
+# 角：底部對到 --horn-y（預設 0%，身體上緣）
 PARTS += [
     part('horn', '小角', 'html', 10, html='''
         <div class="horn"></div>
     ''', css='''
         .horn {
           position: absolute;
-          top: calc(50% - 74px);
+          top: calc(var(--horn-y, 0%) - 24px);
           left: calc(50% - 10px);
           border-left: 10px solid transparent;
           border-right: 10px solid transparent;
@@ -191,7 +242,7 @@ PARTS += [
     ''', css='''
         .horn-twin {
           position: absolute;
-          top: calc(50% - 72px);
+          top: calc(var(--horn-y, 0%) - 22px);
           border-left: 9px solid transparent;
           border-right: 9px solid transparent;
           border-bottom: 22px solid #f3ead8;
@@ -211,7 +262,7 @@ PARTS += [
         /* 用 clip-path 切成細長三角形，斜條紋是 repeating-linear-gradient */
         .horn-unicorn {
           position: absolute;
-          top: calc(50% - 100px);
+          top: calc(var(--horn-y, 0%) - 50px);
           left: calc(50% - 8px);
           width: 16px;
           height: 50px;
@@ -230,7 +281,7 @@ PARTS += [
         /* 一根直的主幹，加一根橫的分岔，分岔尾端再往上長一小段 */
         .horn-deer {
           position: absolute;
-          top: calc(50% - 92px);
+          top: calc(var(--horn-y, 0%) - 42px);
           width: 6px;
           height: 40px;
           background: #8a5a3b;
@@ -284,7 +335,7 @@ PARTS += [
         /* 圓圈只畫兩邊的邊框，就是一段彎月形 */
         .horn-ox {
           position: absolute;
-          top: calc(50% - 90px);
+          top: calc(var(--horn-y, 0%) - 40px);
           width: 24px;
           height: 24px;
           border: 8px solid transparent;
@@ -307,7 +358,7 @@ PARTS += [
     ''', css='''
         .horn-antenna {
           position: absolute;
-          top: calc(50% - 84px);
+          top: calc(var(--horn-y, 0%) - 34px);
           left: calc(50% - 2px);
           width: 4px;
           height: 30px;
@@ -333,7 +384,7 @@ PARTS += [
         /* 外面深棕色大三角，::after 疊一個粉紅小三角 */
         .horn-cat {
           position: absolute;
-          top: calc(50% - 80px);
+          top: calc(var(--horn-y, 0%) - 30px);
           border-left: 18px solid transparent;
           border-right: 18px solid transparent;
           border-bottom: 28px solid #4a3426;
@@ -363,7 +414,7 @@ PARTS += [
     ''', css='''
         .horn-bunny {
           position: absolute;
-          top: calc(50% - 116px);
+          top: calc(var(--horn-y, 0%) - 66px);
           width: 22px;
           height: 60px;
           background: #f3ead8;
@@ -398,7 +449,7 @@ PARTS += [
         .horn-color {
           --horn-color: #f3ead8;
           position: absolute;
-          top: calc(50% - 82px);
+          top: calc(var(--horn-y, 0%) - 32px);
           left: calc(50% - 14px);
           border-left: 14px solid transparent;
           border-right: 14px solid transparent;
@@ -418,7 +469,7 @@ PARTS += [
     '''),
 ]
 
-# 眼睛：中心大約在 50% - 13px，左右眼各離中線 25px 左右
+# 眼睛：上緣大約在 --eye-y（預設 30%），左右眼各離中線 25px 左右
 PARTS += [
     part('eyes', '眼睛', 'html', 15, html='''
         <div class="eye left"></div>
@@ -426,7 +477,7 @@ PARTS += [
     ''', css='''
         .eye {
           position: absolute;
-          top: calc(50% - 20px);
+          top: var(--eye-y, 30%);
           width: 14px;
           height: 14px;
           background: #2b1d14;
@@ -446,7 +497,7 @@ PARTS += [
     ''', css='''
         .eye-round {
           position: absolute;
-          top: calc(50% - 27px);
+          top: calc(var(--eye-y, 30%) - 7px);
           width: 22px;
           height: 22px;
           background: #ffffff;
@@ -479,7 +530,7 @@ PARTS += [
         /* 圓角框拿掉下邊，剩一個彎弧 */
         .eye-squint {
           position: absolute;
-          top: calc(50% - 18px);
+          top: calc(var(--eye-y, 30%) + 2px);
           width: 16px;
           height: 8px;
           border: 4px solid #2b1d14;
@@ -500,7 +551,7 @@ PARTS += [
     ''', css='''
         .eye-cyclops {
           position: absolute;
-          top: calc(50% - 34px);
+          top: calc(var(--eye-y, 30%) - 14px);
           left: calc(50% - 18px);
           width: 28px;
           height: 28px;
@@ -525,7 +576,7 @@ PARTS += [
     ''', css='''
         .eye-star {
           position: absolute;
-          top: calc(50% - 30px);
+          top: calc(var(--eye-y, 30%) - 10px);
           font-size: 24px;
           line-height: 1;
           color: #f5c542;
@@ -546,7 +597,7 @@ PARTS += [
     ''', css='''
         .eye-heart {
           position: absolute;
-          top: calc(50% - 30px);
+          top: calc(var(--eye-y, 30%) - 10px);
           font-size: 24px;
           line-height: 1;
           color: #e0526b;
@@ -569,7 +620,7 @@ PARTS += [
     ''', css='''
         .eye-shades {
           position: absolute;
-          top: calc(50% - 26px);
+          top: calc(var(--eye-y, 30%) - 6px);
           left: calc(50% - 40px);
           width: 80px;
           height: 20px;
@@ -621,7 +672,7 @@ PARTS += [
         /* 大部分時間睜開，96% 那一下壓扁就是眨眼 */
         .eye-blink {
           position: absolute;
-          top: calc(50% - 20px);
+          top: var(--eye-y, 30%);
           width: 14px;
           height: 14px;
           background: #2b1d14;
@@ -653,7 +704,7 @@ PARTS += [
     ''', css='''
         .eye-follow {
           position: absolute;
-          top: calc(50% - 28px);
+          top: calc(var(--eye-y, 30%) - 8px);
           width: 24px;
           height: 24px;
           background: #ffffff;
@@ -695,7 +746,7 @@ PARTS += [
     '''),
 ]
 
-# 嘴巴：放在 50% + 10px 到 50% + 30px 之間
+# 嘴巴：從 --mouth-y（預設 60%）往下
 PARTS += [
     part('mouth', '牙齒', 'html', 15, html='''
         <div class="tooth left"></div>
@@ -703,7 +754,7 @@ PARTS += [
     ''', css='''
         .tooth {
           position: absolute;
-          top: calc(50% + 16px);
+          top: calc(var(--mouth-y, 60%) + 6px);
           border-left: 6px solid transparent;
           border-right: 6px solid transparent;
           border-top: 12px solid #ffffff;
@@ -723,7 +774,7 @@ PARTS += [
         /* 框拿掉上邊、下面兩角變圓，就是微笑的弧 */
         .mouth-smile {
           position: absolute;
-          top: calc(50% + 10px);
+          top: var(--mouth-y, 60%);
           left: calc(50% - 19px);
           width: 30px;
           height: 12px;
@@ -737,7 +788,7 @@ PARTS += [
     ''', css='''
         .mouth-big {
           position: absolute;
-          top: calc(50% + 6px);
+          top: calc(var(--mouth-y, 60%) - 4px);
           left: calc(50% - 25px);
           width: 44px;
           height: 22px;
@@ -762,7 +813,7 @@ PARTS += [
     ''', css='''
         .mouth-tongue {
           position: absolute;
-          top: calc(50% + 14px);
+          top: calc(var(--mouth-y, 60%) + 4px);
           left: calc(50% - 16px);
           width: 32px;
           height: 4px;
@@ -786,7 +837,7 @@ PARTS += [
     ''', css='''
         .mouth-beak {
           position: absolute;
-          top: calc(50% + 6px);
+          top: calc(var(--mouth-y, 60%) - 4px);
           left: calc(50% - 18px);
           border-left: 18px solid transparent;
           border-right: 18px solid transparent;
@@ -799,7 +850,7 @@ PARTS += [
         /* 一條嘴巴線，兩顆尖牙用 ::before ::after 畫 */
         .mouth-vampire {
           position: absolute;
-          top: calc(50% + 12px);
+          top: calc(var(--mouth-y, 60%) + 2px);
           left: calc(50% - 18px);
           width: 36px;
           height: 4px;
@@ -830,7 +881,7 @@ PARTS += [
     ''', css='''
         .mouth-whisker {
           position: absolute;
-          top: calc(50% + 2px);
+          top: calc(var(--mouth-y, 60%) - 8px);
           width: 40px;
         }
 
@@ -864,7 +915,7 @@ PARTS += [
     ''', css='''
         .mouth-o {
           position: absolute;
-          top: calc(50% + 10px);
+          top: var(--mouth-y, 60%);
           left: calc(50% - 11px);
           width: 14px;
           height: 14px;
@@ -882,7 +933,7 @@ PARTS += [
 
         .mouth-talk {
           position: absolute;
-          top: calc(50% + 14px);
+          top: calc(var(--mouth-y, 60%) + 4px);
           left: calc(50% - 12px);
           width: 24px;
           height: 6px;
@@ -902,7 +953,7 @@ PARTS += [
 
         .mouth-bubble {
           position: absolute;
-          top: calc(50% - 100px);
+          top: calc(var(--horn-y, 0%) - 50px);
           left: calc(50% + 30px);
           padding: 6px 10px;
           background: #ffffff;
@@ -1034,7 +1085,7 @@ PARTS += [
     '''),
 ]
 
-# 翅膀：身體左右邊在 50% ∓ 64px，翅膀接在外側
+# 翅膀：上緣在 --wing-y（預設 10%），接在身體左右邊緣外側
 # 右邊那片多半是左邊那片用 scaleX(-1) 翻過來
 PARTS += [
     part('wings', '翅膀', 'css', 30, html='''
@@ -1043,8 +1094,8 @@ PARTS += [
         .wing {
           --wing-color: #85b7eb;
           position: absolute;
-          top: calc(50% - 40px);
-          left: calc(50% - 130px);
+          top: var(--wing-y, 10%);
+          left: calc(-70px + var(--wing-x, 0px));
           width: 64px;
           height: 40px;
           background: var(--wing-color);
@@ -1058,7 +1109,7 @@ PARTS += [
     ''', css='''
         .wing-pair {
           position: absolute;
-          top: calc(50% - 38px);
+          top: calc(var(--wing-y, 10%) + 2px);
           width: 40px;
           height: 28px;
           background: #85b7eb;
@@ -1066,12 +1117,12 @@ PARTS += [
         }
 
         .wing-pair.left {
-          left: calc(50% - 108px);
+          left: calc(-48px + var(--wing-x, 0px));
           border-radius: 30px 4px 30px 4px;
         }
 
         .wing-pair.right {
-          left: calc(50% + 60px);
+          left: calc(100% - var(--wing-x, 0px));
           border-radius: 4px 30px 4px 30px;
         }
     '''),
@@ -1082,17 +1133,17 @@ PARTS += [
         /* 三片白色羽毛由長到短往下疊 */
         .wing-angel {
           position: absolute;
-          top: calc(50% - 50px);
+          top: calc(var(--wing-y, 10%) - 10px);
           width: 62px;
           height: 60px;
         }
 
         .wing-angel.left {
-          left: calc(50% - 122px);
+          left: calc(-62px + var(--wing-x, 0px));
         }
 
         .wing-angel.right {
-          left: calc(50% + 60px);
+          left: calc(100% - var(--wing-x, 0px));
           transform: scaleX(-1);
         }
 
@@ -1127,7 +1178,7 @@ PARTS += [
         /* clip-path 的點從身體那側開始，繞一圈切出下緣的鋸齒 */
         .wing-bat {
           position: absolute;
-          top: calc(50% - 44px);
+          top: calc(var(--wing-y, 10%) - 4px);
           width: 72px;
           height: 46px;
           background: #3b2a3f;
@@ -1146,11 +1197,11 @@ PARTS += [
         }
 
         .wing-bat.left {
-          left: calc(50% - 130px);
+          left: calc(-70px + var(--wing-x, 0px));
         }
 
         .wing-bat.right {
-          left: calc(50% + 58px);
+          left: calc(100% - 2px - var(--wing-x, 0px));
           transform: scaleX(-1);
         }
     '''),
@@ -1166,17 +1217,17 @@ PARTS += [
     ''', css='''
         .wing-butterfly {
           position: absolute;
-          top: calc(50% - 52px);
+          top: calc(var(--wing-y, 10%) - 12px);
           width: 56px;
           height: 80px;
         }
 
         .wing-butterfly.left {
-          left: calc(50% - 116px);
+          left: calc(-56px + var(--wing-x, 0px));
         }
 
         .wing-butterfly.right {
-          left: calc(50% + 60px);
+          left: calc(100% - var(--wing-x, 0px));
           transform: scaleX(-1);
         }
 
@@ -1217,18 +1268,18 @@ PARTS += [
         }
 
         .wing-dragonfly {
-          top: calc(50% - 40px);
+          top: var(--wing-y, 10%);
           width: 84px;
           transform-origin: right center;
           transform: rotate(12deg);
         }
 
         .wing-dragonfly.left {
-          left: calc(50% - 146px);
+          left: calc(-86px + var(--wing-x, 0px));
         }
 
         .wing-dragonfly.right {
-          left: calc(50% + 58px);
+          left: calc(100% - 2px - var(--wing-x, 0px));
           transform-origin: left center;
           transform: rotate(-12deg);
         }
@@ -1274,18 +1325,18 @@ PARTS += [
 
         .wing-dragon {
           position: absolute;
-          top: calc(50% - 64px);
+          top: calc(var(--wing-y, 10%) - 24px);
           width: 100px;
           height: 82px;
           background: #4a3426;
         }
 
         .wing-dragon.left {
-          left: calc(50% - 164px);
+          left: calc(-104px + var(--wing-x, 0px));
         }
 
         .wing-dragon.right {
-          left: calc(50% + 64px);
+          left: calc(100% + 4px - var(--wing-x, 0px));
           transform: scaleX(-1);
         }
 
@@ -1302,7 +1353,7 @@ PARTS += [
         /* transform-origin 設在靠身體那一側，旋轉起來才像在拍 */
         .wing-flap {
           position: absolute;
-          top: calc(50% - 40px);
+          top: var(--wing-y, 10%);
           width: 50px;
           height: 32px;
           background: #85b7eb;
@@ -1310,14 +1361,14 @@ PARTS += [
         }
 
         .wing-flap.left {
-          left: calc(50% - 120px);
+          left: calc(-60px + var(--wing-x, 0px));
           border-radius: 32px 4px 32px 4px;
           transform-origin: right center;
           animation: wing-flap-left 0.5s ease-in-out infinite alternate;
         }
 
         .wing-flap.right {
-          left: calc(50% + 62px);
+          left: calc(100% + 2px - var(--wing-x, 0px));
           border-radius: 4px 32px 4px 32px;
           transform-origin: left center;
           animation: wing-flap-right 0.5s ease-in-out infinite alternate;
@@ -1341,7 +1392,7 @@ PARTS += [
     ''', css='''
         .wing-fly {
           position: absolute;
-          top: calc(50% - 40px);
+          top: var(--wing-y, 10%);
           width: 50px;
           height: 32px;
           background: #f3ead8;
@@ -1350,13 +1401,13 @@ PARTS += [
         }
 
         .wing-fly.left {
-          left: calc(50% - 120px);
+          left: calc(-60px + var(--wing-x, 0px));
           border-radius: 32px 4px 32px 4px;
           transform-origin: right center;
         }
 
         .wing-fly.right {
-          left: calc(50% + 62px);
+          left: calc(100% + 2px - var(--wing-x, 0px));
           border-radius: 4px 32px 4px 32px;
           transform-origin: left center;
         }
@@ -1401,15 +1452,15 @@ PARTS += [
     '''),
 ]
 
-# 尾巴：從身體右邊 50% + 64px 接出去，高度在 50% + 10px 附近
+# 尾巴：從身體右邊緣（100%）接出去，高度在 --tail-y（預設 60%）附近
 PARTS += [
     part('tail', '會擺動的尾巴', 'js', 60, html='''
         <div class="tail"></div>
     ''', css='''
         .tail {
           position: absolute;
-          top: calc(50% + 10px);
-          left: calc(50% + 64px);
+          top: var(--tail-y, 60%);
+          left: calc(100% + 4px);
           width: 50px;
           height: 12px;
           background: #4a3426;
@@ -1443,8 +1494,8 @@ PARTS += [
     ''', css='''
         .tail-pompom {
           position: absolute;
-          top: calc(50% + 4px);
-          left: calc(50% + 56px);
+          top: calc(var(--tail-y, 60%) - 6px);
+          left: calc(100% - 4px);
           width: 24px;
           height: 24px;
           background: #f3ead8;
@@ -1458,8 +1509,8 @@ PARTS += [
         /* 圓圈少畫一邊，看起來就是捲起來的豬尾巴 */
         .tail-curly {
           position: absolute;
-          top: calc(50% - 2px);
-          left: calc(50% + 72px);
+          top: calc(var(--tail-y, 60%) - 12px);
+          left: calc(100% + 12px);
           width: 18px;
           height: 18px;
           border: 5px solid #e89aa8;
@@ -1484,8 +1535,8 @@ PARTS += [
         /* 尾端白色是漸層硬切出來的 */
         .tail-fox {
           position: absolute;
-          top: calc(50% - 6px);
-          left: calc(50% + 60px);
+          top: calc(var(--tail-y, 60%) - 16px);
+          left: 100%;
           width: 72px;
           height: 34px;
           background: linear-gradient(90deg, #e07b39 70%, #ffffff 70%);
@@ -1500,8 +1551,8 @@ PARTS += [
     ''', css='''
         .tail-devil {
           position: absolute;
-          top: calc(50% + 16px);
-          left: calc(50% + 64px);
+          top: calc(var(--tail-y, 60%) + 6px);
+          left: calc(100% + 4px);
           width: 56px;
           height: 4px;
           background: #4a3426;
@@ -1525,8 +1576,8 @@ PARTS += [
     ''', css='''
         .tail-fish {
           position: absolute;
-          top: calc(50% - 8px);
-          left: calc(50% + 62px);
+          top: calc(var(--tail-y, 60%) - 18px);
+          left: calc(100% + 2px);
           width: 40px;
           height: 46px;
           background: #5aa9e6;
@@ -1539,8 +1590,8 @@ PARTS += [
         /* 照 clip-path 的點連起來就是閃電的形狀 */
         .tail-bolt {
           position: absolute;
-          top: calc(50% - 20px);
-          left: calc(50% + 62px);
+          top: calc(var(--tail-y, 60%) - 30px);
+          left: calc(100% + 2px);
           width: 66px;
           height: 52px;
           background: #f5c542;
@@ -1553,8 +1604,8 @@ PARTS += [
         /* 下緣是一條斜線，上緣的點一高一低就是背刺 */
         .tail-dino {
           position: absolute;
-          top: calc(50% - 8px);
-          left: calc(50% + 60px);
+          top: calc(var(--tail-y, 60%) - 18px);
+          left: 100%;
           width: 88px;
           height: 40px;
           background: #5a9a4a;
@@ -1579,8 +1630,8 @@ PARTS += [
     ''', css='''
         .tail-grow {
           position: absolute;
-          top: calc(50% + 10px);
-          left: calc(50% + 64px);
+          top: var(--tail-y, 60%);
+          left: calc(100% + 4px);
           width: 30px;
           height: 12px;
           background: #4a3426;
@@ -1601,7 +1652,7 @@ PARTS += [
     '''),
 ]
 
-# 腳：從身體底部 50% + 54px 往下長，左右腳大約在 50% - 40px 和 50% + 20px
+# 腳：從 --leg-y（預設 100%，身體下緣）往下長，左右腳大約在 50% - 40px 和 50% + 20px
 PARTS += [
     part('feet', '小短腳', 'html', 10, html='''
         <div class="feet-short left"></div>
@@ -1609,7 +1660,7 @@ PARTS += [
     ''', css='''
         .feet-short {
           position: absolute;
-          top: calc(50% + 54px);
+          top: calc(var(--leg-y, 100%) + 4px);
           width: 20px;
           height: 16px;
           background: #4a3426;
@@ -1629,7 +1680,7 @@ PARTS += [
     ''', css='''
         .feet-paw {
           position: absolute;
-          top: calc(50% + 50px);
+          top: var(--leg-y, 100%);
           width: 26px;
           height: 18px;
           background: #f3ead8;
@@ -1663,7 +1714,7 @@ PARTS += [
     ''', css='''
         .feet-long {
           position: absolute;
-          top: calc(50% + 54px);
+          top: calc(var(--leg-y, 100%) + 4px);
           width: 8px;
           height: 38px;
           background: #4a3426;
@@ -1701,7 +1752,7 @@ PARTS += [
     ''', css='''
         .feet-duck {
           position: absolute;
-          top: calc(50% + 54px);
+          top: calc(var(--leg-y, 100%) + 4px);
           width: 6px;
           height: 10px;
           background: #e8a33d;
@@ -1733,7 +1784,7 @@ PARTS += [
     ''', css='''
         .feet-hoof {
           position: absolute;
-          top: calc(50% + 54px);
+          top: calc(var(--leg-y, 100%) + 4px);
           width: 16px;
           height: 22px;
           background: #b98b62;
@@ -1762,7 +1813,7 @@ PARTS += [
         /* 每條觸手只畫兩個邊再把角弄圓，就是一條彎彎的線；左右兩邊往外彎 */
         .feet-octopus {
           position: absolute;
-          top: calc(50% + 52px);
+          top: calc(var(--leg-y, 100%) + 2px);
           left: calc(50% - 50px);
           width: 100px;
           display: flex;
@@ -1792,7 +1843,7 @@ PARTS += [
     ''', css='''
         .feet-wheel-axle {
           position: absolute;
-          top: calc(50% + 68px);
+          top: calc(var(--leg-y, 100%) + 18px);
           left: calc(50% - 30px);
           width: 60px;
           height: 4px;
@@ -1801,7 +1852,7 @@ PARTS += [
 
         .feet-wheel {
           position: absolute;
-          top: calc(50% + 54px);
+          top: calc(var(--leg-y, 100%) + 4px);
           width: 26px;
           height: 26px;
           background: #2b1d14;
@@ -1836,7 +1887,7 @@ PARTS += [
         /* 斜斜的條紋疊起來像一圈一圈的彈簧，::after 是底下的腳墊 */
         .feet-spring {
           position: absolute;
-          top: calc(50% + 54px);
+          top: calc(var(--leg-y, 100%) + 4px);
           width: 16px;
           height: 30px;
           background: repeating-linear-gradient(
@@ -1870,7 +1921,7 @@ PARTS += [
     ''', css='''
         .feet-walk {
           position: absolute;
-          top: calc(50% + 54px);
+          top: calc(var(--leg-y, 100%) + 4px);
           width: 16px;
           height: 22px;
           background: #4a3426;
@@ -1912,7 +1963,7 @@ PARTS += [
     '''),
 ]
 
-# 配件：多半放在身體下半部前面，不要擋到眼睛和嘴巴
+# 配件：多半放在身體下半部前面，不要擋到眼睛和嘴巴；領結、圍巾、項鍊、勳章對到 --neck-y（預設 80%）
 # 零件在 .body 裡面，身體做動畫時 z-index: -1 會跑到身體前面，所以「在後面」的配件改成不跟身體重疊
 PARTS += [
     part('accessory', '領結', 'html', 10, html='''
@@ -1921,7 +1972,7 @@ PARTS += [
         /* 左右兩個三角形對在一起，中間的 span 是結 */
         .accessory-bowtie {
           position: absolute;
-          top: calc(50% + 32px);
+          top: calc(var(--neck-y, 80%) + 2px);
           left: calc(50% - 17px);
           width: 34px;
           height: 18px;
@@ -1961,9 +2012,9 @@ PARTS += [
         /* 橫的一條繞在身體上，::after 是垂下來的那一端 */
         .accessory-scarf {
           position: absolute;
-          top: calc(50% + 34px);
-          left: calc(50% - 64px);
-          width: 128px;
+          top: calc(var(--neck-y, 80%) + 4px);
+          left: -4px;
+          width: calc(100% + 8px);
           height: 12px;
           background: repeating-linear-gradient(90deg, #5a9a4a 0 10px, #f3ead8 10px 14px);
           border-top: 3px solid #4a3426;
@@ -1988,7 +2039,7 @@ PARTS += [
         /* dotted 邊框剛好是一顆一顆的珠子，::after 是墜子 */
         .accessory-necklace {
           position: absolute;
-          top: calc(50% + 22px);
+          top: calc(var(--neck-y, 80%) - 8px);
           left: calc(50% - 36px);
           width: 64px;
           height: 22px;
@@ -2015,7 +2066,7 @@ PARTS += [
         /* 中間是花心，四片花瓣用 box-shadow 複製出來 */
         .accessory-flower {
           position: absolute;
-          top: calc(50% - 44px);
+          top: calc(var(--horn-y, 0%) + 6px);
           left: calc(50% + 38px);
           width: 10px;
           height: 10px;
@@ -2033,7 +2084,7 @@ PARTS += [
     ''', css='''
         .accessory-medal {
           position: absolute;
-          top: calc(50% + 22px);
+          top: calc(var(--neck-y, 80%) - 8px);
           left: calc(50% - 54px);
           width: 20px;
           height: 20px;
@@ -2063,8 +2114,8 @@ PARTS += [
         /* 只畫露在身體左邊的那一截，右邊貼著身體的框 */
         .accessory-backpack {
           position: absolute;
-          top: calc(50% - 30px);
-          left: calc(50% - 92px);
+          top: calc(var(--wing-y, 10%) + 10px);
+          left: calc(-32px + var(--wing-x, 0px));
           width: 25px;
           height: 54px;
           background: #6b8fb0;
@@ -2093,12 +2144,12 @@ PARTS += [
         /* 不用 z-index: -1，身體做動畫的時候披風才不會蓋到身體前面 */
         .accessory-cape {
           position: absolute;
-          top: calc(50% - 40px);
-          left: calc(50% - 80px);
-          width: 160px;
-          height: 106px;
+          top: 63%;
+          left: -20px;
+          width: calc(100% + 40px);
+          height: calc(37% + 16px);
           background: #c8553d;
-          clip-path: polygon(16px 53px, 0 100%, 100% 100%, 144px 53px, 144px 94px, 16px 94px);
+          clip-path: polygon(16px 0, 0 100%, 100% 100%, calc(100% - 16px) 0, calc(100% - 16px) calc(100% - 12px), 16px calc(100% - 12px));
         }
     '''),
     part('accessory', '小雨傘', 'html', 25, html='''
@@ -2107,8 +2158,8 @@ PARTS += [
         /* 上半圓是傘面，::after 是傘柄 */
         .accessory-umbrella {
           position: absolute;
-          top: calc(50% - 92px);
-          left: calc(50% + 48px);
+          top: calc(var(--horn-y, 0%) - 42px);
+          left: calc(100% - 12px);
           width: 56px;
           height: 28px;
           background: repeating-linear-gradient(90deg, #e0526b 0 14px, #ffffff 14px 28px);
@@ -2132,8 +2183,8 @@ PARTS += [
     ''', css='''
         .accessory-balloon {
           position: absolute;
-          top: calc(50% - 100px);
-          left: calc(50% + 62px);
+          top: calc(var(--horn-y, 0%) - 50px);
+          left: calc(100% + 2px);
           width: 30px;
           height: 36px;
           background: #e0526b;
@@ -2239,7 +2290,7 @@ def build_sql(parts):
 
 # 跟 components/ChimeraEditor.tsx 的 starterChimera 一樣
 STARTER = {
-    'html': '<div class="chimera">\n  <div class="speech">……</div>\n  <div class="body">\n    <!-- 零件裝在這裡 -->\n  </div>\n</div>',
+    'html': '<div class="chimera">\n  <div class="body">\n    <!-- 零件裝在這裡 -->\n  </div>\n</div>',
     'css': code('''
         .chimera {
           position: relative;
@@ -2257,51 +2308,6 @@ STARTER = {
           height: 100px;
           background: var(--fur-color);
           border: 4px solid #4a3426;
-        }
-
-        /* 對話框：跟 .body 同一層，跟著 .chimera 換位置，身體轉圈、發抖、跳的時候不會跟著變形 */
-        /* 擺在頭的正上方，抬高到角的上面：身體高 108px，頂端在 50% - 54px，再往上 46px */
-        /* 寬度最多到預覽框寬度少一點（100vw 是預覽框的寬度），手機上也不會超出去；夠寬，長的句子也只要兩三行 */
-        .speech {
-          position: absolute;
-          bottom: calc(50% + 100px);
-          left: 50%;
-          translate: -50% 0;
-          z-index: 1;
-          box-sizing: border-box;
-          width: max-content;
-          max-width: calc(100vw - 16px);
-          padding: 6px 10px;
-          background: #ffffff;
-          border: 3px solid #4a3426;
-          border-radius: 12px;
-          font-size: 14px;
-          line-height: 1.4;
-          text-align: center;
-          overflow-wrap: anywhere;
-        }
-
-        /* 指向合成獸的小尾巴：深色三角形當邊框，上面再疊一個白色三角形 */
-        .speech::before,
-        .speech::after {
-          content: '';
-          position: absolute;
-          left: 50%;
-          translate: -50% 0;
-          border-left: 8px solid transparent;
-          border-right: 8px solid transparent;
-        }
-
-        .speech::before {
-          top: 100%;
-          border-top: 12px solid #4a3426;
-        }
-
-        .speech::after {
-          top: calc(100% - 4px);
-          border-left-width: 6px;
-          border-right-width: 6px;
-          border-top: 9px solid #ffffff;
         }
 
         /* 點一下往上跳再落下，改 -30px 調跳多高、改 0.4s 調多快 */
