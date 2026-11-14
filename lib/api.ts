@@ -17,6 +17,7 @@ export function clearToken() {
 
 // 自動帶上 JSON 格式和 token，回傳後端的 JSON
 // 跟 curl 測試時加的 -H 是一樣的東西
+// 失敗的時候多帶 status，要分辨 409 這類狀況的地方可以看
 export async function api(path: string, method = 'GET', body?: unknown) {
   const token = getToken()
   const res = await fetch(`${API_URL}${path}`, {
@@ -27,5 +28,6 @@ export async function api(path: string, method = 'GET', body?: unknown) {
     },
     body: body ? JSON.stringify(body) : undefined,
   })
-  return res.json()
+  const data = await res.json()
+  return res.ok ? data : { ...data, status: res.status }
 }

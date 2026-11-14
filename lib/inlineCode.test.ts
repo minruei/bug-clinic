@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { splitInlineCode } from '@/lib/inlineCode'
+import { markCode, splitInlineCode } from '@/lib/inlineCode'
 
 describe('splitInlineCode', () => {
   it('反引號包起來的是程式碼，其他是一般文字', () => {
@@ -34,5 +34,31 @@ describe('splitInlineCode', () => {
       { text: ' 是橘色', code: false },
     ])
     expect(splitInlineCode('')).toEqual([])
+  })
+})
+
+describe('markCode', () => {
+  it('把說明裡的英數字程式碼包成行內程式碼', () => {
+    expect(markCode('在 .body 加上 border-radius，用 50% 最圓')).toBe(
+      '在 `.body` 加上 `border-radius`，用 `50%` 最圓',
+    )
+  })
+
+  it('中間有空白的一整段算同一段，句尾的分號留在程式碼裡', () => {
+    expect(markCode('例如 box-shadow: 4px 4px 0 #4a3426;')).toBe(
+      '例如 `box-shadow: 4px 4px 0 #4a3426;`',
+    )
+  })
+
+  it('HTML、CSS、JS 這種格子名稱不包', () => {
+    expect(markCode('在 HTML 的 <div class="body"> 裡面')).toBe(
+      '在 HTML 的 `<div class="body">` 裡面',
+    )
+  })
+
+  it('句尾的逗號、句點不算程式碼', () => {
+    expect(markCode("寫 body.classList.add('happy'). 好")).toBe(
+      "寫 `body.classList.add('happy')`. 好",
+    )
   })
 })

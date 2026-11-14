@@ -1843,3 +1843,62 @@ h2::before {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* 每日任務：編輯器下面、動作參考上面的卡片 */
+.daily-task {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  background: var(--card);
+  border: var(--pixel) solid var(--ink);
+  box-shadow: var(--shadow);
+}
+
+.daily-task-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.daily-task-title {
+  font-size: 20px;
+}
+
+.daily-task-reward {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  font-weight: 700;
+}
+
+.daily-task-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.daily-task-done,
+.daily-task-ok {
+  color: var(--green);
+  font-weight: 700;
+}
+
+.daily-task-error {
+  color: #9b2c2c;
+  font-weight: 700;
+}
+
+/* 檢查用的預覽要真的畫出來才量得到大小，所以不用 display: none，改成放到畫面外面 */
+.daily-task-check {
+  position: fixed;
+  top: 0;
+  left: -10000px;
+  width: 320px;
+  height: 320px;
+  border: 0;
+  pointer-events: none;
+}

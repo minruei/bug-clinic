@@ -17,22 +17,37 @@ type Props = {
   // 玩家現在的程式碼，用來判斷哪幾招已經加過
   code: ChimeraCode
   onAdd: (move: Move) => void
+  // 從外面指定要打開哪一招，例如每日任務的「參考動作」；at 是按下的時間，同一招再按一次也會重新捲過去
+  focus?: { id: string; at: number } | null
 }
 
 // 動作參考：放在編輯器下面，可以展開收合
 // 每一招平常只顯示一行，點了才展開；同一時間只展開一招，示範預覽也只開那一招的
-export function MoveGuide({ code, onAdd }: Props) {
+export function MoveGuide({ code, onAdd, focus }: Props) {
   const [open, setOpen] = useState(false)
   const [level, setLevel] = useState<MoveLevel>(1)
   const [openId, setOpenId] = useState<string | null>(null)
   const [showDemo, setShowDemo] = useState(false)
   const openRef = useRef<HTMLElement>(null)
+  // 外面指定打開某一招時加一，就算那招本來就開著也會重新捲過去
+  const [scrollTick, setScrollTick] = useState(0)
 
   // 展開一招時，上面那招會收起來、畫面跟著跳，所以捲到這一招的開頭
   // 要等新的那招畫出來才捲得到，所以放在 effect 裡
   useEffect(() => {
     if (openId) openRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }, [openId])
+  }, [openId, scrollTick])
+
+  // 外面指定了某一招：打開動作參考、切到那招的等級、展開那招
+  useEffect(() => {
+    const move = focus ? moves.find((m) => m.id === focus.id) : undefined
+    if (!move) return
+    setOpen(true)
+    setLevel(move.level)
+    setOpenId(move.id)
+    setShowDemo(false)
+    setScrollTick((n) => n + 1)
+  }, [focus])
 
   function toggleMove(id: string) {
     setOpenId(openId === id ? null : id)

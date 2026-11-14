@@ -21,6 +21,7 @@ import {
 } from '@/lib/chimera'
 import { Tutorial } from '@/components/Tutorial'
 import { MoveGuide } from '@/components/MoveGuide'
+import { DailyTask } from '@/components/DailyTask'
 import { addMove, hasMove, hasNeededPart, needLabel, type Move } from '@/lib/moves'
 import type { Progress } from '@/lib/tutorial'
 
@@ -78,6 +79,8 @@ export default function LabPage() {
   // 正在看哪個零件的詳情，null 是詳情框收起來
   const [viewingId, setViewingId] = useState<number | null>(null)
   const detailRef = useRef<HTMLElement>(null)
+  // 每日任務按「參考動作」時，請動作參考打開的那一招
+  const [moveFocus, setMoveFocus] = useState<{ id: string; at: number } | null>(null)
   // 上一次裝上、換上、卸下之前的程式碼，按「復原」就放回去；null 代表沒有可以復原的
   const [undoCode, setUndoCode] = useState<ChimeraCode | null>(null)
   // 教程用一隻全新的練習用合成獸，玩家自己的合成獸先收在這裡，結束時放回去
@@ -359,7 +362,7 @@ export default function LabPage() {
 
       {loggedIn === false && (
         <section className="card">
-          <p>登入之後才能買零件</p>
+          <p>登入之後才能買零件、領每日任務</p>
           <Link href="/login" className="btn">
             去登入
           </Link>
@@ -414,7 +417,17 @@ export default function LabPage() {
         </p>
       )}
 
-      {code && <MoveGuide code={code} onAdd={addMoveToChimera} />}
+      {/* 每日任務：要登入才領得到；新手教程的練習合成獸不能存檔，所以練習中不顯示 */}
+      {code && loggedIn && !practicing && (
+        <DailyTask
+          code={code}
+          onSave={saveChimera}
+          onCoins={setCoins}
+          onShowMove={(id) => setMoveFocus({ id, at: Date.now() })}
+        />
+      )}
+
+      {code && <MoveGuide code={code} onAdd={addMoveToChimera} focus={moveFocus} />}
 
       <h2>零件商店</h2>
       {viewingPart && viewingCode && (
