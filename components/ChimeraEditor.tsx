@@ -72,6 +72,11 @@ export function ChimeraEditor({
         onPreview?.(code, { type: 'jump' })
         return
       }
+      if (event.data?.type === 'chimera-shape') {
+        const radius = typeof event.data.radius === 'string' ? event.data.radius : null
+        onPreview?.(code, { type: 'shape', radius })
+        return
+      }
       if (event.data?.type === 'chimera-speech') {
         const text = typeof event.data.text === 'string' ? event.data.text : null
         onPreview?.(code, { type: 'speech', text })

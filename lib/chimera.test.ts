@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import {
   installPart,
   installedPartId,
+  buildPage,
+  partPreviewPage,
   practiceChimera,
   removePart,
   starterChimera,
@@ -197,5 +199,32 @@ describe('預設合成獸', () => {
     expect(practiceChimera.css).toBe(starterChimera.css)
     expect(practiceChimera.js).not.toContain("classList.add('jump')")
     expect(practiceChimera.js).toContain('在這裡加上一行')
+  })
+})
+
+describe('商店預覽不顯示對話框', () => {
+  // 從預覽頁的 <style> 裡拿出 CSS，看最後一條管 .speech 的規則是不是 display: none
+  function lastSpeechRule(page: string) {
+    const css = page.slice(page.indexOf('<style>'), page.indexOf('</style>'))
+    const rules = [...css.matchAll(/\.speech\s*\{([^}]*)\}/g)].map((m) => m[1].trim())
+    return rules.at(-1)
+  }
+
+  it('商店卡片和詳情框的預覽，最後一條 .speech 規則是 display: none', () => {
+    const page = partPreviewPage(deerHorn, '\n.chimera { transform: scale(0.55); }')
+    expect(lastSpeechRule(page)).toBe('display: none;')
+  })
+
+  it('只是在預覽頁加 CSS 蓋過去，對話框和零件的 HTML 都還在', () => {
+    const page = partPreviewPage(deerHorn)
+    expect(page).toContain('<div class="speech">')
+    expect(page).toContain('horn-deer')
+  })
+
+  it('編輯器和一般的預覽照常顯示對話框', () => {
+    expect(lastSpeechRule(buildPage(starterChimera))).not.toBe('display: none;')
+    expect(lastSpeechRule(buildPage(starterChimera, { catchErrors: true }))).not.toBe(
+      'display: none;',
+    )
   })
 })

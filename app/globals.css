@@ -1221,6 +1221,29 @@ h2::before {
   text-decoration: line-through;
 }
 
+/* 「要做什麼」用暗紅色加粗，跟合成獸說的話、「為什麼是這一格」分得開 */
+.tutorial-todo {
+  color: #9b2c2c;
+  font-weight: 700;
+}
+
+/* 說明文字裡的程式碼：淡黃底、深色字、等寬字體；新手教程和動作指南的說明都用這個 */
+/* 長的程式碼可以在中間換行，換行後每一段都有完整的底色和邊框 */
+.inline-code {
+  padding: 0 4px;
+  margin: 0 2px;
+  background: #fff3c4;
+  color: #2e221a;
+  border: 1px solid #c9a24a;
+  border-radius: 3px;
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 0.92em;
+  font-weight: 400;
+  overflow-wrap: anywhere;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
 /* 說明欄開頭那句是合成獸說的話 */
 .tutorial-voice {
   font-weight: 700;

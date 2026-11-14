@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import type { ChimeraCode, EditorTab } from '@/lib/chimera'
 import { FINISH_VOICE, steps, type Progress } from '@/lib/tutorial'
+import { CodeText } from '@/components/CodeText'
 
 const tabLabel = {
   html: 'HTML 骨架',
@@ -72,20 +73,23 @@ export function Tutorial({
               <span className="tutorial-mark">{doneList[i] ? '✔' : i + 1}</span>
               <div>
                 <p className="tutorial-step-title">{step.title}</p>
+                {state === 'done' && step.doneVoice && (
+                  <p className="tutorial-voice">「{step.doneVoice}」</p>
+                )}
                 {state === 'now' && (
                   <>
                     <p className="tutorial-voice">「{step.voice}」</p>
-                    <p>
-                      <b>要做什麼：</b>
-                      {step.todo}
+                    <p className="tutorial-todo">
+                      要做什麼：
+                      <CodeText text={step.todo} />
                     </p>
                     <p className="muted">
                       <b>為什麼是這一格：</b>
-                      {step.why}
+                      <CodeText text={step.why} />
                     </p>
                     <p className="muted">
                       <b>卡住了？</b>
-                      {step.stuck}
+                      <CodeText text={step.stuck} />
                     </p>
                     {/* 不在玩家打字時自動切分頁：刪到一半剛好達成條件就被切走，
                         接下來打的字會寫進別的格子。改成按鈕，讓玩家自己決定什麼時候換 */}

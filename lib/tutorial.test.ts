@@ -7,7 +7,7 @@ import {
   practiceChimera,
   type ChimeraCode,
 } from '@/lib/chimera'
-import { bodyBlock, isColor, steps, type Progress } from '@/lib/tutorial'
+import { isColor, steps, type Progress } from '@/lib/tutorial'
 
 // 測試跑在 Node 裡沒有 CSS.supports，換成一個簡單版：只認色碼和幾個顏色名稱
 beforeEach(() => {
@@ -22,8 +22,8 @@ afterEach(() => {
 })
 
 // 預覽裡還沒跳過、已經跳過
-const notJumped: Progress = { jumped: false, speech: SPEECH_PLACEHOLDER }
-const jumped: Progress = { jumped: true, speech: SPEECH_PLACEHOLDER }
+const notJumped: Progress = { jumped: false, speech: SPEECH_PLACEHOLDER, shape: '0px' }
+const jumped: Progress = { jumped: true, speech: SPEECH_PLACEHOLDER, shape: '0px' }
 
 function doneList(code: ChimeraCode, progress = notJumped) {
   return steps.map((step) => step.done(code, progress))
@@ -59,25 +59,27 @@ describe('新手教程', () => {
     })
   })
 
-  describe('第三步：改大小', () => {
-    it('改 width 或 height 算完成', () => {
-      expect(steps[2].done(editCss('width: 120px', 'width: 160px'), notJumped)).toBe(true)
-      expect(steps[2].done(editCss('height: 100px', 'height: 80px'), notJumped)).toBe(true)
+  describe('第三步：改變形狀', () => {
+    const shaped = (shape: string | null) => steps[2].done(practiceChimera, { ...notJumped, shape })
+
+    it('預覽裡 .body 算出來的圓角跟一開始的 0px 不一樣才算', () => {
+      expect(shaped('20px')).toBe(true)
+      expect(shaped('50%')).toBe(true)
+      expect(shaped('50% 50% 10% 10%')).toBe(true)
     })
 
-    it('改 .body 以外的地方不算', () => {
-      expect(steps[2].done(editCss('height: 100vh', 'height: 90vh'), notJumped)).toBe(false)
+    it('還是 0px、還沒收到預覽的回報，都不算', () => {
+      expect(shaped('0px')).toBe(false)
+      expect(shaped(null)).toBe(false)
     })
 
-    it('bodyBlock 找得到 .body 大括號裡的文字', () => {
-      expect(bodyBlock(practiceChimera.css)).toContain('width: 120px')
-      expect(bodyBlock('.chimera { color: red; }')).toBe('')
+    it('做完時合成獸會說話', () => {
+      expect(steps[2].doneVoice).toBe('哇！我變成新的樣子了！')
     })
   })
 
   describe('第二步：幫牠說話', () => {
-    const said = (speech: string | null) =>
-      steps[1].done(practiceChimera, { jumped: false, speech })
+    const said = (speech: string | null) => steps[1].done(practiceChimera, { ...notJumped, speech })
 
     it('預覽裡對話框的字換成自己的話才算', () => {
       expect(said('你好！')).toBe(true)

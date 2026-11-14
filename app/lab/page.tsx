@@ -6,9 +6,9 @@ import { api } from '@/lib/api'
 import { Pixel } from '@/components/Pixel'
 import { ChimeraEditor, CodeViewer } from '@/components/ChimeraEditor'
 import {
-  buildPage,
   installPart,
   installedPartId,
+  partPreviewPage,
   practiceChimera,
   removePart,
   slots,
@@ -87,16 +87,20 @@ export default function LabPage() {
     code: null,
     jumped: false,
     speech: null,
+    shape: null,
   })
   const progress: Progress =
     preview.code === code
-      ? { jumped: preview.jumped, speech: preview.speech }
-      : { jumped: false, speech: null }
+      ? { jumped: preview.jumped, speech: preview.speech, shape: preview.shape }
+      : { jumped: false, speech: null, shape: null }
 
   function onPreview(from: ChimeraCode, event: PreviewEvent) {
     setPreview((prev) => {
-      const base = prev.code === from ? prev : { code: from, jumped: false, speech: null }
-      return event.type === 'jump' ? { ...base, jumped: true } : { ...base, speech: event.text }
+      const base =
+        prev.code === from ? prev : { code: from, jumped: false, speech: null, shape: null }
+      if (event.type === 'jump') return { ...base, jumped: true }
+      if (event.type === 'speech') return { ...base, speech: event.text }
+      return { ...base, shape: event.radius }
     })
   }
 
@@ -169,8 +173,7 @@ export default function LabPage() {
     for (const part of parts) {
       const partCode = parsePartCode(part)
       if (!partCode) continue
-      const page = installPart(starterChimera, { ...part, code: partCode })
-      pages[part.id] = buildPage({ ...page, css: page.css + PREVIEW_CSS })
+      pages[part.id] = partPreviewPage({ ...part, code: partCode }, PREVIEW_CSS)
     }
     return pages
   }, [parts])
@@ -255,8 +258,10 @@ export default function LabPage() {
   const viewingCode = viewingPart ? parsePartCode(viewingPart) : null
   let detailPage = ''
   if (viewingPart && viewingCode) {
-    const page = installPart(starterChimera, { ...viewingPart, code: viewingCode })
-    detailPage = buildPage({ ...page, css: `${page.css}\nbody { overflow: hidden; }` })
+    detailPage = partPreviewPage(
+      { ...viewingPart, code: viewingCode },
+      '\nbody { overflow: hidden; }',
+    )
   }
 
   // 打開或換一個零件的詳情時，捲到詳情框；從下面的卡片點上來，不捲的話會看不到

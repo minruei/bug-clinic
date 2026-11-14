@@ -133,6 +133,7 @@ export const starterChimera: ChimeraCode = {
 // 2. 玩家點了合成獸、某個元素被加上 jump，而且那個元素真的套用了 jump 動畫，就回報一聲，給新手教程判斷「真的跳起來了」
 //    看 class 變化，不等 animationstart：分頁在背景時畫面不更新，animationstart 不會觸發
 // 3. 對話框實際顯示的文字，一開始回報一次，之後文字變了再回報，給新手教程判斷「真的說話了」
+// 4. .body 實際算出來的 border-radius，一開始回報一次，之後 class 或 style 變了再回報，給新手教程判斷「真的變形了」
 // 只抓得到 JS 執行時的錯誤；CSS、HTML 寫錯瀏覽器不會報錯，無窮迴圈會讓預覽卡住也抓不到
 const ERROR_CATCHER = `<script>
 (function () {
@@ -149,14 +150,20 @@ const ERROR_CATCHER = `<script>
   })
   var clicked = false
   document.addEventListener('click', function () { clicked = true }, true)
+  function sendShape() {
+    var body = document.querySelector('.body')
+    parent.postMessage({ type: 'chimera-shape', radius: body ? getComputedStyle(body).borderRadius : null }, '*')
+  }
+  sendShape()
   new MutationObserver(function (records) {
+    sendShape()
     records.forEach(function (record) {
       var el = record.target
       if (!clicked || !el.classList.contains('jump')) return
       if (getComputedStyle(el).animationName.indexOf('jump') === -1) return
       parent.postMessage({ type: 'chimera-jump' }, '*')
     })
-  }).observe(document.documentElement, { attributes: true, attributeFilter: ['class'], subtree: true })
+  }).observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'style'], subtree: true })
   function sendSpeech() {
     var speech = document.querySelector('.speech')
     parent.postMessage({ type: 'chimera-speech', text: speech ? speech.textContent : null }, '*')
@@ -171,11 +178,16 @@ const ERROR_CATCHER = `<script>
 </script>`
 
 // 編輯器的預覽傳出來的事件，新手教程拿來判斷玩家真的做到了
-export type PreviewEvent = { type: 'jump' } | { type: 'speech'; text: string | null }
+export type PreviewEvent =
+  | { type: 'jump' }
+  | { type: 'speech'; text: string | null }
+  | { type: 'shape'; radius: string | null }
 
 type PageOptions = {
   // 只有編輯器的預覽要接錯誤主控台，商店卡片和詳情框的預覽不用
   catchErrors?: boolean
+  // 商店卡片和詳情框只是要看零件，不顯示對話框；接在 CSS 最後面蓋過原本的樣式，不改到程式碼
+  hideSpeech?: boolean
 }
 
 // 玩家 JS 前面那一段；buildPage 和行號換算都用這個，兩邊才不會對不上
@@ -183,7 +195,7 @@ function pageBeforeJs(code: ChimeraCode, options: PageOptions) {
   return `<!doctype html>
 <html>
 <head>
-<style>body { margin: 0; } ${code.css}</style>
+<style>body { margin: 0; } ${code.css}${options.hideSpeech ? '\n.speech { display: none; }' : ''}</style>
 </head>
 <body>
 ${code.html}
@@ -199,6 +211,12 @@ export function buildPage(code: ChimeraCode, options: PageOptions = {}) {
 </script>
 </body>
 </html>`
+}
+
+// 商店卡片和詳情框的預覽：零件裝在預設合成獸上的樣子，extraCss 給卡片縮小用
+export function partPreviewPage(part: InstallablePart, extraCss = '') {
+  const page = installPart(starterChimera, part)
+  return buildPage({ ...page, css: page.css + extraCss }, { hideSpeech: true })
 }
 
 // 錯誤回報的行號是整個預覽頁的第幾行，換算成 JS 引擎格裡的第幾行
