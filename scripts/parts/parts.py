@@ -4704,8 +4704,10 @@ PARTS += [
         /* ===== 零件形狀 ===== */
 
         /* 橫的一條繞在身體上，寬度是身體加一圈；條紋是 2 格綠、1 格白一直重複 */
+        /* z-index: 2 比腳的 1 高，垂下來的那一端碰到腳的時候畫在腳前面 */
         .accessory-scarf {
           position: absolute;
+          z-index: 2;
           left: -4px;
           width: calc(100% + 8px);
           height: 8px;
