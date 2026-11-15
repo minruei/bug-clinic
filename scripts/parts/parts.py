@@ -2586,10 +2586,11 @@ PARTS += [
 # 花紋：只改 .body 的 background-image，底色還是玩家選的 --fur-color
 PARTS += [
     part('pattern', '毛色', 'css', 20, css='''
-        /* 想換顏色，改這裡就好：--fur-color 是底色，rgba 最後的 0.15 是條紋的深淺，0 是全透明、1 是不透明 */
+        /* 想換顏色，改這裡就好：--fur-color 是底色，rgba 最後的 0.3 是條紋的深淺，0 是全透明、1 是不透明 */
+        /* 毛色很深的話，深色條紋會看不出來，改成白色的 rgba(255, 255, 255, 0.3) */
         .body {
           --fur-color: #e8a33d;
-          --stripe-color: rgba(46, 34, 26, 0.15);
+          --stripe-color: rgba(46, 34, 26, 0.3);
         }
 
         /* ===== 零件形狀 ===== */
@@ -2650,15 +2651,15 @@ PARTS += [
         /* ===== 零件形狀 ===== */
 
         /* 像素風的漸層：不讓顏色慢慢變，分成 5 段一段一段變暗，中間那段透出 --fur-color */
-        /* color-mix 把顏色調成半透明：45% 就是只疊上四成五的亮色 */
+        /* color-mix 把顏色調成半透明：60% 就是只疊上六成的亮色 */
         /* 每一段寫兩個位置（例如 20% 40%），同一段裡顏色一樣，邊緣就是直的 */
         .body {
           background-image: linear-gradient(
-            color-mix(in srgb, var(--light-color) 45%, transparent) 0 20%,
-            color-mix(in srgb, var(--light-color) 20%, transparent) 20% 40%,
+            color-mix(in srgb, var(--light-color) 60%, transparent) 0 20%,
+            color-mix(in srgb, var(--light-color) 30%, transparent) 20% 40%,
             transparent 40% 60%,
-            color-mix(in srgb, var(--dark-color) 12%, transparent) 60% 80%,
-            color-mix(in srgb, var(--dark-color) 25%, transparent) 80%
+            color-mix(in srgb, var(--dark-color) 20%, transparent) 60% 80%,
+            color-mix(in srgb, var(--dark-color) 40%, transparent) 80%
           );
         }
     '''),

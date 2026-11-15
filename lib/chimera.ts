@@ -380,10 +380,13 @@ function slotBlocks(tab: EditorTab, slot: Slot) {
 
 // 把零件的程式碼各自用標記包起來，空的那格不加；CSS 先拆成 CSS 烤漆和零件形狀，兩邊用同一個標記
 // HTML 先不縮排，放進去的時候再照那一行的縮排補上
-function wrapPart(part: InstallablePart): ChimeraCode {
+// shapesInCss：形狀也放進 CSS 烤漆，接在顏色後面，舊存檔用
+function wrapPart(part: InstallablePart, shapesInCss = false): ChimeraCode {
   const tag = `[${part.slot}:${part.id}]`
   const { html, js } = part.code
-  const { css, shapes } = splitPartCss(part.code.css)
+  const split = splitPartCss(part.code.css)
+  const css = shapesInCss ? [split.css, split.shapes].filter(Boolean).join('\n\n') : split.css
+  const shapes = shapesInCss ? '' : split.shapes
   const wrapCss = (text: string) =>
     text ? `/* ${tag} ${part.name} 開始 */\n${text}\n/* ${tag} 結束 */` : ''
   return {
@@ -435,14 +438,24 @@ function moveMarkerIntoBody(code: ChimeraCode) {
   return { ...code, html, css }
 }
 
+// 零件形狀裡除了零件的段落，還有沒有身體自己的形狀
+// 有零件形狀這一格以前存的合成獸沒有：身體的底色和外框還寫在 CSS 烤漆的 .body，例如 background: var(--fur-color)
+// 零件形狀排在 CSS 烤漆前面，這種存檔把零件的形狀放進零件形狀，會被 .body 的 background 蓋掉，花紋就不見了
+const ANY_PART_SHAPES =
+  /\n{0,2}\/\* \[\w+:\d+\] [^\n]*? 開始 \*\/[\s\S]*?\/\* \[\w+:\d+\] 結束 \*\//g
+
+function hasBodyShapes(shapes: string) {
+  return shapes.replace(ANY_PART_SHAPES, '').trim() !== ''
+}
+
 // 裝上零件：同部位的舊段落整段拿掉，再放新的
 // HTML 原本就有同部位段落的話換在原位置，玩家自己排好的順序不會亂掉；沒有才插到「零件裝在這裡」前面
 // 11/14 以前存的舊結構先把「零件裝在這裡」搬進 .body，同部位的舊段落也不留在原位，改插到 .body 裡
-// CSS、JS、零件形狀接在最後面
+// CSS、JS、零件形狀接在最後面；舊存檔沒有身體的形狀，零件的形狀改接在 CSS 烤漆後面，跟有零件形狀這一格以前一樣
 export function installPart(original: ChimeraCode, part: InstallablePart): ChimeraCode {
-  const wrapped = wrapPart(part)
   const moved = moveMarkerIntoBody(original)
   const code = moved ?? original
+  const wrapped = wrapPart(part, !hasBodyShapes(code.shapes))
 
   let replaced = false
   let html = code.html.replace(

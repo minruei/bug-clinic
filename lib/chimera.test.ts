@@ -471,12 +471,48 @@ describe('零件形狀', () => {
     expect(installedPartId(code, 'pattern')).toBe(40)
   })
 
-  it('舊存檔沒有零件形狀：裝零件時形狀前面不多空行，原本的 CSS 不動', () => {
-    const old = withShapes({ html: starterChimera.html, css: '.body { width: 120px; }', js: '' })
+  it('舊存檔沒有零件形狀：形狀接在 CSS 烤漆後面，才不會被舊的 .body background 蓋掉', () => {
+    const old = withShapes({
+      html: starterChimera.html,
+      css: '.body {\n  background: var(--fur-color);\n}',
+      js: '',
+    })
     expect(old.shapes).toBe('')
     const code = installPart(old, wing)
-    expect(code.shapes.startsWith('/* [wings:12] 翅膀 開始 */')).toBe(true)
-    expect(code.css.startsWith('.body { width: 120px; }')).toBe(true)
+    expect(code.shapes).toBe('')
+    expect(code.css).toBe(
+      `${old.css}\n\n/* [wings:12] 翅膀 開始 */\n.wing {\n  --wing-color: green;\n}\n\n.wing {\n  clip-path: polygon(0 0, 4px 0);\n}\n/* [wings:12] 結束 */`,
+    )
+    expect(installedPartId(code, 'wings')).toBe(12)
+    expect(removePart(code, 'wings')).toEqual(old)
+  })
+
+  it('舊存檔的零件形狀裡只有之前裝的零件，新裝的零件一樣接在 CSS 烤漆後面', () => {
+    const old = {
+      html: starterChimera.html,
+      css: '.body {\n  background: var(--fur-color);\n}',
+      js: '',
+      shapes: '/* [accessory:30] 圍巾 開始 */\n.accessory-scarf {}\n/* [accessory:30] 結束 */',
+    }
+    const pattern: InstallablePart = {
+      id: 4,
+      slot: 'pattern',
+      name: '毛色',
+      code: {
+        html: '',
+        css: `.body { --stripe-color: red; }\n${SHAPE_MARKER}\n.body { background-image: none; }`,
+        js: '',
+      },
+    }
+    const code = installPart(old, pattern)
+    expect(code.shapes).toBe(old.shapes)
+    expect(code.css).toContain('background-image')
+  })
+
+  it('有身體形狀的合成獸，零件的形狀照樣放進零件形狀', () => {
+    const code = installPart(starterChimera, wing)
+    expect(code.css).not.toContain('clip-path')
+    expect(code.shapes).toContain('clip-path')
   })
 
   it('組預覽頁時零件形狀排在 CSS 烤漆前面，CSS 烤漆寫的會蓋過形狀', () => {
