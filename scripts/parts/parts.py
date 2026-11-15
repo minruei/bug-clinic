@@ -25,6 +25,7 @@
 
 import html as html_lib
 import json
+import re
 import sys
 from pathlib import Path
 from textwrap import dedent
@@ -255,8 +256,8 @@ PARTS += [
           background-clip: border-box;
           border-radius: 0;
           box-shadow:
-            inset 4px 4px 0 rgb(251 248 241 / 45%),
-            inset -4px -4px 0 rgb(46 34 26 / 25%);
+            inset 4px 4px 0 rgba(251, 248, 241, 0.45),
+            inset -4px -4px 0 rgba(46, 34, 26, 0.25);
           clip-path: var(--body-inner);
           pointer-events: none;
         }
@@ -464,8 +465,8 @@ PARTS += [
           background-clip: border-box;
           border-radius: 0;
           box-shadow:
-            inset 4px 4px 0 rgb(251 248 241 / 45%),
-            inset -4px -4px 0 rgb(46 34 26 / 25%);
+            inset 4px 4px 0 rgba(251, 248, 241, 0.45),
+            inset -4px -4px 0 rgba(46, 34, 26, 0.25);
           clip-path: var(--body-inner);
           pointer-events: none;
         }
@@ -601,8 +602,8 @@ PARTS += [
           background-clip: border-box;
           border-radius: 0;
           box-shadow:
-            inset 4px 4px 0 rgb(251 248 241 / 45%),
-            inset -4px -4px 0 rgb(46 34 26 / 25%);
+            inset 4px 4px 0 rgba(251, 248, 241, 0.45),
+            inset -4px -4px 0 rgba(46, 34, 26, 0.25);
           clip-path: var(--body-inner);
           pointer-events: none;
         }
@@ -701,8 +702,8 @@ PARTS += [
           background-clip: border-box;
           border-radius: 0;
           box-shadow:
-            inset 4px 4px 0 rgb(251 248 241 / 45%),
-            inset -4px -4px 0 rgb(46 34 26 / 25%);
+            inset 4px 4px 0 rgba(251, 248, 241, 0.45),
+            inset -4px -4px 0 rgba(46, 34, 26, 0.25);
           clip-path: var(--body-inner);
           pointer-events: none;
         }
@@ -854,8 +855,8 @@ PARTS += [
           background-clip: border-box;
           border-radius: 0;
           box-shadow:
-            inset 4px 4px 0 rgb(251 248 241 / 45%),
-            inset -4px -4px 0 rgb(46 34 26 / 25%);
+            inset 4px 4px 0 rgba(251, 248, 241, 0.45),
+            inset -4px -4px 0 rgba(46, 34, 26, 0.25);
           clip-path: var(--body-inner);
           pointer-events: none;
         }
@@ -961,7 +962,7 @@ PARTS += [
           border-radius: 0;
           box-shadow:
             inset 0 var(--caramel-height) 0 var(--caramel-color),
-            inset -4px -4px 0 rgb(46 34 26 / 25%);
+            inset -4px -4px 0 rgba(46, 34, 26, 0.25);
           clip-path: var(--body-inner);
           pointer-events: none;
         }
@@ -1016,8 +1017,8 @@ PARTS += [
           background-clip: border-box;
           border-radius: 0;
           box-shadow:
-            inset 4px 4px 0 rgb(251 248 241 / 45%),
-            inset -4px -4px 0 rgb(46 34 26 / 25%);
+            inset 4px 4px 0 rgba(251, 248, 241, 0.45),
+            inset -4px -4px 0 rgba(46, 34, 26, 0.25);
           clip-path: var(--cloud-inner);
           pointer-events: none;
         }
@@ -1293,7 +1294,7 @@ PARTS += [
           height: 8px;
           background: var(--horn-color);
           border: 4px solid #4a3426;
-          box-shadow: inset -4px 0 0 rgb(46 34 26 / 20%);
+          box-shadow: inset -4px 0 0 rgba(46, 34, 26, 0.2);
         }
 
         /* 中間那層 */
@@ -1307,7 +1308,7 @@ PARTS += [
           background: var(--horn-color);
           border: 4px solid #4a3426;
           border-bottom: 0;
-          box-shadow: inset -4px 0 0 rgb(46 34 26 / 20%);
+          box-shadow: inset -4px 0 0 rgba(46, 34, 26, 0.2);
         }
 
         /* 最上面的尖端 */
@@ -1351,7 +1352,7 @@ PARTS += [
           height: 8px;
           background: var(--horn-color);
           border: 4px solid #4a3426;
-          box-shadow: inset -4px 0 0 rgb(46 34 26 / 20%);
+          box-shadow: inset -4px 0 0 rgba(46, 34, 26, 0.2);
         }
 
         /* 尖端：沒有下框，往下蓋住下層的上框，兩層才會連在一起 */
@@ -1510,7 +1511,7 @@ PARTS += [
           height: 8px;
           background: var(--horn-color);
           border: 4px solid #4a3426;
-          box-shadow: inset 0 -4px 0 rgb(46 34 26 / 20%);
+          box-shadow: inset 0 -4px 0 rgba(46, 34, 26, 0.2);
         }
 
         /* 往上翹的那段：沒有下框，往下蓋住橫條的上框，兩塊才會連在一起 */
@@ -1564,8 +1565,8 @@ PARTS += [
           background: var(--ball-color);
           border: 4px solid #4a3426;
           box-shadow:
-            inset 4px 4px 0 rgb(255 255 255 / 45%),
-            inset -4px -4px 0 rgb(46 34 26 / 25%);
+            inset 4px 4px 0 rgba(255, 255, 255, 0.45),
+            inset -4px -4px 0 rgba(46, 34, 26, 0.25);
         }
     '''),
     part('horn', '貓耳', 'html', 20, html='''
@@ -1705,7 +1706,7 @@ PARTS += [
           z-index: 1;
           width: 20px;
           height: 8px;
-          box-shadow: inset -4px 0 0 rgb(46 34 26 / 20%);
+          box-shadow: inset -4px 0 0 rgba(46, 34, 26, 0.2);
           cursor: pointer;
         }
 
@@ -2585,10 +2586,10 @@ PARTS += [
 # 花紋：只改 .body 的 background-image，底色還是玩家選的 --fur-color
 PARTS += [
     part('pattern', '毛色', 'css', 20, css='''
-        /* 想換顏色，改這裡就好：--fur-color 是底色，最後的 15% 是條紋的深淺 */
+        /* 想換顏色，改這裡就好：--fur-color 是底色，rgba 最後的 0.15 是條紋的深淺，0 是全透明、1 是不透明 */
         .body {
           --fur-color: #e8a33d;
-          --stripe-color: rgb(46 34 26 / 15%);
+          --stripe-color: rgba(46, 34, 26, 0.15);
         }
 
         /* ===== 零件形狀 ===== */
@@ -2821,8 +2822,8 @@ PARTS += [
             linear-gradient(transparent 16px, var(--vein-color) 16px 20px, transparent 20px),
             var(--wing-color);
           box-shadow:
-            inset 4px 4px 0 rgb(255 255 255 / 30%),
-            inset -4px -4px 0 rgb(46 34 26 / 25%);
+            inset 4px 4px 0 rgba(255, 255, 255, 0.3),
+            inset -4px -4px 0 rgba(46, 34, 26, 0.25);
           clip-path: var(--wing-shape);
         }
 
@@ -2918,8 +2919,8 @@ PARTS += [
           inset: 0;
           background: var(--wing-color);
           box-shadow:
-            inset 4px 4px 0 rgb(255 255 255 / 35%),
-            inset -4px -4px 0 rgb(46 34 26 / 25%);
+            inset 4px 4px 0 rgba(255, 255, 255, 0.35),
+            inset -4px -4px 0 rgba(46, 34, 26, 0.25);
           clip-path: var(--wing-shape);
         }
 
@@ -2992,7 +2993,7 @@ PARTS += [
           height: 8px;
           background: var(--feather-color);
           border: 4px solid #4a3426;
-          box-shadow: inset 0 -4px 0 rgb(46 34 26 / 15%);
+          box-shadow: inset 0 -4px 0 rgba(46, 34, 26, 0.15);
         }
 
         .wing-angel span:nth-child(1) {
@@ -3059,8 +3060,8 @@ PARTS += [
           inset: 0;
           background: var(--wing-color);
           box-shadow:
-            inset 4px 4px 0 rgb(255 255 255 / 35%),
-            inset -4px -4px 0 rgb(46 34 26 / 25%);
+            inset 4px 4px 0 rgba(255, 255, 255, 0.35),
+            inset -4px -4px 0 rgba(46, 34, 26, 0.25);
           clip-path: var(--wing-shape);
         }
 
@@ -3243,9 +3244,9 @@ PARTS += [
         <div class="wing-dragonfly left"></div>
         <div class="wing-dragonfly right"></div>
     ''', css='''
-        /* 想換顏色、移位置，改這裡就好；最後的 60% 是透明度 */
+        /* 想換顏色、移位置，改這裡就好；rgba 最後的 0.6 是透明度，0 是全透明、1 是不透明 */
         .wing-dragonfly {
-          --wing-color: rgb(156 196 190 / 60%);
+          --wing-color: rgba(156, 196, 190, 0.6);
           top: var(--wing-y, 10%);
         }
 
@@ -3266,7 +3267,7 @@ PARTS += [
           z-index: -2;
           height: 8px;
           background: var(--wing-color);
-          border: 4px solid rgb(74 52 38 / 60%);
+          border: 4px solid rgba(74, 52, 38, 0.6);
         }
 
         .wing-dragonfly {
@@ -3327,8 +3328,8 @@ PARTS += [
           inset: 0;
           background: var(--wing-color);
           box-shadow:
-            inset 4px 4px 0 rgb(255 255 255 / 35%),
-            inset -4px -4px 0 rgb(46 34 26 / 25%);
+            inset 4px 4px 0 rgba(255, 255, 255, 0.35),
+            inset -4px -4px 0 rgba(46, 34, 26, 0.25);
           clip-path: var(--wing-shape);
         }
 
@@ -3520,8 +3521,8 @@ PARTS += [
           inset: 0;
           background: var(--wing-color);
           box-shadow:
-            inset 4px 4px 0 rgb(255 255 255 / 35%),
-            inset -4px -4px 0 rgb(46 34 26 / 25%);
+            inset 4px 4px 0 rgba(255, 255, 255, 0.35),
+            inset -4px -4px 0 rgba(46, 34, 26, 0.25);
           clip-path: var(--wing-shape);
         }
 
@@ -3632,8 +3633,8 @@ PARTS += [
           inset: 0;
           background: var(--wing-color);
           box-shadow:
-            inset 4px 4px 0 rgb(255 255 255 / 35%),
-            inset -4px -4px 0 rgb(46 34 26 / 25%);
+            inset 4px 4px 0 rgba(255, 255, 255, 0.35),
+            inset -4px -4px 0 rgba(46, 34, 26, 0.25);
           clip-path: var(--wing-shape);
         }
 
@@ -3750,7 +3751,7 @@ PARTS += [
           height: 8px;
           background: var(--tail-color);
           border: 4px solid #4a3426;
-          box-shadow: inset 0 4px 0 rgb(255 255 255 / 35%);
+          box-shadow: inset 0 4px 0 rgba(255, 255, 255, 0.35);
           transform-origin: left center;
           cursor: pointer;
         }
@@ -3822,7 +3823,7 @@ PARTS += [
           bottom: 0;
           width: 4px;
           height: 4px;
-          background: rgb(46 34 26 / 20%);
+          background: rgba(46, 34, 26, 0.2);
         }
     '''),
     part('tail', '捲捲尾巴', 'css', 15, html='''
@@ -3888,8 +3889,8 @@ PARTS += [
           inset: 0;
           background: linear-gradient(90deg, var(--tail-color) 75%, var(--tip-color) 75%);
           box-shadow:
-            inset 4px 4px 0 rgb(255 255 255 / 35%),
-            inset -4px -4px 0 rgb(46 34 26 / 25%);
+            inset 4px 4px 0 rgba(255, 255, 255, 0.35),
+            inset -4px -4px 0 rgba(46, 34, 26, 0.25);
           clip-path: var(--tail-shape);
         }
 
@@ -4040,8 +4041,8 @@ PARTS += [
           inset: 0;
           background: var(--tail-color);
           box-shadow:
-            inset 4px 4px 0 rgb(255 255 255 / 35%),
-            inset -4px -4px 0 rgb(46 34 26 / 25%);
+            inset 4px 4px 0 rgba(255, 255, 255, 0.35),
+            inset -4px -4px 0 rgba(46, 34, 26, 0.25);
           clip-path: var(--tail-shape);
         }
 
@@ -4121,8 +4122,8 @@ PARTS += [
           inset: 0;
           background: var(--tail-color);
           box-shadow:
-            inset 4px 4px 0 rgb(255 255 255 / 35%),
-            inset -4px -4px 0 rgb(46 34 26 / 25%);
+            inset 4px 4px 0 rgba(255, 255, 255, 0.35),
+            inset -4px -4px 0 rgba(46, 34, 26, 0.25);
           clip-path: var(--tail-shape);
         }
 
@@ -4190,7 +4191,7 @@ PARTS += [
           height: 8px;
           background: var(--tail-color);
           border: 4px solid #4a3426;
-          box-shadow: inset 0 4px 0 rgb(255 255 255 / 35%);
+          box-shadow: inset 0 4px 0 rgba(255, 255, 255, 0.35);
           cursor: pointer;
           transition: width 0.3s steps(4);
         }
@@ -4238,7 +4239,7 @@ PARTS += [
           height: 8px;
           background: var(--foot-color);
           border: 4px solid #4a3426;
-          box-shadow: inset 0 -4px 0 rgb(46 34 26 / 25%);
+          box-shadow: inset 0 -4px 0 rgba(46, 34, 26, 0.25);
         }
     '''),
     part('feet', '肉球腳掌', 'html', 15, html='''
@@ -4410,7 +4411,7 @@ PARTS += [
           width: 16px;
           height: 20px;
           background: var(--leg-color);
-          box-shadow: inset -4px 0 0 rgb(46 34 26 / 20%);
+          box-shadow: inset -4px 0 0 rgba(46, 34, 26, 0.2);
         }
 
         /* 蹄比腿左右各寬一格，2 格高 */
@@ -4450,7 +4451,7 @@ PARTS += [
           width: 8px;
           height: 20px;
           background: var(--tentacle-color);
-          box-shadow: inset -4px 0 0 rgb(46 34 26 / 15%);
+          box-shadow: inset -4px 0 0 rgba(46, 34, 26, 0.15);
         }
 
         .feet-octopus span::after {
@@ -4604,7 +4605,7 @@ PARTS += [
           height: 16px;
           background: var(--foot-color);
           border: 4px solid #4a3426;
-          box-shadow: inset 0 -4px 0 rgb(46 34 26 / 25%);
+          box-shadow: inset 0 -4px 0 rgba(46, 34, 26, 0.25);
           cursor: pointer;
         }
 
@@ -4668,7 +4669,7 @@ PARTS += [
           height: 24px;
           background: var(--bow-color);
           border: 4px solid #4a3426;
-          box-shadow: inset 0 -4px 0 rgb(46 34 26 / 20%);
+          box-shadow: inset 0 -4px 0 rgba(46, 34, 26, 0.2);
         }
 
         .accessory-bowtie::before {
@@ -4871,7 +4872,7 @@ PARTS += [
           background: var(--bag-color);
           border: 4px solid #4a3426;
           border-right: none;
-          box-shadow: inset 4px 4px 0 rgb(255 255 255 / 30%);
+          box-shadow: inset 4px 4px 0 rgba(255, 255, 255, 0.3);
         }
 
         /* 外面的口袋 3 × 3 格 */
@@ -4882,7 +4883,7 @@ PARTS += [
           left: 4px;
           width: 12px;
           height: 12px;
-          background: rgb(46 34 26 / 20%);
+          background: rgba(46, 34, 26, 0.2);
           border: 4px solid #4a3426;
         }
     '''),
@@ -5091,6 +5092,10 @@ PARTS += [
 ]
 
 
+# 顏色函式的括號裡同時有逗號和斜線
+MIXED_COLOR = re.compile(r'(?:rgba?|hsla?)\([^()]*,[^()]*/[^()]*\)|(?:rgba?|hsla?)\([^()]*/[^()]*,[^()]*\)')
+
+
 def check(parts):
     names = [p['name'] for p in parts]
     dupes = {n for n in names if names.count(n) > 1}
@@ -5101,6 +5106,12 @@ def check(parts):
     for slot, label in SLOTS:
         count = sum(1 for p in parts if p['slot'] == slot)
         assert count == 9, f'{label}有 {count} 個零件，應該是 9 個'
+    # 顏色統一用 rgba(r, g, b, 0.15) 的逗號寫法
+    # 逗號和斜線混在一起（例如 rgb(242, 242, 242 / 15%)）瀏覽器會整行忽略，玩家改了也沒反應
+    for p in parts:
+        for kind in ('html', 'css', 'js'):
+            for color in MIXED_COLOR.findall(p[kind]):
+                raise AssertionError(f'{p["name"]} 的 {kind} 有逗號和斜線混用的顏色：{color}，請改成 rgba(r, g, b, 0.15)')
 
 
 def sql_str(text):
