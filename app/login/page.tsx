@@ -1,10 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Pixel } from '@/components/Pixel'
-import { api, saveToken } from '@/lib/api'
+import { api, getToken, saveToken } from '@/lib/api'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -13,6 +13,15 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [message, setMessage] = useState('')
+
+  // 已經登入就不用再登入一次，直接回首頁
+  // token 可能過期了，問過後端確定還有效才導走
+  useEffect(() => {
+    if (!getToken()) return
+    api('/api/user/auth').then((result) => {
+      if (!result.error) router.replace('/')
+    })
+  }, [router])
 
   async function handleSubmit(e: React.FormEvent) {
     // 不要讓表單自己重新整理頁面

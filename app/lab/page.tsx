@@ -327,6 +327,15 @@ export default function LabPage() {
       )
     }
 
+    // 還沒登入不是金幣不夠，直接帶去登入
+    if (loggedIn === false) {
+      return (
+        <Link href="/login" className="btn">
+          登入後購買
+        </Link>
+      )
+    }
+
     let label = '購買'
     if (coins < part.price) label = '金幣不夠'
     else if (buyingId === part.id) label = '購買中…'

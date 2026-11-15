@@ -140,8 +140,8 @@ export function ChimeraEditor({
   }, [code, page, pixel, onPreview])
 
   // 點主控台的錯誤：切到 JS 格，游標移到出錯的那一行
-  // 要等 JS 格的內容換上去才能移，所以先記在 jumpLine，等分頁換好再移
-  const cmRef = useRef<ReactCodeMirrorRef>(null)
+  // JS 格要等分頁換好、顯示出來才能捲過去，所以先記在 jumpLine，等分頁換好再移
+  const jsRef = useRef<ReactCodeMirrorRef>(null)
   const jumpLine = useRef<number | null>(null)
 
   function jumpTo(line: number | null) {
@@ -151,7 +151,7 @@ export function ChimeraEditor({
   }
 
   function moveToLine() {
-    const view = cmRef.current?.view
+    const view = jsRef.current?.view
     const line = jumpLine.current
     jumpLine.current = null
     if (!view || !line) return
@@ -238,16 +238,22 @@ export function ChimeraEditor({
               </button>
             )}
           </div>
-          <CodeMirror
-            ref={cmRef}
-            className="editor-cm"
-            value={code[tab]}
-            onChange={(value) => onChange({ ...code, [tab]: value })}
-            extensions={[...tabs.find((t) => t.key === tab)!.extensions]}
-            theme="dark"
-            basicSetup={{ foldGutter: false, autocompletion: false }}
-            aria-label={`${tab} 程式碼`}
-          />
+          {/* 每一格各用一個編輯器，切分頁只是換顯示哪一個
+              共用一個的話，切分頁時內容還沒換好就打字會寫錯格，復原也會復原到別格的內容 */}
+          {visibleTabs.map((t) => (
+            <CodeMirror
+              key={t.key}
+              ref={t.key === 'js' ? jsRef : undefined}
+              className="editor-cm"
+              hidden={t.key !== tab}
+              value={code[t.key]}
+              onChange={(value) => onChange({ ...code, [t.key]: value })}
+              extensions={[...t.extensions]}
+              theme="dark"
+              basicSetup={{ foldGutter: false, autocompletion: false }}
+              aria-label={`${t.key} 程式碼`}
+            />
+          ))}
         </div>
 
         <div className="editor-preview-wrap">

@@ -50,11 +50,12 @@ test('零件形狀那一格放著畫身體的程式，CSS 烤漆只留毛色和�
   await fakeApi(page, true)
   await page.goto('/lab')
 
+  const editor = page.locator('.editor-cm:visible')
   await page.getByRole('button', { name: '零件形狀' }).click()
-  await expect(page.locator('.editor-cm')).toContainText('.body::before')
+  await expect(editor).toContainText('.body::before')
   await page.getByRole('button', { name: 'CSS 烤漆' }).click()
-  await expect(page.locator('.editor-cm')).toContainText('--fur-color')
-  await expect(page.locator('.editor-cm')).not.toContainText('::before')
+  await expect(editor).toContainText('--fur-color')
+  await expect(editor).not.toContainText('::before')
 })
 
 test('新手教程中不顯示零件形狀那一格', async ({ page }) => {
@@ -66,4 +67,42 @@ test('新手教程中不顯示零件形狀那一格', async ({ page }) => {
     'CSS 烤漆',
     'JS 引擎',
   ])
+})
+
+// 每一格有自己的內容和復原紀錄：切分頁後馬上打字、按復原，都只影響目前這一格
+test('切分頁後馬上打字和復原，不會動到別的分頁', async ({ page }) => {
+  await fakeApi(page, true)
+  await page.goto('/lab')
+
+  const editor = page.locator('.editor-cm:visible').locator('.cm-content')
+  const cssTab = page.getByRole('button', { name: 'CSS 烤漆' })
+  const htmlTab = page.getByRole('button', { name: 'HTML 骨架' })
+
+  // 實驗室一打開就在 CSS 格，先記下原本的內容
+  await expect(cssTab).toHaveClass(/active/)
+  const cssBefore = await editor.innerText()
+
+  // 在 HTML 格的最前面打字，切到 CSS 格馬上接著打
+  await htmlTab.click()
+  await editor.click()
+  await page.keyboard.press('ControlOrMeta+Home')
+  await page.keyboard.type('htmlMark')
+  await cssTab.click()
+  await editor.click()
+  await page.keyboard.press('ControlOrMeta+Home')
+  await page.keyboard.type('cssMark')
+
+  await expect(editor).toContainText('cssMark')
+  await expect(editor).toContainText('--fur-color')
+  await expect(editor).not.toContainText('htmlMark')
+
+  // 多按幾次復原，CSS 格只會回到原本的樣子，不會變成 HTML 格的內容
+  await page.keyboard.press('ControlOrMeta+z')
+  await page.keyboard.press('ControlOrMeta+z')
+  await page.keyboard.press('ControlOrMeta+z')
+  await expect.poll(() => editor.innerText()).toBe(cssBefore)
+
+  // HTML 格打的字還在
+  await htmlTab.click()
+  await expect(editor).toContainText('htmlMark')
 })
